@@ -1,0 +1,172 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    warp: casino_entrance
+    dir: plugins/Skript/data/logs/casino/casino_%now formatted as "yyyy-MM-dd"%_%round down (now formatted as "H" parsed as number)/4%.txt
+
+    money: 1000000
+    max: 10000000
+
+function casinoChipCount(p: player, inv: inventory, game: text) :: objects:
+    set {_result::1} to 0
+    set {_result::2} to 0
+    set {_result::3} to 0
+    set {_result::4} to 0
+    set {_result::5} to 0
+    set {_temp} to false
+    loop 5 times:
+        set {_item} to slot (loop-number)+10 of {_inv}
+        if uncolored name of {_item} is "[CASINO] $1 Chip":
+            add item amount of {_item} to {_result::1}
+            set {_temp} to true
+        else if uncolored name of {_item} is "[CASINO] $5 Chip":
+            add item amount of {_item} to {_result::2}
+            set {_temp} to true
+        else if uncolored name of {_item} is "[CASINO] $10 Chip":
+            add item amount of {_item} to {_result::3}
+            set {_temp} to true
+        else if uncolored name of {_item} is "[CASINO] $25 Chip":
+            add item amount of {_item} to {_result::4}
+            set {_temp} to true
+        else if uncolored name of {_item} is "[CASINO] $100 Chip":
+            add item amount of {_item} to {_result::5}
+            set {_temp} to true
+        else:
+            add {_item} to {_give::*}
+    if {_temp} is false:
+        return false
+    else:
+        loop {_give::*}:
+            give loop-value to {_p}
+    set {_n} to {_result::1}*1000 + {_result::2}*5000 + {_result::3}*10000 + {_result::4}*25000 + {_result::5}*100000
+    if {_n} >= {@max}:
+        return true
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_game}% ChipBatting %{_p}% %{_n}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+    send "{@prefix} &6%moneyDigit({_n})%원&f을 배팅하였습니다." to {_p}
+    return {_result::*}
+
+function casinoChipGUI(p: player): 
+    set {_inv} to chest inventory with 3 rows named "&0&l[ CASINO CHIP ]"
+    loop 27 times:
+        set slot (loop-number)-1 of {_inv} to white glass pane named "&f"
+    loop 5 times:
+        set slot (loop-number)+10 of {_inv} to air
+    set slot 22 of {_inv} to green glass pane named "&a&l배팅"
+    open {_inv} to {_p}
+
+function casinoChipGive(p: player, items: objects, game: text) :: number:
+    set {_price} to {_items::1}*1000 + {_items::2}*5000 + {_items::3}*10000 + {_items::4}*25000 + {_items::5}*100000
+    remove mod({_price}, 1000) from {_price}
+    set {_n} to {_price}
+    set {_100000} to round down ({_n} / 100000)
+    itemGive({_p}, book with custom model data 58 named "&e&l[CASINO]&f $100 Chip", {_100000}, "Casino")
+    remove ({_100000} * 100000) from {_n}
+    set {_25000} to round down ({_n} / 25000)
+    itemGive({_p}, book with custom model data 57 named "&e&l[CASINO]&f $25 Chip", {_25000}, "Casino")
+    remove ({_25000} * 25000) from {_n}
+    set {_10000} to round down ({_n} / 10000)
+    itemGive({_p}, book with custom model data 56 named "&e&l[CASINO]&f $10 Chip", {_10000}, "Casino")
+    remove ({_10000} * 10000) from {_n}
+    set {_5000} to round down ({_n} / 5000)
+    itemGive({_p}, book with custom model data 55 named "&e&l[CASINO]&f $5 Chip", {_5000}, "Casino")
+    remove ({_5000} * 5000) from {_n}
+    set {_1000} to round down ({_n} / 1000)
+    itemGive({_p}, book with custom model data 54 named "&e&l[CASINO]&f $1 Chip", {_1000}, "Casino")
+    remove ({_1000} * 1000) from {_n}
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_game}% ChipGet %{_p}% %{_price}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+    return {_price}
+      
+command /casino_calculate [<text>] [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        set {_batting.blackjack} to 0
+        set {_batting.roulette} to 0
+        set {_batting.baccara} to 0
+        set {_get.blackjack} to 0
+        set {_get.roulette} to 0
+        set {_get.baccara} to 0
+        set {_file::*} to files in dir "plugins/Skript/data/logs/casino/"
+        loop {_file::*}:
+            if "%loop-value%" contains "casino_":
+                if arg-1 is set:
+                    if "%loop-value%" doesn't contain arg-1:
+                        continue
+                else:
+                    if "%loop-value%" doesn't contain now formatted as "yyyy-MM":
+                        continue
+                set {_value::*} to file contents of loop-value
+                loop {_value::*}:
+                    loop {list.admin::*}:
+                        set {_temp} to false if loop-value-2 contains loop-value-3
+                    set {_list::*} to loop-value-2 split by " "
+                    if {_temp} isn't set:
+                        if loop-value-2 contains "Blackjack ChipBatting":
+                            add {_list::9} parsed as number to {_batting.blackjack}
+                        else if loop-value-2 contains "Blackjack ChipGet":
+                            add {_list::9} parsed as number to {_get.blackjack}
+                        else if loop-value-2 contains "Roulette ChipBatting":
+                            add {_list::9} parsed as number to {_batting.roulette}
+                        else if loop-value-2 contains "Roulette ChipGet":
+                            add {_list::9} parsed as number to {_get.roulette}
+                        else if loop-value-2 contains "Baccara ChipBatting":
+                            add {_list::9} parsed as number to {_batting.baccara}
+                        else if loop-value-2 contains "Baccara ChipGet":
+                            add {_list::9} parsed as number to {_get.baccara}
+                    delete {_temp}
+            wait 1 tick
+        set {_diff.blackjack} to {_batting.blackjack} - {_get.blackjack}
+        if {_diff.blackjack} >= 0:
+            set {_diff} to "&c+%moneyDigit({_diff.blackjack})%원"
+        else:
+            set {_diff} to "&b-%moneyDigit(abs({_diff.blackjack}))%원"
+        send "&6&l블랙잭&f: 배팅 &e%moneyDigit({_batting.blackjack})%원&f, 획득 &e%moneyDigit({_get.blackjack})%원&f, 차액 %{_diff}%"
+        set {_diff.roulette} to {_batting.roulette} - {_get.roulette}
+        if {_diff.roulette} >= 0:
+            set {_diff} to "&c+%moneyDigit({_diff.roulette})%원"
+        else:
+            set {_diff} to "&b-%moneyDigit(abs({_diff.roulette}))%원"
+        send "&6&l룰렛&f: 배팅 &e%moneyDigit({_batting.roulette})%원&f, 획득 &e%moneyDigit({_get.roulette})%원&f, 차액 %{_diff}%"
+        set {_diff.baccara} to {_batting.baccara} - {_get.baccara}
+        if {_diff.baccara} >= 0:
+            set {_diff} to "&c+%moneyDigit({_diff.baccara})%원"
+        else:
+            set {_diff} to "&b-%moneyDigit(abs({_diff.baccara}))%원"
+        send "&6&l바카라&f: 배팅 &e%moneyDigit({_batting.baccara})%원&f, 획득 &e%moneyDigit({_get.baccara})%원&f, 차액 %{_diff}%"
+        set {_batting.total} to {_batting.blackjack} + {_batting.roulette} + {_batting.baccara}
+        set {_get.total} to {_get.blackjack} + {_get.roulette} + {_get.baccara}
+        set {_diff.total} to {_batting.total} - {_get.total}
+        if {_diff.total} >= 0:
+            set {_diff} to "&c+%moneyDigit({_diff.total})%원"
+        else:
+            set {_diff} to "&b-%moneyDigit(abs({_diff.total}))%원"
+        send "&6&l전체&f: 배팅 &e%moneyDigit({_batting.total})%원&f, 획득 &e%moneyDigit({_get.total})%원&f, 차액 %{_diff}%"
+
+#on join:
+#    if "%region at player%" contains "casino":
+#        if {casino.entrance.%player%} isn't set:
+#            make player run command "warp {@warp}" as op
+
+on enter region:
+    if event-entity is player:
+        if "%event-region%" contains "casino":
+            if "%player%" is "요트" or "바카라" or "카지노 칩 교환" or "카지노 칩 상점" or "블랙잭" or "룰렛":
+                stop
+            if player's balance >= {@money}:
+                balanceRemove(player, {@money}, "CasinoFee")
+                send "{@prefix} 입장 보증금 &e%moneyDigit({@money})%원&f이 출금되었습니다!"
+                set {casino.entrance.%player%} to true
+                stop
+            else:
+                send "{@prefix} 입장 보증금 &e%moneyDigit({@money})%원&f이 없어 입장하실 수 없습니다!"
+                make player run command "warp {@warp}" as op
+                stop
+
+on leave region:
+    if event-entity is player:
+        if "%event-region%" contains "casino":
+            if {Casino.entrance.%player%} is true:
+                balanceAdd(player, {@money}, "CasinoFee")
+                send "{@prefix} 입장 보증금 &e%moneyDigit({@money})%원&f이 입금되었습니다!"
+                delete {casino.entrance.%player%}
+                stop

@@ -1,0 +1,102 @@
+options:
+    prefix: &f[ &6&l!&f ]
+
+command /event_coin_reset:
+    permission: op.user
+    trigger:
+        delete {randombox.ppaeppaero::*}
+
+command /event_coin:
+    permission: op.user
+    trigger:
+        set {coin.ppaeppaero} to player's tool
+        send "{@prefix} %name of player's tool%&f이 빼빼로 뽑기권으로 설정되었습니다."
+
+on right click with paper:
+    if uncolored name of event-item is "[ 빼빼로 뽑기권 ]":
+        set {randombox.ppaeppaero::%uuid of player%} to 0 if {randombox.ppaeppaero::%uuid of player%} isn't set
+        set {_i} to {randombox.ppaeppaero::%uuid of player%}
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        if {_n} is between 1 and 12:
+            set {_number} to round up ({_n}/3)
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.ppaeppaero::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                send "{@prefix} <##663333>&l초코맛 <##FF6666>&l하트 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##663333>&l초코맛 <##FF6666>&l하트 <##CC9966>&l빼빼로" with custom model data 188 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.heart_pepero"
+            else if {_number} is 2:
+                send "{@prefix} <##FF3333>&l딸기맛 <##FF6666>&l하트 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##FF3333>&l딸기맛 <##FF6666>&l하트 <##CC9966>&l빼빼로" with custom model data 189 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.heart_pepero_pink"
+            else if {_number} is 3:
+                send "{@prefix} <##663333>&l초코맛 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##663333>&l초코맛 <##CC9966>&l빼빼로" with custom model data 190 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.pepero_choco"
+            else if {_number} is 4:
+                send "{@prefix} <##FF3333>&l딸기맛 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##FF3333>&l딸기맛 <##CC9966>&l빼빼로" with custom model data 191 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.pepero_pink"
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 13 and 20:
+            set {_number} to round up ({_n}/4) + 1
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.ppaeppaero::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 5:
+                send "{@prefix} &f[ <##663333>&l초코맛 <##CC9966>&l빼빼로 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to book named "&f[ <##663333>&l초코맛 <##CC9966>&l빼빼로 &f]" with lore "&7우클릭하여 칭호를 획득합니다." and "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 6:
+                send "{@prefix} &f[ <##FF3333>&l딸기맛 <##CC9966>&l빼빼로 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to book named "&f[ <##FF3333>&l딸기맛 <##CC9966>&l빼빼로 &f]" with lore "&7우클릭하여 칭호를 획득합니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 21 and 40:
+            send "{@prefix} %name of {coin.ppaeppaero}%&f 1개를 획득하였습니다!" to player
+            set {_item} to 1 of {coin.ppaeppaero}
+        else if {_n} is between 41 and 56:
+            send "{@prefix} 10,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 57 and 66:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 67 and 72:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 73 and 74:
+            send "{@prefix} 50,000원 10개를 획득하였습니다!" to player
+            set {_item} to 10 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 75 and 94:
+            send "{@prefix} &f&l확성기&f 1개를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 95 and 108:
+            send "{@prefix} &f&l확성기&f 2개를 획득하였습니다!" to player
+            set {_item} to 2 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 109 and 114:
+            send "{@prefix} &f&l확성기&f 3개를 획득하였습니다!" to player
+            set {_item} to 3 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 115 and 120:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 121 and 130:
+            send "{@prefix} 스테이크 10개를 획득하였습니다!" to player
+            set {_item} to 10 of cooked beef
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")

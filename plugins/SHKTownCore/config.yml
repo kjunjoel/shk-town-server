@@ -1,0 +1,10 @@
+database:
+  host: "localhost"
+  port: 3306
+  name: "shktown"
+  user: "root"
+  password: "password"
+
+settings:
+  debug-mode: true
+  prefix: "§e[SHK-TOWN]§f "

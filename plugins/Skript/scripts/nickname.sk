@@ -1,0 +1,112 @@
+options:
+	@: <##BC602B>&l[닉네임]&f
+
+command /nick_set [<player>]:
+	permission: op.user
+	trigger:
+		set {nick::new::%uuid of arg-1%} to "<##FFE6F7>&l리티"
+		
+command /nickname [<text>] [<offlineplayer>] [<text>]:
+	permission: op.user
+	permission message: {@@} 명령어를 사용할 권한이 없습니다.
+	trigger:
+		if arg 1 is not set:
+			send "{@@} /nickname item | 현재 들고있는 아이템을 닉네임 변경권으로 설정합니다"
+			send "{@@} /nickname set <플레이어> <닉네임> | 해당 플레이어의 닉네임을 설정합니다"
+			send "{@@} /nickname reset <플레이어> | 해당 플레이어의 닉네임을 초기화합니다"
+		if arg 1 is "item":
+			if player's tool is air:
+				send "{@@} 손에 아이템을 들어주세요"
+				stop
+			set name of player's tool to "{@@} 닉네임 변경권"
+			send "{@@} 현재 들고있는 아이템을 닉네임 변경권으로 설정 하였습니다"
+
+
+		if arg 1 is "set":
+			if arg 2 is not set:
+				send "{@@} 플레이어를 입력해주세요"
+				stop
+			if arg 3 is not set:
+				send "{@@} 변경할 닉네임을 입력해주세요"
+				stop
+			loop {nick::name::*}:
+				if "%loop-value%" is colored arg 3:
+					send "{@@} 이미 있는 닉네임입니다."
+					stop
+
+
+			set {_p} to arg 2
+			if {_p} is set:
+				set {_uuid} to {_p}'s uuid
+				set {nick::new::%{_uuid}%} to colored arg 3
+				send "{@@} 플레이어의 이름을 %colored arg 3%&f으로 정했습니다."
+
+			else:
+				send "{@@} 해당 플레이어가 없어 불가능합니다."
+
+		if arg 1 is "reset":
+			set {_p} to arg 2
+			set {_uuid} to {_p}'s uuid
+
+			delete {nick::new::%{_uuid}%}
+			send "{@@} 해당 플레이어를 닉네임 변경을 삭제하였습니다."
+
+			
+
+command /닉네임 [<text>] [<text>]:
+	trigger:
+		if arg 1 is not set:
+			send "{@@} /닉네임 확인 <닉네임> &8&l| &f닉네임을 변경한 플레이어의 원래 닉네임을 확인합니다."
+			send "{@@} /닉네임 변경 <이름> &8&l| &f닉네임을 변경합니다."
+			stop
+		if arg 1 is "확인":
+			if arg 2 is not set:
+				send "{@@} 닉네임을 입력해주세요"
+				stop
+			loop {nick::new::*}:
+				if uncolored loop-value is arg-2:
+					send "{@@} 해당 플레이어의 마인크래프트 닉네임은 %loop-index parsed as offlineplayer%&f입니다."
+					stop
+			send "{@@} 해당 이름의 플레이어를 찾을 수 없습니다."
+			stop
+			
+
+		if arg 1 is "변경":
+			if arg 2 is not set:
+				send "{@@} 닉네임을 입력해주세요."
+				stop
+			loop {nick::new::*}:
+				if loop-value is colored arg-2:
+					send "{@@} 이미 존재하는 닉네임입니다."
+					stop
+			if length of uncolored arg 2 < 1:
+				send "{@@} 닉네임은 1글자 이상이어야 합니다."
+				stop
+			if length of uncolored arg 2 > 5:
+				send "{@@} 닉네임은 5글자를 초과할 수 없습니다."
+				stop	
+			if name of player's tool contains "닉네임 변경권":
+				set {nick::check::%player's uuid%} to arg 2
+				send formatted "{@@} 정말로 이름을 %arg 2%&f으로 바꾸시겠습니까? (&a&l<ttp:&7클릭시 닉네임을 변경합니다><cmd:/닉네임수락>예<reset>&f/<ttp:&7클릭시 닉네임 변경을 취소합니다><cmd:/닉네임거절>&c&l아니요<reset>&f)"
+				stop
+			else:
+				send "{@@} 닉네임 변경권을 가지고 있지 않습니다."
+				stop
+
+command /닉네임수락:
+	trigger:
+		if {nick::check::%player's uuid%} is set:
+			loop all items in player's inventory:
+				if name of loop-value contains "닉네임 변경권":
+					set item amount of loop-value to item amount of loop-value - 1
+					set {_uuid} to player's uuid
+					set {nick::new::%{_uuid}%} to colored {nick::check::%{_uuid}%}
+					set {_text} to uncolored {nick::check::%{_uuid}%}
+					delete {nick::check::%{_uuid}%}
+					send "{@@} 닉네임을 변경하였습니다."
+					stop
+command /닉네임거절:
+	trigger:
+		if {nick::check::%player's uuid%} is set:
+			delete {nick::check::%player's uuid%}
+			send "{@@} 닉네임 변경을 취소하였습니다."

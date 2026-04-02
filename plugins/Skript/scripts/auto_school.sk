@@ -1,0 +1,715 @@
+options:
+    # 접두사
+    prefix: &2[<##90ee90>&l학교&2]&f
+    classPrefix: &a&l[수업]&f
+
+    # 좌표 설정 도구
+    tool: Iron Axe
+
+    # 시간 관련 설정 (단위는 분)
+    class_time: 2 # 수업 진행 시간
+    cycle_time: 3 # 사이클 시간 (단, 수업 진행 시간과 사이클 시간은 2분 이상 차이가 나야함)
+
+    # 럭펌 그룹
+    학생: 학생
+    
+    # 럭펌 노드
+    student: student.user
+
+# 변수
+# school.lectrueList::*                                    - 강의 목록 배열
+# school.lectureList.{강의명}                              - {강의명}에 대한 파일명 
+# school.classroomList::*                                  - 강의실 목록 배열
+# school.classroomList.{교실명}.pos1                       - {교실명}의 첫 번째 좌표
+# school.classroomList.{교실명}.pos2                       - {교실명}의 두 번째 좌표
+# school.classList::*                                      - 수업 목록 배열
+# school.classList.{수업명}                                - {수업명}의 교실명
+# school.classList.{수업명}.isInClassroom.%uuid of player% - {플레이어}가 {수업명}의 교실에 있는지 (boolean)
+# school.classList.{수업명}.isAttending.%uuid of player%   - {플레이어}가 {수업명}을 듣고 있는지 (boolean)
+# school.classList.{수업명}.attend.%uuid of player%        - {플레이어}가 {수업명}을 들었는지 (boolean)
+# school.region.%uuid of player%                           - {플레이어}의 범위 도구 ON/OFF (boolean)
+# school.region.pos1.%uuid of player%                      - {플레이어}가 설정한 첫 번째 좌표
+# school.region.pos2.%uuid of player%                      - {플레이어}가 설정한 두 번째 좌표
+# school.region.set.%uuid of player%                       - {플레이어}가 좌표를 설정했는가 (boolean)
+# school.cycle                                             - 수업 사이클을 시작했는가 (boolean)
+# school.minutesIndex                                      - 수업 사이클 시작 후 지난 시간(분)
+# school.attendance.%uuid of player%                       - {플레이어}의 출석 총 횟수
+
+# 범위 체크 함수
+function classroomCheck(p: player, pos1: location, pos2: location) :: boolean:
+    set {_pos} to location of {_p}
+    set {_pos.x} to x coord of {_pos}
+    set {_pos.y} to y coord of {_pos}
+    set {_pos.z} to z coord of {_pos}
+    set {_pos1.x} to x coord of {_pos1}
+    set {_pos1.y} to y coord of {_pos1}
+    set {_pos1.z} to z coord of {_pos1}
+    set {_pos2.x} to x coord of {_pos2}
+    set {_pos2.y} to y coord of {_pos2}
+    set {_pos2.z} to z coord of {_pos2}
+    if {_pos1.x} < {_pos2.x}:
+        set {_x.min} to {_pos1.x}
+        set {_x.max} to {_pos2.x}
+    else:
+        set {_x.min} to {_pos2.x}
+        set {_x.max} to {_pos1.x}
+    if {_pos1.y} < {_pos2.y}:
+        set {_y.min} to {_pos1.y}
+        set {_y.max} to {_pos2.y}
+    else:
+        set {_y.min} to {_pos2.y}
+        set {_y.max} to {_pos1.y}
+    if {_pos1.z} < {_pos2.z}:
+        set {_z.min} to {_pos1.z}
+        set {_z.max} to {_pos2.z}
+    else:
+        set {_z.min} to {_pos2.z}
+        set {_z.max} to {_pos1.z}
+    if {_pos.x} is greater than or equal to {_x.min}:
+        if {_pos.x} is less than or equal to {_x.max}:
+            if {_pos.y} is greater than or equal to {_y.min}:
+                if {_pos.y} is less than or equal to {_y.max}:
+                    if {_pos.z} is greater than or equal to {_z.min}:
+                        if {_pos.z} is less than or equal to {_z.max}:
+                            return true
+    return false
+
+# 수업 출력 함수
+function classMessage(p: player, f: text, pos1: location, pos2: location):
+    set {_loc} to "plugins/Skript/data/lectures/%{_f}%"
+    set {_contents::*} to file contents of {_loc}
+    set {_len} to size of {_contents::*}
+    set {_classTime} to {@class_time} * 60
+    set {_interval} to {_classTime} / {_len}
+    loop {_contents::*}:
+        if classroomCheck({_p}, {_pos1}, {_pos2}) is true:
+            send "{@classPrefix} %colored loop-value%" to {_p}
+            wait "%{_interval}% seconds" parsed as timespan
+
+command /school_message [<player>] [<text>]:
+    trigger:
+        set {_loc} to "plugins/Skript/data/lectures/%arg-2%"
+        set {_contents::*} to file contents of {_loc}
+        set {_len} to size of {_contents::*}
+        set {_classTime} to {@class_time} * 60
+        set {_interval} to {_classTime} / {_len}
+        loop {_contents::*}:
+            send "{@classPrefix} %colored loop-value%" to arg-1
+            wait "%{_interval}% seconds" parsed as timespan
+
+# 학교 관리 명령어
+command /school [<text>] [<text>] [<text>] [<text>]:
+    trigger:
+        if player is not op:
+            send "{@prefix} 해당 명령어를 사용할 권한이 없습니다."
+            stop
+        if arg 1 is "lecture":
+            if arg 2 is "add":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.lectureList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        send "{@prefix} 중복된 강의명입니다. 다른 강의명을 입력해주세요."
+                        stop
+                if arg 4 is not set:
+                    send "{@prefix} 확장자를 포함한 파일명을 입력해주세요."
+                    stop
+                set {_textLocation} to "plugins/Skript/data/lectures/%arg-4%"
+                if file {_textLocation} doesn't exist:
+                    send "{@prefix} 입력하신 파일명이 존재하지 않습니다. 확장자를 포함하여 다시 입력해주세요."
+                    stop
+                else:
+                    add arg-3 to {school.lectureList::*}
+                    set {school.lectureList.%arg-3%} to arg-4
+                    send "{@prefix} %arg-4%을(를) %arg-3% 강의의 내용으로 추가하였습니다."
+                    stop
+
+            else if arg 2 is "list":
+                if {school.lectureList::*} is not set:
+                    send ""
+                    send "{@prefix} 강의 리스트가 존재하지 않습니다."
+                    stop
+                else:
+                    set {_index} to 1
+                    send ""
+                    send "{@prefix} 강의 리스트는 다음과 같습니다."
+                    loop {school.lectureList::*}:
+                        send "{@prefix} %{_index}%. %loop-value%: %{school.lectureList.%loop-value%}%"
+                        add 1 to {_index}
+                    stop
+
+            else if arg 2 is "modify":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.lectureList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        exit 1 loop
+                if {_tempState} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+                if arg 4 is not set:
+                    send "{@prefix} 확장자를 포함한 파일명을 입력해주세요."
+                    stop
+                set {_textLocation} to "plugins/Skript/data/lectures/%arg-4%"
+                if file {_textLocation} doesn't exist:
+                    send "{@prefix} 입력하신 파일명이 존재하지 않습니다. 확장자를 포함하여 다시 입력해주세요."
+                    stop
+                else:
+                    set {school.lectureList.%arg-3%} to arg-4
+                    send "{@prefix} %arg-4%을(를) %arg-3% 강의의 내용으로 변경하였습니다."
+                    stop
+
+            else if arg 2 is "rename":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.lectureList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        if arg 4 is not set:
+                            send ""
+                            send "{@prefix} 새로운 강의명을 입력해주세요."
+                            stop
+                        else:
+                            set {school.lectureList::%loop-index%} to arg-4
+                            set {school.lectureList.%arg-4%} to {school.lectureList.%arg-3%}
+                            delete {school.lectureList.%arg-3%}
+                            send "{@prefix} %arg-3%의 강의명을 %arg-4%(으)로 변경하였습니다."
+                            stop
+                if {_tempState} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+
+            else if arg 2 is "remove":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.lectureList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        remove arg-3 from {school.lectureList::*}
+                        delete {school.lectureList.%arg-3%}
+                        send "{@prefix} 강의명 %arg-3%을(를) 삭제하였습니다."
+                        stop
+                if {_tempState} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+            else:
+                send ""
+                send "{@prefix} /school lecture add [강의명] [파일명] &8&l| &f[파일명]을 [강의명]의 강의 내용으로 설정합니다."
+                send "{@prefix} /school lecture list &8&l| &f강의 내용 리스트를 표시합니다."
+                send "{@prefix} /school lecture modify [강의명] [파일명] &8&l| &f[강의명]의 강의 내용을 [파일명]으ㅂ로 변경합니다."
+                send "{@prefix} /school lecture rename [강의명] [새강의명] &8&l| &f[강의명]의 이름을 [새강의명]으로 변경합니다."
+                send "{@prefix} /school lecture remove [강의명] &8&l| &f[강의명]을 강의 내용에서 삭제합니다."
+                stop
+            
+
+        else if arg 1 is "classroom":
+            if arg 2 is "add":
+                if {school.region.set.%uuid of player%} is false:
+                    send "{@prefix} 범위가 설정되지 않았습니다. /school region을 이용해 범위를 설정해주세요."
+                    stop
+                if arg 3 is not set:
+                    send "{@prefix} 교실명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classroomList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        send "{@prefix} 중복된 교실명입니다. 다른 교실명을 입력해주세요."
+                        stop
+                # create area of arg 3 at {school.region.pos1.%uuid of player%}, {school.region.pos2.%uuid of player%}
+                add arg-3 to {school.classroomList::*}
+                set {school.classroomList.%arg-3%.pos1} to {school.region.pos1.%uuid of player%}
+                set {school.classroomList.%arg-3%.pos2} to {school.region.pos2.%uuid of player%}
+                set {_pos1.x} to x coord of {school.classroomList.%arg-3%.pos1}
+                set {_pos1.y} to y coord of {school.classroomList.%arg-3%.pos1}
+                set {_pos1.z} to z coord of {school.classroomList.%arg-3%.pos1}
+                set {_pos2.x} to x coord of {school.classroomList.%arg-3%.pos2}
+                set {_pos2.y} to y coord of {school.classroomList.%arg-3%.pos2}
+                set {_pos2.z} to z coord of {school.classroomList.%arg-3%.pos2}
+                send "{@prefix} 교실 %arg-3%이 (%{_pos1.x}%, %{_pos1.y}%, %{_pos1.z}%) ~ (%{_pos2.x}%, %{_pos2.y}%, %{_pos2.z}%)로 생성되었습니다."
+                stop
+
+            else if arg 2 is "list":
+                if {school.classroomList::*} is not set:
+                    send ""
+                    send "{@prefix} 교실 리스트가 존재하지 않습니다."
+                    stop
+                else:
+                    set {_index} to 1
+                    send ""
+                    send "{@prefix} 교실 리스트는 다음과 같습니다."
+                    loop {school.classroomList::*}:
+                        set {_pos1.x} to x coord of {school.classroomList.%loop-value%.pos1}
+                        set {_pos1.y} to y coord of {school.classroomList.%loop-value%.pos1}
+                        set {_pos1.z} to z coord of {school.classroomList.%loop-value%.pos1}
+                        set {_pos2.x} to x coord of {school.classroomList.%loop-value%.pos2}
+                        set {_pos2.y} to y coord of {school.classroomList.%loop-value%.pos2}
+                        set {_pos2.z} to z coord of {school.classroomList.%loop-value%.pos2}
+                        send "{@prefix} %{_index}%. %loop-value%: (%{_pos1.x}%, %{_pos1.y}%, %{_pos1.z}%) ~ (%{_pos2.x}%, %{_pos2.y}%, %{_pos2.z}%)"
+                        add 1 to {_index}
+                    stop
+
+            else if arg 2 is "modify":
+                if arg 3 is not set:
+                    send "{@prefix} 교실명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classroomList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        # delete area of arg 3
+                        # create area of arg 3 at {school.region.pos1.%uuid of player%}, {school.region.pos2.%uuid of player%}
+                        set {school.classroomList.%arg-3%.pos1} to {school.region.pos1.%uuid of player%}
+                        set {school.classroomList.%arg-3%.pos2} to {school.region.pos2.%uuid of player%}
+                        set {_pos1.x} to x coord of {school.classroomList.%arg-3%.pos1}
+                        set {_pos1.y} to y coord of {school.classroomList.%arg-3%.pos1}
+                        set {_pos1.z} to z coord of {school.classroomList.%arg-3%.pos1}
+                        set {_pos2.x} to x coord of {school.classroomList.%arg-3%.pos2}
+                        set {_pos2.y} to y coord of {school.classroomList.%arg-3%.pos2}
+                        set {_pos2.z} to z coord of {school.classroomList.%arg-3%.pos2}
+                        send "{@prefix} 교실 %arg-3%이 (%{_pos1.x}%, %{_pos1.y}%, %{_pos1.z}%) ~ (%{_pos2.x}%, %{_pos2.y}%, %{_pos2.z}%)로 변경되었습니다."
+                        stop
+                if {_tempState} is false:
+                    send "{@prefix} 교실명을 찾을 수 없습니다."
+                    stop
+            
+            else if arg 2 is "rename":
+                if {school.region.set.%uuid of player%} is false:
+                    send "{@prefix} 범위가 설정되지 않았습니다. /school region을 이용해 범위를 설정해주세요."
+                    stop
+                if arg 3 is not set:
+                    send "{@prefix} 교실명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classroomList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        if arg 4 is not set:
+                            send "{@prefix} 새로운 교실명을 입력해주세요."
+                            stop
+                        else:
+                            # delete area of arg 3
+                            # create area of arg 4 at {school.classroomList.%arg-3%.pos1}, {school.classroomList.%arg-3%.pos2}
+                            set {school.classroomList::%loop-index%} to arg-4
+                            set {school.classroomList.%arg-4%.pos1} to {school.classroomList.%loop-value%.pos1}
+                            set {school.classroomList.%arg-4%.pos2} to {school.classroomList.%loop-value%.pos2}
+                            delete {school.classroomList.%loop-value%.pos1}
+                            delete {school.classroomList.%loop-value%.pos2}
+                            send "{@prefix} 교실 %arg-3%의 이름이 %arg-4%(으)로 변경되었습니다."
+                            stop
+                if {_tempState} is false:
+                    send "{@prefix} 교실명을 찾을 수 없습니다."
+                    stop
+
+            else if arg 2 is "remove":
+                if arg 3 is not set:
+                    send "{@prefix} 교실명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classroomList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        # delete area of arg 3
+                        delete {school.classroomList::%loop-index%}
+                        delete {school.classroomList.%loop-value%.pos1}
+                        delete {school.classroomList.%loop-value%.pos2} 
+                        send "{@prefix} 교실 %arg-3%이 삭제되었습니다."
+                        stop
+                if {_tempState} is false:
+                    send "{@prefix} 교실명을 찾을 수 없습니다."
+                    stop
+
+            else:
+                send ""
+                send "{@prefix} /school classroom add [교실명] &8&l| &f지정된 범위를 [교실명]의 범위로 설정합니다."
+                send "{@prefix} /school classroom list &8&l| &f교실 리스트를 표시합니다."
+                send "{@prefix} /school classroom modify [교실명] &8&l| &f지정된 범위를 [교실명]의 새 범위로 변경합니다."
+                send "{@prefix} /school classroom rename [교실명] [새교실명] &8&l| &f[교실명]의 이름을 [새교실명]으로 변경합니다."
+                send "{@prefix} /school classroom remove [교실명] &8&l| &f[교실명]을 교실에서 삭제합니다."
+                stop
+        
+        else if arg 1 is "class":
+            if arg 2 is "set":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        send "{@prefix} 중복된 수업명입니다. 다른 수업명을 입력해주세요."
+                        stop
+                set {_tempStateFirst} to false
+                loop {school.lectureList::*}:
+                    if loop-value-1 is arg-3:
+                        set {_tempStateFirst} to true
+                        if arg 4 is not set:
+                            send "{@prefix} 교실명을 입력해주세요."
+                            stop
+                        else:
+                            set {_tempStateSecond} to false
+                            loop {school.classroomList::*}:
+                                if loop-value-2 is arg-4:
+                                    set {_tempStateSecond} to true
+                                    add arg-3 to {school.classList::*}
+                                    set {school.classList.%arg-3%} to arg-4
+                                    send "{@prefix} 강의 %arg-3%의 교실이 %arg-4%로 설정되었습니다."
+                                    stop
+                            if {_tempStateSecond} is false:
+                                send "{@prefix} 교실명을 찾을 수 없습니다."
+                                stop
+                if {_tempStateFirst} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+
+            else if arg 2 is "list":
+                if {school.classList::*} is not set:
+                    send ""
+                    send "{@prefix} 수업 리스트가 존재하지 않습니다."
+                    stop
+                else:
+                    set {_index} to 1
+                    send ""
+                    send "{@prefix} 수업 리스트는 다음과 같습니다."
+                    loop {school.classList::*}:
+                        send "{@prefix} %{_index}%. 강의 - %loop-value%: 교실 - %{school.classList.%loop-value%}%"
+                        add 1 to {_index}
+                    stop
+
+            else if arg 2 is "modify":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempStateFirst} to false
+                loop {school.classList::*}:
+                    if loop-value-1 is arg-3:
+                        set {_tempStateFirst} to true
+                        if arg 4 is not set:
+                            send "{@prefix} 새로운 교실명을 입력해주세요."
+                            stop
+                        else:
+                            set {_tempStateSecond} to false
+                            loop {school.classroomList::*}:
+                                if loop-value-2 is arg-4:
+                                    set {_tempStateSecond} to true
+                                    set {school.classList.%arg-3%} to arg-4
+                                    send "{@prefix} 강의 %arg-3%의 교실이 %arg-4%로 변경되었습니다."
+                                    stop
+                            if {_tempStateSecond} is false:
+                                send "{@prefix} 교실명을 찾을 수 없습니다."
+                                stop
+                if {_tempStateFirst} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+                
+            else if arg 2 is "remove":
+                if arg 3 is not set:
+                    send "{@prefix} 강의명을 입력해주세요."
+                    stop
+                set {_tempState} to false
+                loop {school.classList::*}:
+                    if loop-value is arg-3:
+                        set {_tempState} to true
+                        remove arg-3 from {school.classList::*}
+                        delete {school.classList.%arg-3%}
+                        send "{@prefix} 강의 %arg-3%의 교실 설정이 삭제되었습니다."
+                        stop
+                if {_tempState} is false:
+                    send "{@prefix} 강의명을 찾을 수 없습니다."
+                    stop
+
+            else:
+                send ""
+                send "{@prefix} /school class set [강의명] [교실명] &8&l| &f[강의명]의 교실을 [교실명]으로 설정합니다."
+                send "{@prefix} /school class list &8&l| &f수업 리스트를 표시합니다."
+                send "{@prefix} /school class modify [강의명] [새교실명] &8&l| &f[강의명]의 교실을 [새교실명]으로 설정합니다."
+                send "{@prefix} /school class remove [강의명] &8&l| &f[강의명]의 교실을 삭제합니다."
+                stop
+
+        else if arg 1 is "region":
+            if arg 2 is "on":
+                if {school.region.%uuid of player%} is true:
+                    send "{@prefix} 이미 범위 설정 도구가 켜져 있습니다."
+                    stop
+                set {school.region.%uuid of player%} to true
+                send "{@prefix} 범위 설정 도구가 켜졌습니다."
+                stop
+            else if arg 2 is "off":
+                if {school.region.%uuid of player%} is false:
+                    send "{@prefix} 이미 범위 설정 도구가 꺼져 있습니다."
+                    stop
+                set {school.region.%uuid of player%} to false
+                send "{@prefix} 범위 설정 도구가 꺼졌습니다."
+                stop
+            else:
+                send ""
+                send "{@prefix} /school region on &8&l| &f범위 설정을 시작합니다. {@tool}을(를) 이용해 범위를 설정할 수 있습니다."
+                send "{@prefix} /school region off &8&l| &f범위 설정을 종료합니다."
+                stop
+        
+        else if arg 1 is "start":
+            if {school.cycle} is true:
+                send "{@prefix} 이미 수업 사이클이 실행되고 있습니다."
+                stop
+            if {school.lectureList::*} is not set:
+                send "{@prefix} 강의가 설정되지 않았습니다. /school lecture를 이용해 강의를 설정한 후 다시 시도해주시기 바랍니다."
+                stop
+            else if {school.classroomList::*} is not set:
+                send "{@prefix} 교실이 설정되지 않았습니다. /school classorom을 이용해 강의를 설정한 후 다시 시도해주시기 바랍니다."
+                stop
+            else if {school.classList::*} is not set:
+                send "{@prefix} 수업이 설정되지 않았습니다. /school class를 이용해 강의를 설정한 후 다시 시도해주시기 바랍니다."
+                stop
+            else:
+                set {school.cycle} to true
+                set {school.minutesIndex} to 0
+                send "{@prefix} 수업 사이클이 시작되었습니다. 60초 내로 수업 사이클이 시작됩니다."
+                stop
+        
+        else if arg 1 is "stop":
+            if {school.cycle} is false:
+                send "{@prefix} 이미 수업 사이클이 정지되어 있습니다."
+                stop
+            set {school.cycle} to false
+            set {school.minutesIndex} to 0
+            send "{@prefix} 수업 사이클이 정지되었습니다. 60초 내로 수업 사이클이 정지됩니다."
+            stop
+
+        else:
+            send ""
+            send "{@prefix} /school lecture &8&l| &f강의와 관련된 내용을 설정합니다."
+            send "{@prefix} /school classroom &8&l| &f강의실과 관련된 내용을 설정합니다."
+            send "{@prefix} /school class &8&l| &f수업과 관련된 내용을 설정합니다."
+            send "{@prefix} /school region &8&l| &f강의실 범위를 설정합니다."
+            send "{@prefix} /school start &8&l| &f수업 사이클을 시작합니다."
+            send "{@prefix} /school stop &8&l| &f수업 사이클을 정지합니다."
+            stop
+
+command /school_force [<offlineplayer>]:
+    permission: guide.user
+    trigger:
+        set {_n} to size of {school.classList::*}
+        set {school.attendance.%uuid of arg-1%} to {_n}
+        if {quest.%uuid of arg-1%.main} is 2:
+            make arg-1 run command "quest done main 2" as op
+
+command /출석확인 [<offlineplayer>]:
+    permission: guide.chatting
+    trigger:
+        set {_i} to 1
+        set {_n} to size of {school.classList::*}
+        send "{@prefix} &6%arg-1%&f님의 출석 현황은 아래와 같습니다."
+        loop {school.classList::*}:
+            if {school.classList.%loop-value%.attend.%uuid of arg-1%} is true:
+                send "{@prefix} %{_i}%. &b%loop-value%&f: 수강 완료"
+            else if {school.classList.%loop-value%.attend.%uuid of arg-1%} is false:
+                send "{@prefix} %{_i}%. &b%loop-value%&f: 미수강"
+            else if {school.classList.%loop-value%.attend.%uuid of arg-1%} is not set:
+                send "{@prefix} %{_i}%. &b%loop-value%&f: 미수강"
+            add 1 to {_i}
+        send "{@prefix} &d%{school.attendance.%uuid of arg-1%}%/%{_n}%&f 수강 완료"
+        stop
+
+# 출석증 명령어
+command /출석:
+    trigger:
+        if {school.lectureList::*} is not set:
+            send "{@prefix} 출석 현황을 확인할 수 없습니다. 자세한 사항은 관리자에게 문의하시기 바랍니다. &c(Error code 1)"
+            stop
+        else if {school.classroomList::*} is not set:
+            send "{@prefix} 출석 현황을 확인할 수 없습니다. 자세한 사항은 관리자에게 문의하시기 바랍니다. &c(Error code 2)"
+            stop
+        else if {school.classList::*} is not set:
+            send "{@prefix} 출석 현황을 확인할 수 없습니다. 자세한 사항은 관리자에게 문의하시기 바랍니다. &c(Error code 3)"
+            stop
+        else:
+            set {_i} to 1
+            set {_n} to size of {school.classList::*}
+            send "{@prefix} &6%player%&f님의 출석 현황은 아래와 같습니다."
+            loop {school.classList::*}:
+                if {school.classList.%loop-value%.attend.%uuid of player%} is true:
+                    send "{@prefix} %{_i}%. &b%loop-value%&f: 수강 완료"
+                else if {school.classList.%loop-value%.attend.%uuid of player%} is false:
+                    send "{@prefix} %{_i}%. &b%loop-value%&f: 미수강"
+                else if {school.classList.%loop-value%.attend.%uuid of player%} is not set:
+                    send "{@prefix} %{_i}%. &b%loop-value%&f: 미수강"
+                add 1 to {_i}
+            send "{@prefix} &d%{school.attendance.%uuid of player%}%/%{_n}%&f 수강 완료"
+            stop
+
+command /출석초기화 [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if arg-1 isn't set:
+            send "{@prefix} 출석을 초기화할 대상을 지정하세요."
+            stop
+        if arg-1 is set:
+            delete {school.classList.1.attend.%uuid of arg-1%}
+            delete {school.classList.2.attend.%uuid of arg-1%}
+            delete {school.classList.3.attend.%uuid of arg-1%}
+            send "{@prefix} &e%arg-1%님&f의 출석 초기화 완료"
+            stop
+
+# 좌클릭 이벤트
+on left click:
+    if {school.region.%uuid of player%} is true:
+        if player is op:
+            if player's tool is {@tool}:
+                cancel event
+                if location of event-block is not set:
+                    stop
+                set {school.region.pos1.%uuid of player%} to location of event-block
+                send "{@prefix} 첫 번째 좌표가 &6(%X-location of event-block%, %Y-location of event-block%, %Z-location of event-block%)&f로 설정되었습니다."
+                if {school.region.pos2.%uuid of player%} is set:
+                    set {_pos1.x} to x coord of {school.region.pos1.%uuid of player%}
+                    set {_pos1.y} to y coord of {school.region.pos1.%uuid of player%}
+                    set {_pos1.z} to z coord of {school.region.pos1.%uuid of player%}
+                    set {_pos2.x} to x coord of {school.region.pos2.%uuid of player%}
+                    set {_pos2.y} to y coord of {school.region.pos2.%uuid of player%}
+                    set {_pos2.z} to z coord of {school.region.pos2.%uuid of player%}
+                    send "{@prefix} 범위가 지정되었습니다: &6(%{_pos1.x}%, %{_pos1.y}%, %{_pos1.z}%) ~ (%{_pos2.x}%, %{_pos2.y}%, %{_pos2.z}%)"
+                    set {school.region.set.%uuid of player%} to true
+
+# 우클릭 이벤트
+on right click:
+    if {school.region.%uuid of player%} is true:
+        if player is op:
+            if player's tool is {@tool}:
+                cancel event
+                if location of event-block is not set:
+                    stop
+                set {school.region.pos2.%uuid of player%} to location of event-block
+                send "{@prefix} 두 번째 좌표가 &6(%X-location of event-block%, %Y-location of event-block%, %Z-location of event-block%)&f로 설정되었습니다."
+                if {school.region.pos1.%uuid of player%} is set:
+                    set {_pos1.x} to x coord of {school.region.pos1.%uuid of player%}
+                    set {_pos1.y} to y coord of {school.region.pos1.%uuid of player%}
+                    set {_pos1.z} to z coord of {school.region.pos1.%uuid of player%}
+                    set {_pos2.x} to x coord of {school.region.pos2.%uuid of player%}
+                    set {_pos2.y} to y coord of {school.region.pos2.%uuid of player%}
+                    set {_pos2.z} to z coord of {school.region.pos2.%uuid of player%}
+                    send "{@prefix} 범위가 지정되었습니다: &6(%{_pos1.x}%, %{_pos1.y}%, %{_pos1.z}%) ~ (%{_pos2.x}%, %{_pos2.y}%, %{_pos2.z}%)"
+                    set {school.region.set.%uuid of player%} to true
+
+# 입장 변수 초기화 이벤트
+on join:
+    if {school.region.%uuid of player%} is not set:
+        set {school.region.%uuid of player%} to false
+    if {school.attendance.%uuid of player%} is not set:
+        set {school.attendance.%uuid of player%} to 0
+    loop {classList::*}:
+        if {school.classList.%loop-value%.isInClassroom.%uuid of player%} is not set:
+            set {school.classList.%loop-value%.isInClassroom.%uuid of player%} to false
+        if {school.classList.%loop-value%.isAttending.%uuid of player%} is not set:
+            set {school.classList.%loop-value%.isAttending.%uuid of player%} to false
+        if {school.classList.%loop-value%.attend.%uuid of player%} is not set:
+            set {school.classList.%loop-value%.attend.%uuid of player%} to false
+
+# 퇴장 변수 초기화 이벤트
+on quit:
+    loop {classList::*}:
+        set {school.classList.%loop-value%.isInClassroom.%uuid of player%} to false
+        set {school.classList.%loop-value%.isAttending.%uuid of player%} to false
+    set {school.region.%uuid of player%} to false
+    set {school.region.set.%uuid of player%} to false
+    delete {school.region.pos1.%uuid of player%}
+    delete {school.region.pos2.%uuid of player%}
+
+command /sch:
+    trigger:
+        loop {school.classList::*}:
+            send {school.classList.%loop-value%}
+
+# 1분 반복 이벤트
+every 1 minute:
+    if {school.cycle} is true:
+        if {school.minutesIndex} is {@cycle_time}:
+            set {school.minutesIndex} to 0
+        
+        if {school.minutesIndex} is 0:
+            loop {school.classroomList::*}:
+                execute console command "hologram setline school-%loop-value% 5 상태: &b수업 진행 중"
+                execute console command "hologram setline school-%loop-value% 6 수업 종료까지 &6{@class_time}분 &f남음"
+            loop all players:
+                set {_tempUUID} to loop-player's uuid
+                if group of loop-player contains "{@학생}" or "가이드" or "임시가이드":
+                    send "{@prefix} 수업이 시작되었습니다." to loop-player
+                    loop {school.classList::*}:
+                        set {_pos1} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos1}
+                        set {_pos2} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos2}
+                        classMessage(loop-player, {school.lectureList.%loop-value-2%}, {_pos1}, {_pos2})
+                        if classroomCheck(loop-player, {_pos1}, {_pos2}) is true:
+                            set {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} to true
+                        else:
+                            set {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} to false
+
+        else if {school.minutesIndex} < {@class_time}:
+            loop {school.classroomList::*}:
+                execute console command "hologram setline school-%loop-value% 6 수업 종료까지 &6%{@class_time}-{school.minutesIndex}%분 &f남음"
+            loop all players:
+                set {_tempUUID} to loop-player's uuid
+                if group of loop-player contains "{@학생}" or "가이드" or "임시가이드":
+                    loop {school.classList::*}:
+                        execute console command "hologram setline school-%{school.classList.%loop-value-2%}% 6 수업 종료까지 &6%{@class_time}-{school.minutesIndex}%분 &f남음"
+                        set {_pos1} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos1}
+                        set {_pos2} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos2}
+                        if {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} is true:
+                            if classroomCheck(loop-player, {_pos1}, {_pos2}) is true:
+                                set {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} to true
+                            else:
+                                set {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} to false
+                
+        else if {school.minutesIndex} is {@class_time}:
+            loop {school.classroomList::*}:
+                execute console command "hologram setline school-%loop-value% 5 상태: &c수업 종료"
+                execute console command "hologram setline school-%loop-value% 6 수업 시작까지 &6%{@cycle_time}-{@class_time}%분 &f남음"
+            loop all players:
+                set {_tempUUID} to loop-player's uuid
+                if group of loop-player contains "{@학생}" or "가이드" or "임시가이드":
+                    send "{@prefix} 수업이 종료되었습니다. &e/출석&f을 이용해 출석 현황을 확인할 수 있습니다." to loop-player
+                    loop {school.classList::*}:
+                        set {_pos1} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos1}
+                        set {_pos2} to {school.classroomList.%{school.classList.%loop-value-2%}%.pos2}
+                        if {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} is true:
+                            if classroomCheck(loop-player, {_pos1}, {_pos2}) is true:
+                                if {school.classList.%loop-value-2%.attend.%{_tempUUID}%} isn't set:
+                                    if {school.attendance.%uuid of loop-player%} is not set:
+                                        set {school.attendance.%uuid of loop-player%} to 1
+                                    else:
+                                        add 1 to {school.attendance.%uuid of loop-player%}
+                                set {school.classList.%loop-value-2%.attend.%{_tempUUID}%} to true
+                            else:
+                                set {school.classList.%loop-value-2%.attend.%{_tempUUID}%} to false
+                            set {school.classList.%loop-value-2%.isAttending.%{_tempUUID}%} to false
+                        if {school.attendance.%uuid of loop-player%} is size of {school.classList::*}:
+                            if {quest.%uuid of loop-player%.main} is 2:
+                                make loop-player run command "quest done main 2" as op
+
+        # else if {school.minutesIndex} < {@cycle_time}-1:
+            # loop {school.classroomList::*}:
+                # execute console command "hologram setline school-%loop-value% 6 수업 시작까지 &6%{@cycle_time}-{school.minutesIndex}%분 &f남음"
+
+        else if {school.minutesIndex} is {@cycle_time}-1:
+            loop all players:
+                if group of loop-player contains "{@학생}" or "가이드" or "임시가이드":
+                    send "{@prefix} 수업이 1분 후에 시작됩니다. 수업 도중에 참여하면 출석이 인정되지 않으니 수업이 시작하기 전 교실로 이동해주시기 바랍니다." to loop-player
+            loop {school.classroomList::*}:
+                execute console command "hologram setline school-%loop-value% 6 수업 시작까지 &61분 &f남음"
+
+        add 1 to {school.minutesIndex}
+
+command /급식:
+    trigger:
+        if group of player contains "{@학생}":
+            send "[ &6&l! &f] 배고픔이 모두 채워졌습니다."
+            make player run command "feed" as op
+            stop

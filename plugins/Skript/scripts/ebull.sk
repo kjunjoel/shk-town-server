@@ -1,0 +1,46 @@
+on join:
+	if uuid of player is "25ed1d57-1a6f-4d92-864d-f2c6750d8572": # ebull8
+		wait 5 second
+		set {bug.kill::%uuid of player%} to true
+		wait 1 second
+		execute console command "kill ebull8"
+		wait 1 second
+		delete {bug.kill::%uuid of player%}
+		if {doctor.pain.%uuid of player%} is set:
+			delete {doctor.pain.%uuid of player%}
+			remove slowness from player
+			remove mining fatigue from player
+			remove 1 of player's tool from player's inventory
+		if group of player contains "현상수배" or "수감자" or "죄수":
+			send " &f[ &6&l&o! &6] &f현상수배이거나 수감자여서 위치 이동이 안되었습니다." to player
+			stop
+		wait 1 second
+		teleport player to {bug.loc::%uuid of player%}
+		delete {bug.loc::%uuid of player%}
+		send "&e[System] &f킬로그 O, 치료, 위치 변수 삭제 완료."
+		stop
+
+on quit:
+	if uuid of player is "25ed1d57-1a6f-4d92-864d-f2c6750d8572": # ebull8
+		set {bug.loc::%uuid of player%} to player's location
+		if {bug.kill::%uuid of player%} is true:
+			delete {bug.kill::%uuid of player%}
+
+command /bug_loc [<offlineplayer>]:
+	permission: op.user
+	trigger:
+		send "%{bug.loc::%uuid of arg-1%}%"
+		if {bug.kill::%uuid of arg-1%} is true:
+			send "%arg-1%에 대한 킬로그 적용X"
+		else if {bug.kill::%uuid of arg-1%} isn't true:
+			send "%arg-1%에 대한 킬로그 적용O"
+
+command /bug_set [<offlineplayer>] [<text>]:
+	permission: op.user
+	trigger:
+		if arg-2 is "true":
+			set {bug.kill::%uuid of arg-1%} to true
+			send "%arg-1%에 대한 킬로그 적용 X"
+		else if arg-2 is "false":
+			delete {bug.kill::%uuid of arg-1%}
+			send "%arg-1%에 대한 킬로그 적용 O"

@@ -1,0 +1,72 @@
+options:
+	말머리: &f[ &6&l! &f]
+	
+on command "/랜덤지급":
+	if player or sender is not op:
+		cancel event
+		message "&c이 명령어는 관리자 권한이 필요합니다."
+		
+Command /랜덤지급 [<integer>]:
+    permission: op.user
+    trigger:
+        if player's tool is not air:
+            if name of player's tool is set:
+                set {_r} to random player out of all players
+                give arg 1 of player's tool to {_r}
+            if arg 1 is set:
+                set {_random} to random player out of all players
+                give arg 1 of player's tool to {_random}
+                broadcast " "
+                broadcast "{@말머리} &f%{_random}% &f&l님께서 %tool's name% &f&l아이템 %arg 1%&f&l개에 당첨되었습니다."
+                broadcast " "
+                play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player
+            else:
+                send "{@말머리} 아이템 갯수를 입력해 주세요!"
+        else:
+            send "{@말머리} 아이템을 손에 들고 입력해주세요."
+
+command /랜덤플레이어 [<text>] [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if arg-1 isn't set:
+            send "{@말머리} &c보상을 선택하여 주세요."
+            stop
+
+        if arg-2 isn't set:
+            set {_random} to random player out of all players
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player
+            send " " to all players
+            send "{@말머리} &e&l%{_random}% &f님이 당첨되셨습니다!" to all players
+            send "{@말머리} 보상: &a&l%arg-1%" to all players
+            send "{@말머리} &d&l5초 내로 채팅을 쳐주세요." to all players
+            send " " to all players
+            wait 1 second
+            send "{@말머리} &d&l4초 내로 채팅을 쳐주세요." to all players
+            wait 1 second
+            send "{@말머리} &d&l3초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l2초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l1초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l잠수가 아닌 경우 관리자가 아이템을 지급할 겁니다." to all players
+            stop
+
+        else if arg-2 is set:
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player
+            send " " to all players
+            send "{@말머리} &e&l%arg-2% &f님이 당첨되셨습니다!" to all players
+            send "{@말머리} 보상: &a&l%arg-1%" to all players
+            send "{@말머리} &d&l5초 내로 채팅을 쳐주세요." to all players
+            send " " to all players
+            wait 1 second
+            send "{@말머리} &d&l4초 내로 채팅을 쳐주세요." to all players
+            wait 1 second
+            send "{@말머리} &d&l3초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l2초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l1초 내로 채팅을 쳐주세요." to all players
+            wait 1 second 
+            send "{@말머리} &d&l잠수가 아닌 경우 관리자가 아이템을 지급할 겁니다." to all players
+            stop

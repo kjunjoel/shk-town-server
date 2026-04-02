@@ -1,0 +1,48 @@
+options:
+    dir: plugins/Skript/data/logs/item/item_%now formatted as "yyyy-MM-dd"%.txt
+
+function itemGive(p: offlineplayer, item: item, n: number, option: text):
+    set {_number} to {_n}
+    set {_space} to 0
+    if {_p} is online:
+        loop 36 times:
+            if slot (loop-number -1) of {_p}'s inventory is air:
+                add 1 to {_space}
+        set {_max} to {_space} * (max stack of {_item})
+        if {_number} > {_max}:
+            give {_max} of {_item} to {_p}
+            set {_remainder} to {_number} - {_max}
+            add {_remainder} of {_item} to {_p}'s ender chest
+            send "[ &6&l!&f ] 보관함이 꽉 차 %moneyDigit({_remainder})%개의 아이템이 선물함으로 이동하였습니다." to {_p}
+        else:
+            give {_number} of {_item} to {_p}
+    else:
+        add {_item} to {mailbox.%uuid of {_p}%::*}
+    # if uncolored name of {_item} is "AK-47":
+    #    create file path "{@dir}" if file path "{@dir}" isn't available
+    #     sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %{_p}% %name of {_item}% %{_n}%개" to file path "{@dir}"
+    # else if uncolored name of {_item} is "마피아 전용 방탄복":
+    #    create file path "{@dir}" if file path "{@dir}" isn't available
+    #    sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %{_p}% %name of {_item}% %{_n}%개" to file path "{@dir}"
+
+on join:
+    loop {mailbox.%uuid of player%::*}:
+        loop item amount of loop-value times:
+            if player has enough space for 1 of loop-value-1:
+                itemGive(player, loop-value-1, 1, "MailboxJoin")
+            else:
+                add 1 of loop-value-1 to player's ender chest
+    delete {mailbox.%uuid of player%::*}
+
+on inventory click:
+    if player's current inventory is player's ender chest:
+        if event-inventory is player's inventory:
+            if player is op:
+                stop
+            else:
+                cancel event
+
+command /선물함:
+    trigger:
+        make player run command "enderchest" as op
+        stop

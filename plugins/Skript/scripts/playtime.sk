@@ -1,0 +1,310 @@
+options:
+    prefix: &a&l[접속보상]&f
+    gui: &f[&a&l접속보상&f]
+    @: &f[ &6&l&o! &f]&7
+
+# 변수
+# {playtime.%uuid of player%}              | 플레이어의 일주일 간 플레이타임
+# {playtime.%uuid of player%.day::number}  | 플레이어가 일일 보상을 수령했는지
+# {playtime.%uuid of player%.week::number} | 플레이어가 주간 보상을 수령했는지
+# {playtime.day::number}                   | 일일 보상
+# {playtime.week::number}                  | 주간 보상
+
+function playtimeName(t: text) :: text:
+    set {_name} to {_t}
+    replace all " second" in {_name} with "초"
+    replace all " minute" in {_name} with "분"
+    replace all " hour" in {_name} with "시간"
+    replace all " day" in {_name} with "일"
+    replace all "s" in {_name} with ""
+    replace all " and" in {_name} with ""
+    return {_name}
+
+function playtimeDay(p: player, t: text) :: boolean:
+    set {_time} to {_t} parsed as timespan
+    if {_p}'s time played > {_time}:
+        return true
+    else:
+        return false
+
+function playtimeWeek(p: player, t: text) :: boolean:
+    set {_play} to {playtime.%uuid of {_p}%}
+    if {_play} is set:
+        add {_p}'s time played to {_play}
+    else if {_play} is "0 seconds" parsed as timespan:
+        set {_play} to {_p}'s time played
+    else:
+        set {_play} to {_p}'s time played
+    set {_time} to {_t} parsed as timespan
+    if {_play} > {_time}:
+        return true
+    else:
+        return false
+
+function playtimeCount(p: player) :: number:
+    set {_result} to 0
+    set {_file.day::*} to file contents of "plugins/Skript/data/playtime/day.txt"
+    set {_file.week::*} to file contents of "plugins/Skript/data/playtime/week.txt"
+    loop 5 times:
+        add 1 to {_result} if playtimeDay({_p}, {_file.day::%loop-number%}) is true
+        add 1 to {_result} if playtimeWeek({_p}, {_file.week::%loop-number%}) is true
+        remove 1 from {_result} if {playtime.%uuid of {_p}%.day::%loop-number%} is set
+        remove 1 from {_result} if {playtime.%uuid of {_p}%.week::%loop-number%} is set
+    return {_result}
+
+function playtimeGUI(p: player):
+    set {_file.day::*} to file contents of "plugins/Skript/data/playtime/day.txt"
+    set {_file.week::*} to file contents of "plugins/Skript/data/playtime/week.txt"
+    set {_value::*} to "1,000원", "5,000원", "10,000원", "30,000원", "50,000원", "200,000원", "400,000원", "600,000원", "1,000,000원", "2,000,000원"
+    set {_inv} to chest inventory with 5 rows named "{@gui}"
+    loop 45 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set {_time} to playtimeName("%{_p}'s time played%")
+    set slot 10 of {_inv} to clock named "&e&l%now formatted as "M월 d일"% &f접속 시간" with lore "&b&l%{_time}%"
+    loop 5 times:
+        set {_name} to playtimeName({_file.day::%loop-number%})
+        if {playtime.%uuid of {_p}%.day::%loop-number%} is set:
+            set {_item} to barrier named "&6&l일일 %{_name}% 접속" with lore "&c이미 보상을 수령했습니다."
+        else:
+            if playtimeDay({_p}, {_file.day::%loop-number%}) is true:
+                set {_item} to ender chest named "&6&l일일 %{_name}% 접속"
+                add "&a좌클릭&f하여 보상을 수령할 수 있습니다." to lore of {_item}
+            else:
+                set {_item} to chest named "&6&l일일 %{_name}% 접속"
+                add "&c아직 보상을 수령할 수 없습니다." to lore of {_item}
+            add "&7보상: %{_value::%loop-number%}%" to lore of {_item}
+        set slot (loop-number)+11 of {_inv} to {_item}
+    if {playtime.%uuid of {_p}%} isn't set:
+        set {_temp} to {_p}'s time played
+    else if {playtime.%uuid of {_p}%} is "0 seconds" parsed as timespan:
+        set {_temp} to {_p}'s time played
+    else:
+        set {_temp} to {playtime.%uuid of {_p}%}
+        add {_p}'s time played to {_temp}
+    set {_time} to playtimeName("%{_temp}%")
+    set slot 28 of {_inv} to clock named "&e&l%now formatted as "M월 W주차"% &f접속 시간" with lore "&b&l%{_time}%"
+    loop 5 times:
+        set {_name} to playtimeName({_file.week::%loop-number%})
+        if {playtime.%uuid of {_p}%.week::%loop-number%} is set:
+            set {_item} to barrier named "&6&l주간 %{_name}% 접속" with lore "&c이미 보상을 수령했습니다."
+        else:
+            if playtimeWeek({_p}, {_file.week::%loop-number%}) is true:
+                set {_item} to ender chest named "&6&l주간 %{_name}% 접속"
+                add "&a좌클릭&f하여 보상을 수령할 수 있습니다." to lore of {_item}
+            else:
+                set {_item} to chest named "&6&l주간 %{_name}% 접속"
+                add "&c아직 보상을 수령할 수 없습니다." to lore of {_item}
+            add "&7보상: %{_value::%loop-number + 5%}%" to lore of {_item}
+        set slot (loop-number)+29 of {_inv} to {_item}
+
+    open {_inv} to {_p}
+
+on inventory click:
+    if {gui.%uuid of player%::playtimeGUI} is true:
+        cancel event
+        if click type is left mouse button:
+            if index of clicked slot is between 12 and 16:
+                set {_ind} to index of clicked slot - 11
+                if uncolored lore of clicked item contains "좌클릭하여 보상을 수령할 수 있습니다.":
+                    set {_temp} to true if player has enough space for {playtime.day::%{_ind}%} 
+                    if {_temp} is true:
+                        set {playtime.%uuid of player%.day::%{_ind}%} to true
+                        itemGive(player, {playtime.day::%{_ind}%}, item amount of {playtime.day::%{_ind}%}, "PlaytimeDay")
+                        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to player
+                        set {_name} to uncolored name of clicked item
+                        replace all " 접속" in {_name} with ""
+                        send "{@prefix} &e%player%님&f이 &a%{_name}% &f접속보상을 수령했습니다."
+                    else:
+                        send "{@prefix} 보관함이 꽉 차 보상을 수령할 수 없습니다."
+                        stop
+                    dailyquestSound(player, 10)
+                    playtimeGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::playtimeGUI} to true
+
+            else if index of clicked slot is between 30 and 34:
+                set {_ind} to index of clicked slot - 29
+                if uncolored lore of clicked item contains "좌클릭하여 보상을 수령할 수 있습니다.":
+                    set {_temp} to true if player has enough space for {playtime.week::%{_ind}%} 
+                    if {_temp} is true:
+                        set {playtime.%uuid of player%.week::%{_ind}%} to true
+                        itemGive(player, {playtime.week::%{_ind}%}, item amount of {playtime.week::%{_ind}%}, "PlaytimeWeek")
+                        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to player
+                        set {_name} to uncolored name of clicked item
+                        replace all " 접속" in {_name} with ""
+                        send "{@prefix} &e%player%님&f이 &a%{_name}% &f접속보상을 수령했습니다." to all players
+                    else:
+                        send "{@prefix} 보관함이 꽉 차 보상을 수령할 수 없습니다."
+                        stop
+                    dailyquestSound(player, 10)
+                    playtimeGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::playtimeGUI} to true
+
+on inventory close:
+    if {gui.%uuid of player%::playtimeGUI} is true:
+        delete {gui.%uuid of player%::playtimeGUI}
+
+command /playtime [<text>] [<integer>]:
+    permission: op.user
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "list":
+            set {_file.day::*} to file contents of "plugins/Skript/data/playtime/day.txt"
+            set {_file.week::*} to file contents of "plugins/Skript/data/playtime/week.txt"
+            set {_ind} to 1
+            send "{@prefix} 일일 접속 보상 목록"
+            loop 5 times:
+                send "{@prefix} [&b%{_ind}%&f] &6%playtimeName({_file.day::%loop-number%})% &f| &e%{playtime.day::%loop-number%}%"
+                add 1 to {_ind}
+            send ""
+            send "{@prefix} 주간 접속 보상 목록"
+            loop 5 times:
+                send "{@prefix} [&b%{_ind}%&f] &6%playtimeName({_file.week::%loop-number%})% &f| &e%{playtime.week::%loop-number%}%"
+                add 1 to {_ind}
+            stop
+
+        else if arg 1 is "set":
+            if player's tool is air:
+                send "{@prefix} 아이템을 들고 명령어를 입력해주세요."
+                stop
+            set {_temp} to true if arg-2 is between 1 and 10
+            if {_temp} isn't set:
+                send "{@prefix} 1에서 10 사이의 숫자를 입력해주세요."
+                stop
+            if arg-2 is between 1 and 5:
+                set {playtime.day::%arg-2%} to player's tool
+            else if arg-2 is between 6 and 10:
+                set {playtime.week::%(arg-2)-5%} to player's tool
+            send "{@prefix} 접속 보상이 설정되었습니다."
+            stop
+            
+        else:
+            send "{@prefix} /playtime list &8&l| &f접속보상 목록을 확인합니다."
+            send "{@prefix} /playtime set [숫자] &8&l| &f손에 든 아이템을 [숫자]의 접속 보상으로 설정합니다."
+
+command /접속보상:
+    aliases: 접속, 접속시간, 플레이타임, wjqthr, wjqthrqhtkd, wjqthrtlrks
+    trigger:
+        playtimeGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::playtimeGUI} to true
+        stop
+
+command /playtime_reset_week:
+    permission: op.user
+    trigger:
+        loop all offline players:
+            delete {playtime.%uuid of loop-offlineplayer%.day::*}
+            delete {playtime.%uuid of loop-offlineplayer%.week::*}
+            set {playtime.%uuid of loop-offlineplayer%} to "0 seconds" parsed as timespan
+            set loop-offlineplayer's time played to "0 seconds" parsed as timespan
+            loop 5 times:
+                delete {playtime.%uuid of loop-offlineplayer%.day::%loop-number%}
+                delete {playtime.%uuid of loop-offlineplayer%.week::%loop-number%}
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} &7관리자에 의해 주간 + 일간 플레이타임 데이터가 삭제되었습니다." to all players
+        send " {@@} &7지금부터 주간 + 일간 플레이타임이 계산됩니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+command /playtime_reset:
+    permission: op.user
+    trigger:
+        if now formatted as "E" contains "월":
+            loop all offline players:
+                delete {playtime.%uuid of loop-offlineplayer%.day::*}
+                delete {playtime.%uuid of loop-offlineplayer%.week::*}
+                set {playtime.%uuid of loop-offlineplayer%} to "0 seconds" parsed as timespan
+                set loop-offlineplayer's time played to "0 seconds" parsed as timespan
+                loop 5 times:
+                    delete {playtime.%uuid of loop-offlineplayer%.day::%loop-number%}
+                    delete {playtime.%uuid of loop-offlineplayer%.week::%loop-number%}
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7관리자에 의해 주간 + 일간 플레이타임 데이터가 삭제되었습니다." to all players
+            send " {@@} &7지금부터 주간 + 일간 플레이타임이 계산됩니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+        else:
+            loop all offline players:
+                delete {playtime.%uuid of loop-offlineplayer%.day::*}
+                if {playtime.%uuid of loop-offlineplayer%} isn't set:
+                    set {playtime.%uuid of loop-offlineplayer%} to "0 seconds" parsed as timespan
+                add loop-offlineplayer's time played to {playtime.%uuid of loop-offlineplayer%}
+                set loop-offlineplayer's time played to "0 seconds" parsed as timespan
+                loop 5 times:
+                    delete {playtime.%uuid of loop-offlineplayer%.day::%loop-number%}
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7관리자에 의해 일간 플레이타임 데이터가 삭제되었습니다." to all players
+            send " {@@} &7지금부터 일간 플레이타임이 계산됩니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+
+command /playtime_reset_player [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if now formatted as "E" contains "월":
+            delete {playtime.%uuid of arg-1%.day::*}
+            delete {playtime.%uuid of arg-1%.week::*}
+            set {playtime.%uuid of arg-1%} to "0 seconds" parsed as timespan
+            set arg-1's time played to "0 seconds" parsed as timespan
+            loop 5 times:
+                delete {playtime.%uuid of arg-1%.day::%loop-number%}
+                delete {playtime.%uuid of arg-1%.week::%loop-number%}
+            send " {@@} &7관리자에 의해 &6%arg-1%&7님의 주간 + 일간 플레이타임 데이터가 삭제되었습니다." to player
+            stop
+        else:
+            delete {playtime.%uuid of arg-1%.day::*}
+            if {playtime.%uuid of arg-1%} isn't set:
+                set {playtime.%uuid of arg-1%} to "0 seconds" parsed as timespan
+                add arg-1's time played to {playtime.%uuid of arg-1%}
+                set arg-1's time played to "0 seconds" parsed as timespan
+                loop 5 times:
+                    delete {playtime.%uuid of arg-1%.day::%loop-number%}
+            send " {@@} &7관리자에 의해 &6%arg-1%&7님의 일간 플레이타임 데이터가 삭제되었습니다." to player
+            stop
+
+every 1 second:
+    if now formatted as "HH:mm:ss" contains "00:01:00":
+        if now formatted as "E" contains "월":
+            loop all offline players:
+                delete {playtime.%uuid of loop-offlineplayer%.day::*}
+                delete {playtime.%uuid of loop-offlineplayer%.week::*}
+                set {playtime.%uuid of loop-offlineplayer%} to "0 seconds" parsed as timespan
+                set loop-offlineplayer's time played to "0 seconds" parsed as timespan
+                loop 5 times:
+                    delete {playtime.%uuid of loop-offlineplayer%.day::%loop-number%}
+                    delete {playtime.%uuid of loop-offlineplayer%.week::%loop-number%}
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7주간 + 일간 플레이타임 데이터가 삭제되었습니다." to all players
+            send " {@@} &7지금부터 주간 + 일간 플레이타임이 계산됩니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+        else:
+            loop all offline players:
+                delete {playtime.%uuid of loop-offlineplayer%.day::*}
+                if {playtime.%uuid of loop-offlineplayer%} isn't set:
+                    set {playtime.%uuid of loop-offlineplayer%} to "0 seconds" parsed as timespan
+                add loop-offlineplayer's time played to {playtime.%uuid of loop-offlineplayer%}
+                set loop-offlineplayer's time played to "0 seconds" parsed as timespan
+                loop 5 times:
+                    delete {playtime.%uuid of loop-offlineplayer%.day::%loop-number%}
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7일간 플레이타임 데이터가 삭제되었습니다." to all players
+            send " {@@} &7지금부터 일간 플레이타임이 계산됩니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+
+    if now formatted as "HH:mm:ss" contains "00:00:30":
+        if now formatted as "E" contains "월":
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7주간 + 일간 &c&l플레이타임 초기화&7까지 &e&l1분 &7남았습니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+        else:
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            send " {@@} &7일간 &c&l플레이타임 초기화&7까지 &e&l1분 &7남았습니다." to all players
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+            stop
+
+

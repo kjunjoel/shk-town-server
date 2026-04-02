@@ -1,0 +1,42 @@
+options:
+    dir: plugins/Skript/data/event/speed.txt
+    dir1: plugins/Skript/data/congress/bell.txt
+
+import:
+    java.lang.String
+
+on leave region:
+    set {_region::*} to file contents of "{@dir}"
+    loop {_region::*}:
+        if "%event-region%" contains loop-value:
+            execute console command "effect clear %player%"
+
+on rightclick on soul torch:
+    cancel event
+    set {_pos} to "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%"
+    if {_pos} is "631.5, 88.5, -335.5":
+        loop {bell.player::*}:
+            set {_player} to loop-value
+            if {_player} isn't "LVMH_FENDI" or "ebull8":
+                stop
+            play sound "block.wood.place" with volume 2 and pitch 1 at {_player} for {_player}
+            wait 1 second
+            play sound "block.wood.place" with volume 2 and pitch 1 at {_player} for {_player}
+            wait 1 second
+            play sound "block.wood.place" with volume 2 and pitch 1 at {_player} for {_player}
+
+on enter region:
+    if "%event-region%" contains "congress":
+        add player to {bell.player::*}
+        send "[ &6&l&o! &f] 집행위원회 회의장에 입장하셨습니다."
+
+on leave region:
+    if "%event-region%" contains "congress":
+        remove player from {bell.player::*}
+        send "[ &6&l&o! &f] 집행위원회 회의장에서 퇴장하셨습니다."
+
+command /벨목록:
+    permission: op.user
+    trigger:
+        send "%{bell.player::*}%"
+

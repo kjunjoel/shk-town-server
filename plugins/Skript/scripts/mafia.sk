@@ -1,0 +1,591 @@
+options:
+    # 접두사
+    prefix: &4&l[마피아]&f
+    @: &f[ &6&l!&f ]
+
+    # 럭펌 그룹명
+    마피아보스: 마피아보스
+    마피아: 마피아
+
+    # 럭펌 노드명
+    admin: mafia.admin
+    user: mafia.user
+
+# 변수
+# {mafia.user::*}                           | 마피아 목록
+# {mafia.class::%uuid of player%.class}     | 마피아 직급 목록
+
+command /마피아 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@admin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {mafia.user::*} is not set:
+                send "{@prefix} 마피아가 존재하지 않습니다."
+                stop
+            send "{@prefix} 마피아 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {mafia.user::*}
+            loop "{@마피아보스}", "{@마피아}":
+                loop {_list::*}:
+                    if {mafia.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@prefix} %{_ind}%. %loop-value-2% (%{mafia.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {mafia.user::*}:
+                if loop-value is arg-2:
+                    send "{@prefix} 해당 플레이어는 이미 마피아입니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@prefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg-2 has permission "cook.user":
+                if cookShopCalculate(player) > 0:
+                    send "{@prefix} &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                    stop
+            if arg 3 is not set:
+                send "{@prefix} 직급을 입력해주세요."
+                stop
+            if arg 3 is "{@마피아보스}" or "{@마피아}":
+                if group of player is "{@마피아보스}":
+                    if arg 3 is "{@마피아보스}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {mafia.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                set {mafia.user.%uuid of arg-2%.class} to arg-3
+                send "{@prefix} &6%arg-2%&f님이 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                stop
+            else:
+                send "{@prefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {mafia.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@prefix} 해당 플레이어는 마피아가 아닙니다."
+                stop
+            if group of player is "{@마피아보스}":
+                if {mafia.user.::%uuid of arg-2%.class} is "{@마피아보스}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {mafia.user::*}
+            execute console command "lp user %arg-2% parent remove %{mafia.user.%uuid of arg-2%.class}%"
+            delete {mafia.user.%uuid of arg-2%.class}
+            send "{@prefix} &6%arg-2%&f님이 &e%arg-3%&f에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@prefix} /마피아 목록 &8&l| &f마피아 목록을 확인합니다."
+            send "{@prefix} /마피아 채용 [플레이어명] [직급] &8&l| &f플레이어를 ㅣ직급으로 채용합니다."
+            send "{@prefix} /마피아 해임 [플레이어명] &8&l| &f플레이어를 마피아에서 해임합니다."
+            send "{@prefix} /마피아공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+
+command /마피아공지 [<text>]:
+    permission: {@user}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@prefix} 공지 내용을 입력해주세요."
+            stop
+        send "" to all players
+        send "{@prefix} &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop
+
+# 복면
+# {mafia.hide::%player%}
+
+function mafiaHideParser(n: number) :: text:
+    set {_min} to round down ({_n}/60)
+    set {_sec} to mod({_n}, 60)
+    if {_min} >= 10:
+        if {_sec} >= 10:
+            return "%{_min}%:%{_sec}%"
+        else:
+            return "%{_min}%:0%{_sec}%"
+    else:
+        if {_sec} >= 10:
+            return "0%{_min}%:%{_sec}%"
+        else:
+            return "0%{_min}%:0%{_sec}%"
+
+on rightclick with stick:
+    if uncolored name of player's tool contains "복면":
+        loop all players:
+            if loop-player is player:
+                continue
+            if distance between player's location and loop-player's location < 15:
+                send "{@@} 반경 15m 안에 사람이 있어 복면을 쓰거나 벗을 수 없습니다." to player
+                stop
+        if {mafia.hide::%player%} is set:
+            send "{@@} 이미 복면을 착용 중입니다."
+            stop
+        else:
+            set {_lore::*} to uncolored lore of player's tool
+            set {_data::*} to {_lore::1} split by " "
+            set {_value::*} to {_data::2} split by ":"
+            set {_time} to ({_value::1} parsed as number)*60 + ({_value::2} parsed as number)
+            if {_time} is 0:
+                send "{@@} 해당 복면은 사용이 불가합니다."
+                stop
+            remove 1 of player's tool from player's tool
+            set {mafia.hide::%player%} to {_time}
+            send "{@@} 복면을 썼습니다!"
+            execute console command "cosmetics %player% remove-all"
+            execute console command "cosmetics %player% add mask"
+            execute console command "tab player %player% abovename" if {marry.nick::%uuid of player%} is set
+            execute console command "tab player %player% tagprefix &f"
+            execute console command "tab player %player% customtagname &f"
+            execute console command "tab player %player% belowname &f"
+            set player's max health to 5
+            
+on death:
+    if {mafia.hide::%victim%} is set:
+        delete {mafia.hide::%victim%}
+        execute console command "tab player %victim% abovename &4&l❤&c&l%{marry.nick::%uuid of victim%}%&a&l부부&4&l❤" if {marry.nick::%uuid of victim%} is set
+        execute console command "tab player %victim% tagprefix"
+        execute console command "tab player %victim% customtagname"
+        execute console command "tab player %victim% belowname"
+        wait 1 tick
+        if attacker has permission "police.user":
+            send "{@@} 복면 착용 중 경찰에게 사망하여 유치장으로 이동되었습니다." to victim
+            set {_location.1} to location(252.5, 57, -83.5)
+            set {_location.2} to location(-547.5, 65, -653.5)
+            set {_distance.1} to taxiTeleportCalculation(victim's location, {_location.1})
+            set {_distance.2} to taxiTeleportCalculation(victim's location, {_location.2})
+            add "%victim%" parsed as player to {police.prisoner::*}
+            set {police.prisoner.%uuid of victim%} to true
+            execute console command "lp user %victim% parent add 수감자"
+            if {_distance.1} <= {_distance.2}:
+                make victim run command "warp jail" as op
+            else:
+                make victim run command "warp jail2" as op
+            set {police.prisoner.%uuid of victim%.during} to 10800
+            set {police.prisoner.%uuid of victim%.time} to now
+        else:
+            send "{@@} 복면 착용 중 사망하여 복면을 벗겨졌습니다." to victim
+        execute console command "cosmetics %victim% remove-all"
+        set victim's max health to 10
+
+on quit:
+    if {mafia.hide::%player%} is set:
+        set {mafia.hide::%player%} to -1
+
+on join:
+    if {mafia.hide::%player%} is -1:
+        delete {mafia.hide::%player%}
+        execute console command "cosmetics %player% remove-all"
+        execute console command "tab player %player% abovename &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤" if {marry.nick::%uuid of player%} is set
+        execute console command "tab player %player% tagprefix"
+        execute console command "tab player %player% customtagname"
+        execute console command "tab player %player% belowname"
+        set player's max health to 10
+
+command /마피아복면해제 [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {mafia.hide::%arg-1%}
+        execute console command "tab player %arg-1% abovename &4&l❤&c&l%{marry.nick::%uuid of arg-1%}%&a&l부부&4&l❤" if {marry.nick::%uuid of arg-1%} is set
+        execute console command "tab player %arg-1% tagprefix"
+        execute console command "tab player %arg-1% customtagname"
+        execute console command "tab player %arg-1% belowname"
+        wait 1 tick
+        execute console command "cosmetics %arg-1% remove-all"
+        set arg-1's max health to 10
+
+every 1 second:
+    loop {mafia.hide::*}:
+        if loop-value > 0:
+            set {_player} to loop-index parsed as offlineplayer
+            if {_player} is online:
+                remove 1 from {mafia.hide::%loop-index%}
+                set {_text} to mafiaHideParser(loop-value)
+                send action bar "&c&l복면 벗기까지 남은 시간 %{_text}%" to {_player}
+                if {mafia.hide::%loop-index%} is 0:
+                    delete {mafia.hide::%loop-index%}
+                    execute console command "cosmetics %{_player}% remove-all"
+                    execute console command "tab player %loop-index% abovename &4&l❤&c&l%{marry.nick::%uuid of {_player}%}%&a&l부부&4&l❤" if {marry.nick::%uuid of {_player}%} is set
+                    execute console command "tab player %loop-index% tagprefix"
+                    execute console command "tab player %loop-index% customtagname"
+                    execute console command "tab player %loop-index% belowname"
+                    set {_player}'s max health to 10
+
+
+# 변수
+# {mafia.terror} | 마피아가 테러 중인지
+# {mafia.terror.time} | 마피아 테러 시각 (XXXX-XX-XX XX:XX) 형태
+# {mafia.terror.locate} | 마피아 테러 위치
+
+command /테러 [<text>] [<text>] [<text>] [<text>] [<integer>]:
+    permission: {@admin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg-1 isn't set:
+            send "{@prefix} /테러 확인 &8&l|&f 현재 설정된 테러 정보를 확인합니다."
+            send "{@prefix} /테러 시작 [날짜] [시간] [장소] [배팅액] &8&l|&f 테러를 지정된 날짜, 시간, 장소에서 시작합니다."
+            send "{@prefix} &7└ 사용 방법: /테러 시작 2023-01-01 23:00 검찰청 10000000"
+            send "{@prefix} &7└ 가능한 장소: 검찰청, 경찰청, 대법원, 대학교, &m문화방송원(본관)&7, 시청, 집행위원회"
+            send "{@prefix} /테러 준비 [날짜] [시간] &8&l|&f 테러 준비 시간을 지정된 날짜, 시간으로 정합니다. 테러 준비 시간과 테러 시간은 30분 이상 차이날 수 없습니다."
+            send "{@prefix} /테러 취소 &8&l|&f 현재 설정된 테러를 취소합니다."
+
+        if arg-1 is "확인":
+            if {mafia.terror.time} isn't set:
+                send "{@prefix} 현재 설정된 마피아 테러 정보가 없습니다."
+                stop
+            send "{@prefix} 현재 설정된 마피아 테러 정보"
+            send "{@prefix} → &f준비 시간 &e%{mafia.terror.readytime}%"
+            send "{@prefix} → &e%{mafia.terror.time}% &f| &a%{mafia.terror.locate}%"
+            send "{@prefix} → &e배팅액 &f| &6%moneyDigit({mafia.terror.bet})%원"
+
+        if arg-1 is "시작":
+            delete {mafia.sneaker}
+            if arg-2 isn't set:
+                send "{@prefix} 테러 시작 날짜를 입력해주세요."
+                stop
+            if arg-3 isn't set:
+                send "{@prefix} 테러 시작 시간을 입력해주세요."
+                stop
+            if arg-4 isn't set:
+                send "{@prefix} 테러 시작 장소를 입력해주세요."
+                stop
+            if arg-5 isn't set:
+                send "{@prefix} 테러 배팅액을 입력해주세요."
+                stop
+            if arg-5 < 10000000:
+                send "{@prefix} 테러 배팅액은 10,000,000원 이상이어야 합니다."
+                stop
+            if arg-5 > 100000000:
+                send "{@prefix} 테러 배팅액은 100,000,000원 이하여야 합니다."
+                stop
+            if player's balance < arg-5:
+                send "{@prefix} 배팅액이 소지금보다 적습니다."
+                stop
+            set {mafia.terror.time} to "%arg-2% %arg-3%"
+            set {mafia.terror.locate} to arg-4
+            set {mafia.terror.bet} to arg-5
+            balanceRemove(player, arg-5, "TerrorBet")
+            set {mafia.terror.symbol} to "A" if arg-4 is "검찰청"
+            set {mafia.terror.symbol} to "B" if arg-4 is "경찰청"
+            set {mafia.terror.symbol} to "C" if arg-4 is "대법원"
+            set {mafia.terror.symbol} to "D" if arg-4 is "대학교"
+            set {mafia.terror.symbol} to "E" if arg-4 is "문화방송원(본관)"
+            set {mafia.terror.symbol} to "F" if arg-4 is "시청"
+            set {mafia.terror.symbol} to "G" if arg-4 is "집행위원회"
+            if {mafia.terror.symbol} isn't set:
+                send "{@prefix} 테러 시작 장소를 다시 입력해주세요."
+                send "{@prefix} &7└ 가능한 장소: 검찰청, 경찰청, 대법원, 대학교, 문화방송원(본관), 시청, 집행위원회"
+            send "{@prefix} 테러가 %{mafia.terror.time}% %{mafia.terror.locate}%(으)로 설정되었습니다."
+
+        if arg-1 is "준비":
+            if arg-2 isn't set:
+                send "{@prefix} 테러 시작 날짜를 입력해주세요."
+                stop
+            if arg-3 isn't set:
+                send "{@prefix} 테러 시작 시간을 입력해주세요."
+                stop
+            set {mafia.terror.readytime} to "%arg-2% %arg-3%"
+            send "{@prefix} 테러 준비 시간이 %{mafia.terror.readytime}%(으)로 설정되었습니다."
+
+        if arg-1 is "취소":
+            if {mafia.terror} is set:
+                send "{@prefix} 이미 테러가 진행 중입니다."
+                stop
+            delete {mafia.terror.ready}
+            delete {mafia.terror.time}
+            delete {mafia.terror.readytime}
+            delete {mafia.terror.locate}
+            delete {mafia.terror.symbol}
+            delete {mafia.sneaker}
+            balanceAdd(player, {mafia.terror.bet}, "TerrorBetReturn")
+            delete {mafia.terror.bet}
+            loop {mafia.user::*}:
+                execute console command "rg removemember prosecutors_office %loop-value% -w island" if {mafia.terror.symbol} is "A"
+                execute console command "rg removemember police_office %loop-value% -w island" if {mafia.terror.symbol} is "B"
+                execute console command "rg removemember supreme_court %loop-value% -w island" if {mafia.terror.symbol} is "C"
+                execute console command "rg removemember university %loop-value% -w island" if {mafia.terror.symbol} is "D"
+                execute console command "rg removemember sbc %loop-value% -w island" if {mafia.terror.symbol} is "E"
+                execute console command "rg removemember city_hall_west %loop-value% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember city_hall_central %loop-value% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember city_hall_east %loop-value% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember congress %loop-value% -w island" if {mafia.terror.symbol} is "G"
+            send "{@prefix} 모든 테러 설정이 삭제되었습니다."
+
+on sneak toggle:
+    if {terror::%player%} is 2:
+        "%region at player%" contains "mafia_%{mafia.terror.symbol}%"
+        if {mafia.sneaker} is set:
+            if {mafia.sneaker} isn't player:
+                send "{@prefix} &e%{mafia.sneaker}%&f님이 폭탄을 해체하고 있습니다."
+                stop
+        if player isn't sneaking:
+            send "{@prefix} 폭탄 해체를 시작합니다."
+            set {mafia.sneaker} to player
+            set {mafia.sneak} to 15
+            set {mafia.sneakloc} to player's location
+            execute console command "tab player %player% customtagname &c폭탄 해체중"
+            execute console command "tab player %player% belowname &f15초 남음"
+        else:
+            send "{@prefix} 웅크리기가 해제되어 폭탄 해체가 취소되었습니다."
+            send player title "&f" with subtitle "&f" for 1 second
+            delete {mafia.sneaker}
+            delete {mafia.sneak}
+            delete {mafia.sneakloc}
+            execute console command "tab player %player% customtagname &f"
+            execute console command "tab player %player% belowname &f"
+
+every 1 minute:
+    if now formatted as "yyyy-MM-dd HH:mm" is {mafia.terror.readytime}:
+        set {mafia.terror.ready} to true
+        loop {mafia.user::*}:
+            send "{@@} &l테러 준비 시간이 시작되었습니다. 지금부터 블록 설치와 상점 이용이 가능합니다." to loop-value
+            execute console command "rg addmember prosecutors_office %loop-value% -w island" if {mafia.terror.symbol} is "A"
+            execute console command "rg addmember police_office %loop-value% -w island" if {mafia.terror.symbol} is "B"
+            execute console command "rg addmember supreme_court %loop-value% -w island" if {mafia.terror.symbol} is "C"
+            execute console command "rg addmember university %loop-value% -w island" if {mafia.terror.symbol} is "D"
+            execute console command "rg addmember sbc %loop-value% -w island" if {mafia.terror.symbol} is "E"
+            execute console command "rg addmember city_hall_west %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember city_hall_central %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember city_hall_east %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember congress %loop-value% -w island" if {mafia.terror.symbol} is "G"
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at loop-value to loop-value
+    if now formatted as "yyyy-MM-dd HH:mm" is {mafia.terror.time}:
+        delete {mafia.terror.ready}
+        set {mafia.terror} to 1800
+        send "" to all players
+        send "{@@} &l테러가 시작되었습니다. 테러 장소는 &e&l%{mafia.terror.locate}%&f&l입니다." to all players
+        send "" to all players
+        loop all players:
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at loop-player to loop-player
+        loop {mafia.user::*}:
+            set {terror::%loop-value%} to 1
+        loop {terror.user::*}:
+            set {terror::%loop-value%} to 2
+            execute console command "rg addmember prosecutors_office %loop-value% -w island" if {mafia.terror.symbol} is "A"
+            execute console command "rg addmember police_office %loop-value% -w island" if {mafia.terror.symbol} is "B"
+            execute console command "rg addmember supreme_court %loop-value% -w island" if {mafia.terror.symbol} is "C"
+            execute console command "rg addmember university %loop-value% -w island" if {mafia.terror.symbol} is "D"
+            execute console command "rg addmember sbc %loop-value% -w island" if {mafia.terror.symbol} is "E"
+            execute console command "rg addmember city_hall_west %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember city_hall_central %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember city_hall_east %loop-value% -w island" if {mafia.terror.symbol} is "F"
+            execute console command "rg addmember congress %loop-value% -w island" if {mafia.terror.symbol} is "G"
+        loop {terror::*}:
+            set {_player} to loop-index parsed as player
+            create bossbar titled "&c&l테러 종료까지 남은 시간 30:00" and id "terror.%loop-index%" for {_player} with progress 100
+            set bossbar "terror.%loop-index%" color to red
+            execute console command "tab player %loop-index% abovename" if {marry.nick::%uuid of {_player}%} is set
+            execute console command "tab player %loop-index% tagprefix &f"
+            execute console command "tab player %loop-index% customtagname &f"
+            execute console command "tab player %loop-index% belowname &f"
+
+on rightclick on entity:
+    if uncolored name of event-entity is "테러 상점":
+        if {mafia.terror} is set:
+            if groups of player contains "마피아보스" or "마피아":
+                shopOpen(player, "테러상점")
+                set {gui.%uuid of player%::shopOpen} to true
+                set {gui.%uuid of player%::shopOpening} to "테러상점"
+        else if {mafia.terror.ready} is set:
+            if groups of player contains "마피아보스" or "마피아":
+                shopOpen(player, "테러상점")
+                set {gui.%uuid of player%::shopOpen} to true
+                set {gui.%uuid of player%::shopOpening} to "테러상점"
+
+on place:
+    if {mafia.terror} is set:
+        loop {terror::*}:
+            if {terror::%player%} is set:
+                if type of event-block isn't nether quartz ore:
+                    cancel event
+                exit 1 loop
+    else if {mafia.terror.ready} is set:
+        if {mafia.user::*} contains player:
+            if type of event-block isn't nether quartz ore:
+                cancel event
+            
+on break:
+    if {mafia.terror} is set:
+        loop {terror::*}:
+            if {terror::%player%} is set:
+                if type of event-block isn't nether quartz ore:
+                    cancel event
+                else:
+                    cancel event
+                    set event-block to air
+                exit 1 loop
+    else if {mafia.terror.ready} is set:
+        if {mafia.user::*} contains player:
+            if type of event-block isn't nether quartz ore:
+                cancel event
+            else:
+                cancel event
+                set event-block to air
+
+on enter region:
+    if {mafia.terror} is set:
+        if {terror::%player%} isn't set:
+            if player isn't op:
+                if "%region at player%" contains "prosecutors_office":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "police_office":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "supreme_court":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "university":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "sbc":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "city_hall_west":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "city_hall_central":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "city_hall_east":
+                    set {_temp} to true
+                else if {mafia.terror.symbol} is "congress":
+                    set {_temp} to true
+                if {_temp} is true:
+                    execute console command "수배 %player% 공무집행방해(테러장소진입)"
+
+command /terror:
+    trigger:
+        loop {terror::*}:
+            send "%loop-index% %loop-value%"
+
+every 1 second:
+    if {mafia.sneaker} is set:
+        set {_player} to {mafia.sneaker}
+        set {_loc} to {_player}'s location
+        if {mafia.sneakloc} isn't {_loc}:
+            send "{@prefix} 움직여서 폭탄 해체에 실패하였습니다." to {_player}
+            send {_player} title "&f" with subtitle "&f" for 1 second
+            execute console command "tab player %{_player}% customtagname &f"
+            execute console command "tab player %{_player}% belowname &f"
+            delete {mafia.sneaker}
+            delete {mafia.sneak}
+            delete {mafia.sneakloc}
+        else:
+            remove 1 from {mafia.sneak}
+            if {mafia.sneak} is 0:
+                send "{@prefix} 폭탄 해체에 성공하였습니다." to {_player}
+                delete {mafia.terror}
+                delete {mafia.sneaker}
+                delete {mafia.sneak}
+                delete {mafia.sneakloc}
+                loop {terror::*}:
+                    send loop-index to console
+                    set {_player} to loop-index parsed as player
+                    if "%region at {_player}%" contains "terror":
+                        execute console command "spawn %{_player}%"
+                    send {_player} to console
+                    remove bossbar "terror.%loop-index%"
+                    execute console command "tab player %loop-index% abovename &4&l❤&c&l%{marry.nick::%uuid of {_player}%}%&a&l부부&4&l❤" if {marry.nick::%uuid of {_player}%} is set
+                    execute console command "tab player %loop-index% tagprefix"
+                    execute console command "tab player %loop-index% customtagname"
+                    execute console command "tab player %loop-index% belowname"
+                    execute console command "rg removemember prosecutors_office %loop-index%" if {mafia.terror.symbol} is "A"
+                    execute console command "rg removemember police_office %loop-index% -w island" if {mafia.terror.symbol} is "B"
+                    execute console command "rg removemember supreme_court %loop-index% -w island" if {mafia.terror.symbol} is "C"
+                    execute console command "rg removemember university %loop-index% -w island" if {mafia.terror.symbol} is "D"
+                    execute console command "rg removemember sbc %loop-index% -w island" if {mafia.terror.symbol} is "E"
+                    execute console command "rg removemember city_hall_west %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                    execute console command "rg removemember city_hall_central %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                    execute console command "rg removemember city_hall_east %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                    execute console command "rg removemember congress %loop-index% -w island" if {mafia.terror.symbol} is "G"
+                send "" to all players
+                send "{@@} &l테러가 종료되었습니다. 공무원이 테러 저지에 성공하였습니다." to all players
+                send "" to all players
+                loop all players:
+                    play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at loop-player to loop-player
+                delete {mafia.terror.time}
+                delete {mafia.terror.readytime}
+                delete {mafia.terror.locate}
+                delete {terror::*}
+                loop {mafia.user::*}:
+                    loop all items in loop-value's inventory:
+                        if uncolored name of loop-value-2 is "마피아 전용 방탄복":
+                            remove loop-value-2 from loop-value-1's inventory
+                    add loop-value to {prison::*}
+                    set {prison.type::%uuid of loop-value%} to "징역"
+                    set {prison.during::%uuid of loop-value%} to 18000
+                    send "{@prefix} &e/징역&f을 입력해 남은 형량을 확인할 수 있습니다." to loop-value
+                    send "{@prefix} 맨손으로 흑요석을 캐야지만 시간이 흘러갑니다. 개당 5분이 차감됩니다." to loop-value
+                    execute console command "lp user %loop-value% parent add 죄수"
+                    if loop-value is online:
+                        prisonAdd(loop-value)
+                    else:
+                        set {prison.offline::%uuid of loop-value%} to true
+            else:
+                send {_player} title "&c폭탄 해체까지 %{mafia.sneak}%초" with subtitle "&f움직이면 폭탄 해체에 실패합니다" for 1 second
+                execute console command "tab player %{_player}% belowname &f%{mafia.sneak}%초 남음"
+
+    if {mafia.terror} > 0:
+        remove 1 from {mafia.terror}
+        set {_text} to mafiaHideParser({mafia.terror})
+        loop {terror::*}:
+            set bossbar "terror.%loop-index%" title to "&c&l테러 종료까지 남은 시간 %{_text}%"
+            set bossbar "terror.%loop-index%" progress to {mafia.terror}/18
+        if {mafia.terror} is 0:
+            delete {mafia.terror}
+            delete {mafia.sneaker}
+            delete {mafia.sneak}
+            delete {mafia.sneakloc}
+            loop {terror::*}:
+                set {_player} to loop-index parsed as player
+                if "%region at {_player}%" contains "terror":
+                    execute console command "spawn %{_player}%"
+                remove bossbar "terror.%loop-index%"
+                execute console command "tab player %loop-index% abovename &4&l❤&c&l%{marry.nick::%uuid of {_player}%}%&a&l부부&4&l❤" if {marry.nick::%uuid of {_player}%} is set
+                execute console command "tab player %loop-index% tagprefix"
+                execute console command "tab player %loop-index% customtagname"
+                execute console command "tab player %loop-index% belowname"
+                execute console command "rg removemember prosecutors_office %loop-index% -w island" if {mafia.terror.symbol} is "A"
+                execute console command "rg removemember police_office %loop-index% -w island" if {mafia.terror.symbol} is "B"
+                execute console command "rg removemember supreme_court %loop-index% -w island" if {mafia.terror.symbol} is "C"
+                execute console command "rg removemember university %loop-index% -w island" if {mafia.terror.symbol} is "D"
+                execute console command "rg removemember sbc %loop-index% -w island" if {mafia.terror.symbol} is "E"
+                execute console command "rg removemember city_hall_west %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember city_hall_central %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember city_hall_east %loop-index% -w island" if {mafia.terror.symbol} is "F"
+                execute console command "rg removemember congress %loop-index% -w island" if {mafia.terror.symbol} is "G"
+            send "" to all players
+            send "{@@} &l테러가 종료되었습니다. 마피아가 테러에 성공하였습니다." to all players
+            send "" to all players
+            loop all players:
+                play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at loop-player to loop-player
+            delete {terror::*}
+            delete {mafia.terror.time}
+            delete {mafia.terror.readytime}
+            delete {mafia.terror.locate}
+            loop {mafia.user::*}:
+                if {mafia.user.%uuid of loop-value%.class} is "마피아보스":
+                    set {_player} to loop-value
+                loop all items in loop-value's inventory:
+                    if uncolored name of loop-value-2 is "AK-47":
+                        remove loop-value-2 from loop-value-1's inventory
+                    else if uncolored name of loop-value-2 is "마피아 전용 방탄복":
+                        remove loop-value-2 from loop-value-1's inventory
+            # balanceAdd({_player}, {mafia.terror.bet}, "TerrorWin")
+            set {_n} to round up ({mafia.terror.bet}*0.4)
+            loop "시청", "검찰청", "경찰청", "대학교", "문화방송원":
+                if {budget::%loop-value%} < {_n}:
+                    set {_left} to {_n} - {budget::%loop-value%}
+                    budgetRemove(loop-value, {_player}, {budget::%loop-value%}, "테러실패")
+                    budgetRemove("국고", {_player}, {_left}, "테러실패-%loop-value%")
+                else:
+                    budgetRemove(loop-value, {_player}, {_n}, "테러실패")

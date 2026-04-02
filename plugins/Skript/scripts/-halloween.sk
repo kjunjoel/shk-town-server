@@ -1,0 +1,119 @@
+options:
+    prefix: [ &6&l&o! &f]
+
+on rightclick:
+    if uncolored name of player's tool is "[ 여름여행 코인 ]":
+        if item amount of player's tool < 3:
+            send "{@prefix} &f[&b&l여름&a&l여행&f] &f코인 &f3개를 손에 들고 우클릭해주세요."
+            stop
+        set {randombox.halloween::%uuid of player%} to 0 if {randombox.halloween::%uuid of player%} isn't set
+        set {_i} to {randombox.halloween::%uuid of player%}
+        remove 3 of player's tool from player's tool
+        set {_n} to random integer between 1 and 250
+        if {_n} is between 1 and 100:
+            set {_number} to round up ({_n}/5) # 1에서 20 랜덤으로 뽑음
+            set {_br} to round down ({_i}/(2^({_number}-1))) # {_br} = {_i} << ({_number} - 1)
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.halloween::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.camera"
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.camera"
+                send "{@prefix} &8&l사진기 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 2:
+                set {_item} to paper with custom model data 154 named "&b&l손선풍기" with lore "&7손에 들어 착용이 가능한 치장입니다." and "&7거래가 불가능한 아이템입니다."
+                send "{@prefix} &b&l손선풍기 &f를 뽑았습니다!" to player
+                send "{@prefix} 손에 드는 아이템입니다! &c옷장에서 착용이 &n불가능&f합니다."
+            else if {_number} is 3:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.ocean"
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.ocean"
+                send "{@prefix} &e&l여름 &b&l바다 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 4:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.straw_hat"
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.straw_hat"
+                send "{@prefix} &6&l밀짚모자 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 5:
+                send "{@prefix} &f[ <##72e9ff>&l立<##3cd1ec>&l夏 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.entersummer}
+            else if {_number} is 6:
+                send "{@prefix} &f[ <##e77379>&l수<##979c45>&l박<##e77379>&l바 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.watermelonbar}
+            else if {_number} is 7:
+                send "{@prefix} &f[ <##398872>&l트<##fcf076>&l로<##ff7796>&l피<##b9efd8>&l컬 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.tropical}
+            else if {_number} is 8:
+                send "{@prefix} &f[ <##01add5>&l시원한 바다 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.coolsea}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 101 and 120:
+            send "{@prefix} &f&l확성기 &f3개를 획득하였습니다!" to player
+            set {_item} to 3 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 121 and 150:
+            send "{@prefix} &a&l10,000원&f을 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 151 and 180:
+            send "{@prefix} &2&l30,000원&f을 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 181 and 200:
+            send "{@prefix} &5&l50,000원&f을 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 201 and 210:
+            send "{@prefix} &6&l100,000원&f을 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 211 and 230:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e3개&f를 획득하였습니다!" to player
+            set {_item} to 3 of {travel.coin}
+        else if {_n} is between 231 and 240:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e15개&f를 획득하였습니다!" to player
+            set {_item} to 15 of {travel.coin}
+        else if {_n} is between 241 and 245:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e30개&f를 획득하였습니다!" to player
+            set {_item} to 30 of {travel.coin}
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "HalloweenBox")
+
+command /halloween_coin_give [<offlineplayer>] [<number>]:
+    permission: op.user
+    trigger:
+        send "&f[ &6&l&o! &f] &e%arg-1%&f님에게 &f[&e&l할로윈&f] &f사탕 &c%arg-2%&f개를 주었습니다." to player
+        set {_item} to paper with custom model data 82 named "&f[&e&l할로윈&f] &f사탕"
+        itemGive(arg-1, {_item}, arg-2, "EventCoinGive")
+
+command /halloween_coin_set:
+    permission: op.user
+    trigger:
+        set {halloween.coin} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &f[&e&l할로윈&f] 코인으로 지정되었습니다."
+        stop
+
+command /event_prefix_set [<text>]:
+    permission: op.user
+    trigger:
+        set {prefix.%arg-1%} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &e%arg-1% &f칭호로 지정되었습니다."
+        stop
+
+command /travel_coin_set:
+    permission: op.user
+    trigger:
+        set {travel.coin} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &f&l[ &b&l여름&a&l여행 &f&l코인 &f&l]&f으로 지정되었습니다."
+        stop
+
+command /halloween_randombox_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {randombox.halloween::%uuid of arg-1%}
+        send "deleted record of %arg-1%'s randombox(halloween)."
+        stop

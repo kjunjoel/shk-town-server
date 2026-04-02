@@ -1,0 +1,52 @@
+options:
+    prefix: [ &6&l! &f]
+    dir: plugins/Skript/data/vending_machine/vending_machine.txt
+    cook: plugins/Skript/data/cook
+
+function vendingmachineGUI(p: player):
+    set {_inv} to chest inventory with 6 rows named "&f자판기"
+    set {_slot} to 0
+    loop all files in dir path "{@cook}/data":
+        set {_name} to file name of loop-value
+        replace all ".yml" in {_name} with ""
+        set {_data::*} to {_name} split by "-"
+        loop 27 times:
+            set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+            set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+            if {_price} isn't 0:
+                if {_n} isn't 0:
+                    set {_title} to yaml value "name" from "cookshop.%{_name}%.yml"
+                    set {_nbt} to nbt compound from yaml value "shop.%loop-number%.nbt" from "cookshop.%{_name}%.yml"
+                    set {_item} to (yaml value "shop.%loop-number%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+                    set {_player} to (yaml value "owner" from "cookshop.%{_name}%.yml") parsed as offlineplayer
+                    set {_price.new} to round  ({_price}*1.1)
+                    add "&6구매 &f가격: &e&l%moneyDigit({_price.new})%&e원" to lore of {_item}
+                    add "&b남은 &f재고: &d&l%moneyDigit({_n})%&d개" to lore of {_item}
+                    if {_player} isn't set:
+                        add "&7판매처: %{_data::1}%동 %{_data::2}%호 %{_title}% (판매자 없음)" to lore of {_item}
+                    else:
+                        add "&7판매처: %{_data::1}%동 %{_data::2}%호 %{_title}% (판매자 %{_player}%)" to lore of {_item}
+                    add "&f" to lore of {_item}
+                    add "&6좌클릭&f하여 1개 &6구매" to lore of {_item}
+                    add "&6SHIFT + 좌클릭&f하여 64개 &6구매" to lore of {_item}
+                    set slot {_slot} of {_inv} to {_item}
+                    add 1 to {_slot}
+    open {_inv} to {_p}
+
+command /자판기:
+    permission: op.user
+    trigger:
+        vendingmachineGUI(player)
+
+on inventory click:
+    if uncolored display name of event-inventory is "자판기":
+        cancel event
+
+on rightclick on barrier:
+    set {_file::*} to file contents of "{@dir}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of target block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        send "{@prefix} 준비 중입니다."
+        stop

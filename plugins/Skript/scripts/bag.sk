@@ -1,0 +1,129 @@
+options:
+	prefix: &f[ &6&l&o!&f ]
+	dir: plugins/Skript/data/bag
+
+# 변수
+# {bag.number}
+
+command /bag_check:
+	permission: op.user
+	trigger:
+		send {bag.number}
+
+command /bag_get [<text>]:
+	permission: op.user
+	trigger:
+		set {_id} to arg-1
+		load yaml "{@dir}/%{_id}%.yml" as "bag.%{_id}%"
+		set {_line} to yaml value "line" from "bag.%{_id}%"
+		if {_line} is 1:
+			set {_name} to "<##FFFFCC>&l하급 가방"
+			set {_cmd} to 31
+#
+		else if {_line} is 3:
+			set {_name} to "<##FFFF66>&l중급 가방"
+			set {_cmd} to 32
+#
+		else if {_line} is 6:
+			set {_name} to "<##FFFF00>&l상급 가방"
+			set {_cmd} to 33
+#
+		if arg-1 isn't set:
+			send "{@prefix} ID를 입력하여 주세요."
+			stop
+		itemGive(player, stick named {_name} with custom model data {_cmd} with lore "&7ID %{_id}%", 1, "AdminBag")
+		send "{@prefix} 이름: %{_name}% &7| &fID: %{_id}% &f아이템이 지급 되었습니다."
+		unload yaml "bag.%{_id}%"
+		stop
+
+function bagCreate(p: player):
+	add 1 to {bag.number}
+	set {_id} to {bag.number}
+	set {_cmd} to custom model data of {_p}'s tool
+	if {_cmd} is 31:
+		set {_line} to 1
+		set {_name} to "<##FFFFCC>&l하급 가방"
+	else if {_cmd} is 32:
+		set {_line} to 3
+		set {_name} to "<##FFFF66>&l중급 가방"
+	else if {_cmd} is 33:
+		set {_line} to 6
+		set {_name} to "<##FFFF00>&l상급 가방"
+	create file path "{@dir}/%{_id}%.yml"
+	load yaml "{@dir}/%{_id}%.yml" as "bag.%{_id}%"
+	set yaml value "line" from "bag.%{_id}%" to {_line}
+	loop 9*{_line} times:
+		set yaml value "items.%loop-number%" from "bag.%{_id}%" to air
+	save yaml "bag.%{_id}%"
+	unload yaml "bag.%{_id}%"
+	remove 1 of {_p}'s tool from {_p}'s tool
+	itemGive({_p}, stick named {_name} with custom model data {_cmd} with lore "&7ID %{_id}%", 1, "Bag")
+	bagOpen({_p}, {_id})
+
+function bagOpen(p: player, id: number):
+	load yaml "{@dir}/%{_id}%.yml" as "bag.%{_id}%"
+	set {_line} to yaml value "line" from "bag.%{_id}%"
+	if {_line} is 1:
+		set {_inv} to chest inventory with 1 row named "<##FFFFCC>&l하급 가방&7 | ID %{_id}%"
+	else if {_line} is 3:
+		set {_inv} to chest inventory with 3 rows named "<##FFFF66>&l중급 가방&7 | ID %{_id}%"
+	else if {_line} is 6:
+		set {_inv} to chest inventory with 6 rows named "<##FFFF00>&l상급 가방&7 | ID %{_id}%"
+	loop 9*{_line} times:
+		set slot (loop-number)-1 of {_inv} to yaml value "items.%loop-number%" from "bag.%{_id}%"
+	unload yaml "bag.%{_id}%"
+	open {_inv} to {_p}
+
+function bagID(i: item) :: number:
+	set {_lore::*} to uncolored lore of {_i}
+	set {_data::*} to {_lore::1} split by " "
+	if {_data::2} isn't set:
+		return -1
+	else:
+		return {_data::2} parsed as number
+
+on rightclick on entity:
+	if type of player's tool is stick:
+		if custom model data of player's tool is 31 or 32 or 33:
+			set {bag.deny::%player%} to true
+			wait 1 second
+			delete {bag.deny::%player%}
+
+on rightclick with stick:
+	if custom model data of player's tool is 31 or 32 or 33:
+		set {_id} to bagID(player's tool)
+		if {_id} is -1:
+			bagCreate(player)
+		else:
+			wait 1 tick
+			if {bag.deny::%player%} is set:
+				stop
+			bagOpen(player, {_id})
+
+on inventory click:
+	if uncolored display name of event-inventory contains "가방":
+		set {_data::*} to uncolored display name of event-inventory split by " "
+		if type of clicked item is stick:
+			if custom model data of clicked item is 31 or 32 or 33:
+				cancel event
+		else if "%type of clicked item%" contains "shulker box":
+			cancel event
+		else:
+			if hotbar button isn't -1:
+				set {_slot} to hotbar button
+				if type of slot {_slot} of player's inventory is stick:
+					if custom model data of slot {_slot} of player's inventory is 31 or 32 or 33:
+						cancel event
+				else if "%type of slot {_slot} of player's inventory%" contains "shulker box":
+					cancel event
+
+on inventory close:
+	if uncolored display name of event-inventory contains "가방":
+		set {_data::*} to uncolored display name of event-inventory split by " "
+		set {_id} to {_data::5} parsed as number
+		load yaml "{@dir}/%{_id}%.yml" as "bag.%{_id}%"
+		set {_line} to yaml value "line" from "bag.%{_id}%"
+		loop 9*{_line} times:
+			set yaml value "items.%loop-number%" from "bag.%{_id}%" to slot (loop-number)-1 of event-inventory
+		save yaml "bag.%{_id}%"
+		unload yaml "bag.%{_id}%"

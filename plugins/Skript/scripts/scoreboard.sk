@@ -1,0 +1,105 @@
+options:
+	prefix: &f[ &6&l!&f ]
+
+command /스코어보드:
+	trigger:
+		if {scoreboard::%uuid of player%} isn't set:
+			set {scoreboard::%uuid of player%} to true
+			set title of player's scoreboard to "&b&lSHK WORLD"
+			set line 13 of player's scoreboard to "&f직업: &e%jobSalaryGroup(player)%"
+			set line 12 of player's scoreboard to "&f"
+			set line 11 of player's scoreboard to "&f잔액: &a%player's balance%"
+			# set {_property} to economyProperty(player)
+			# set line 10 of player's scoreboard to "&f재산: &a%moneyDigit({_property})%&f원"
+			if {guild.name::%{guild.%uuid of player%}%} is set:
+				set line 10 of player's scoreboard to "&f파벌: &a%{guild.name::%{guild.%uuid of player%}%}%"
+				set line 9 of player's scoreboard to "&7└ &f잔액: &a%moneyDigit({guild.money::%{guild.%uuid of player%}%})%&f원"
+				if {guild.chatting::%player%} is set:
+					set line 8 of player's scoreboard to "&7└ &f파벌채팅: &a✔"
+				else:
+					set line 8 of player's scoreboard to "&7└ &f파벌채팅: &c❌"
+			else:
+				set line 10 of player's scoreboard to "&e&l파벌: &c❌"
+			set line 7 of player's scoreboard to "&f"
+			if {sharktalk::%player%} is set:
+				set line 6 of player's scoreboard to "&f상어톡: &a%{sharktalk::%player%}%"
+			else:
+				set line 6 of player's scoreboard to "&f상어톡: &c❌"
+			if {chatting.%uuid of player%} is set:
+				set line 5 of player's scoreboard to "&f지역채팅: &a%{chatting.region::%{chatting.%uuid of player%}%}%"
+			else:
+				set line 5 of player's scoreboard to "&f지역채팅: &a전체채팅"
+			if {openchatting::%player%} is set:
+				set line 4 of player's scoreboard to "&f오픈채팅: &d%{openchatting::%player%}%&f번 방"
+				if {openchatting.title::%{openchatting::%player%}%} is set:
+					set line 3 of player's scoreboard to "&7└ &f%{openchatting.title::%{openchatting::%player%}%}%"
+				else:
+					set line 3 of player's scoreboard to "&7└ 제목 없는 오픈채팅"
+			else:
+				set line 4 of player's scoreboard to "&f오픈채팅: &c❌"
+			set line 2 of player's scoreboard to "&f"
+			set line 1 of player's scoreboard to "&bshkworld.kr &f1.18.2"
+			send "{@prefix} 스코어보드가 켜졌습니다."
+		else:
+			delete {scoreboard::%uuid of player%}
+			clear player's scoreboard
+			send "{@prefix} 스코어보드가 꺼졌습니다."
+
+on quit:
+	if {scoreboard::%uuid of player%} is set:
+		set {scoreboard.off::%uuid of player%} to true
+		delete {scoreboard::%uuid of player%}
+		clear player's scoreboard
+
+on join:
+	if {scoreboard.off::%uuid of player%} is set:
+		set {scoreboard::%uuid of player%} to true
+		delete {scoreboard.off::%uuid of player%}
+
+command /scoreboard_reset:
+	permission: op.user
+	trigger:
+		delete {scoreboard::*}
+		loop all players:
+			clear loop-player's scoreboard
+
+every 5 seconds:
+	loop {scoreboard::*}:
+		set {_p} to loop-index parsed as player
+		if {_p} is set:
+			clear {_p}'s scoreboard
+			set title of {_p}'s scoreboard to "&b&lSHK WORLD"
+			set line 13 of {_p}'s scoreboard to "&f직업: &e%jobSalaryGroup({_p})%"
+			set line 12 of {_p}'s scoreboard to "&f"
+			set line 11 of {_p}'s scoreboard to "&f잔액: &a%{_p}'s balance%"
+			# set {_property} to economyProperty({_p})
+			# set line 10 of {_p}'s scoreboard to "&f재산: &a%moneyDigit({_property})%&f원"
+			if {guild.name::%{guild.%uuid of {_p}%}%} is set:
+				set line 10 of {_p}'s scoreboard to "&f파벌: &a%{guild.name::%{guild.%uuid of {_p}%}%}%"
+				set line 9 of {_p}'s scoreboard to "&7└ &f잔액: &a%moneyDigit({guild.money::%{guild.%uuid of {_p}%}%})%&f원"
+				if {guild.chatting::%{_p}%} is set:
+					set line 8 of {_p}'s scoreboard to "&7└ &f파벌채팅: &a✔"
+				else:
+					set line 8 of {_p}'s scoreboard to "&7└ &f파벌채팅: &c❌"
+			else:
+				set line 8 of {_p}'s scoreboard to "&f파벌: &c❌"
+			set line 7 of {_p}'s scoreboard to "&f"
+			if {sharktalk::%{_p}%} is set:
+				set line 6 of {_p}'s scoreboard to "&f상어톡: &a%{sharktalk::%{_p}%}%"
+			else:
+				set line 6 of {_p}'s scoreboard to "&f상어톡: &c❌"
+			if {chatting.%uuid of {_p}%} is set:
+				set line 5 of {_p}'s scoreboard to "&f지역채팅: &a%{chatting.region::%{chatting.%uuid of {_p}%}%}%"
+			else:
+				set line 5 of {_p}'s scoreboard to "&f지역채팅: &a전체채팅"
+			if {openchatting::%{_p}%} is set:
+				set line 4 of {_p}'s scoreboard to "&f오픈채팅: &d%{openchatting::%{_p}%}%&f번 방"
+				if {openchatting.title::%{openchatting::%{_p}%}%} is set:
+					set line 3 of {_p}'s scoreboard to "&7└ &f%{openchatting.title::%{openchatting::%{_p}%}%}%"
+				else:
+					set line 3 of {_p}'s scoreboard to "&7└ 제목 없는 오픈채팅"
+			else:
+				set line 4 of {_p}'s scoreboard to "&f오픈채팅: &c❌"
+			set line 2 of {_p}'s scoreboard to "&f"
+			set line 1 of {_p}'s scoreboard to "&bshkworld.kr &f1.18.2"
+

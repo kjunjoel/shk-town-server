@@ -1,0 +1,32 @@
+on craft:
+    if player isn't op:
+        cancel event
+
+on rightclick on furnace:
+    if player isn't op:
+        cancel event
+
+on rightclick on smoker:
+    if player isn't op:
+        cancel event
+
+on rightclick on anvil:
+    if player isn't op:
+        cancel event
+
+on place:
+	if player's tool is lava bucket:
+		cancel event
+
+on command "/pl":
+    if player isn't op:
+        cancel event
+
+on command "/plugins":
+    if player isn't op:
+        cancel event
+		
+on place of redstone Wire:
+    if player isn't op:
+        cancel event
+        send "&c설치 하실수 없는 블럭입니다."

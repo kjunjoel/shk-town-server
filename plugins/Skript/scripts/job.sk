@@ -1,0 +1,321 @@
+options:
+    npc: [&6직업&f] 변경
+    price: 3000000
+    dir: plugins/Skript/data/logs/tax/%now formatted as "yyyy-MM-dd"%.txt
+    @: &f[ &6&l&o! &f]&f
+
+# 변수
+# {job.tax}                            | 지금까지의 세금
+# {job.change::%uuid of player%}       | 직업을 변경했는지
+# {job.salary::%uuid of player%::직업}  | 그 직업의 일급을 받았는지
+
+on load:
+    set {job.tax} to 0 if {job.tax} isn't set
+    set {job.data::*} to content of file path "plugins/Skript/data/job/salary.txt"
+    
+function jobSalaryGive(p: player):
+    set {_group::*} to groups of {_p}
+    remove "수감자" from {_group::*}
+    remove "죄수" from {_group::*}
+    remove "현상수배" from {_group::*}
+    remove "default" from {_group::*}
+    remove "임시가이드" from {_group::*}
+    loop {_group::*}:
+        if {job.salary::%uuid of {_p}%::%loop-value%} is true:
+            remove loop-value from {_group::*}
+    if {job.salary::%uuid of {_p}%} is set:
+        send title "{@@}" with subtitle "&7이미 일급을 지급받았습니다." to {_p} for 2 seconds
+        stop
+    if {_group::*} isn't set:
+        send title "{@@}" with subtitle "&7이미 일급을 지급받았습니다." to {_p} for 2 seconds
+        stop
+    set {_n} to 0
+    set {_real} to 0
+    set {_tax} to 0
+    set {_group::*} to groups of {_p}
+    remove "임시가이드" from {_group::*}
+    loop {job.data::*}:
+        set {_data::*} to loop-value split by " "
+        set {_price} to {_data::2} parsed as integer
+        set {_r} to {_price}*9000
+        if {_group::*} contains {_data::1}:
+            if {job.salary::%uuid of {_p}%::%{_data::1}%} isn't set:
+                if {budget::%{_data::3}%} >= {_r}:
+                    add {_price} to {_n}
+                    budgetRemove({_data::3}, {_p}, {_r}, "Salary")
+                    set {job.salary::%uuid of {_p}%::%{_data::1}%} to true
+                else:
+                    add {_data::1} to {_직업::*}
+                    add {_data::3} to {_기관::*}
+    if {_group::*} contains "가이드":
+        set {_text} to "가이드"
+        if {job.salary::%uuid of {_p}%::%{_text}%} isn't set:
+            set {job.salary::%uuid of {_p}%::%{_text}%} to true
+            add 100 to {_n}
+            remove "가이드" from {_group::*}
+            add 100000 to {_real}
+            remove 100000 from {_tax}
+    if {_p} isn't op:
+        if {_p} has permission "salary.400000":
+            set {job.salary::%uuid of {_p}%} to true
+            add 40 to {_n}
+            add 40000 to {job.tax}
+        if {_p} has permission "salary.350000":
+            set {job.salary::%uuid of {_p}%} to true
+            add 35 to {_n}
+            add 35000 to {job.tax}
+    set {_n} to {_n} * 10000
+    if {_n} is 0:
+        if {_기관::*} is set:
+            send title "{@@}" with subtitle "&f%{_기관::*}%&7의 예산이 부족하여 일급을 받지 못했습니다." to {_p} for 2 seconds
+        else:
+            send title "{@@}" with subtitle "&7일급이 설정되지 않았습니다." to {_p} for 2 seconds
+        stop
+    set {_price} to {_n}
+    add {_n}*0.1 to {_tax}
+    if {_n} <= 400000:
+        create file "{@dir}" if file "{@dir}" doesn't exist
+        write "%now formatted as "yyyy-MM-dd HH:mm:ss"% %{_p}% %{_tax}% -> %{job.tax}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+    play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to {_p}
+    add {_n}*0.9 to {_real}
+    send title "&e&l%moneyDigit({_real})%원" with subtitle "&7일급을 지급받았습니다." to {_p} for 2 seconds
+    send " {@@} &bSHK WORLD &f급여 명세서" to {_p}
+    send " {@@} &f성명: &e%{_p}% &f| &f지급일: %now formatted as "yyyy.MM.dd"%"  to {_p}
+    send " {@@} &f&l임금항목&f: 기본급 &a%moneyDigit({_price})%&f원" to {_p}
+    send " {@@} &f&l공제내역&f: 소득세 &a%moneyDigit({_tax})%&f원" to {_p}
+    send " {@@} &f&l실지급액&f: &a%moneyDigit({_real})%&f원" to {_p}
+    if {_기관::*} is set:
+        send "        &6└ &f%{_기관::*}%&7의 예산이 부족하여 &f%{_직업::*}%&7의 일급은 받지 못했습니다." to {_p}
+    balanceAdd({_p}, {_real}, "Salary")
+    
+function jobSalaryGroup(p: player) :: text:
+    set {_group::*} to groups of {_p}
+    remove "수감자" from {_group::*}
+    remove "죄수" from {_group::*}
+    remove "현상수배" from {_group::*}
+    remove "default" from {_group::*}
+    add "시민" to {_group::*} if {_group::*} isn't set
+    set {_text} to ""
+    loop {_group::*}:
+        set {_text} to "%loop-value%, %{_text}%"
+    set {_size} to length of {_text} - 2
+    return first {_size} characters of {_text}
+
+function jobChangeGUI(p: player):
+    set {_inv} to chest inventory with 3 rows named "&f{@npc}"
+    loop 27 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 11 of {_inv} to clock named "&e직업 쿨타임 초기화" with lore "&f비용: &a%moneyDigit({@price})%원"
+    set slot 15 of {_inv} to clock named "&e직업 쿨타임 초기화" with lore "&f클릭하여 직업 변경권 사용"
+    set slot 13 of {_inv} to {job.icon::!} named "&c&l주의 사항" with lore "&7클릭하면 즉시 발동됩니다. 직업쿨타임이 있는지 확인하세요."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 22 of {_inv} to emerald named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 22 of {_inv} to diamond named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    open {_inv} to {_p}
+
+on rightclick on entity:
+    if uncolored name of event-entity is "사업가":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " {@@} &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " {@@} &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of player%} is true:
+            send " {@@} &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " {@@} &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " {@@} &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " {@@} &f직업을 변경하실 수 없습니다." to player
+            stop
+        send formatted " {@@} &f직업을 &a%name of entity%&f(으)로 변경하시겠습니까? <command:/job_change_with_permission_Lantum %uncolored name of entity%>&e&l여기<reset>&f를 클릭하여 직업을 변경할 수 있습니다." to player
+        stop
+    if name of event-entity is "{@npc}":
+        jobChangeGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::jobChangeGUI} to true
+        stop
+
+
+on inventory click:
+    if {gui.%uuid of player%::jobChangeGUI} is true:
+        cancel event
+        if clicked slot is 11:
+            if player's balance < {@price}:
+                send " {@@} &f잔액이 부족합니다."
+                stop
+            close player's inventory
+            balanceRemove(player, {@price}, "JobChange")
+            send " {@@} &f직업 변경 쿨타임을 초기화 하였습니다."
+            delete {job.change::%uuid of player%}
+            stop
+
+        else if clicked slot is 15:
+            loop 36 times:
+                if uncolored name of slot (loop-number) of player's inventory contains "직업 변경권":
+                    set {_temp} to true
+                    remove 1 from item amount of slot (loop-number) of player's inventory
+                    exit 1 loop
+            if {_temp} isn't set:
+                send " {@@} &f직업 변경권을 가지고 있지 않습니다."
+                stop
+            close player's inventory
+            send " {@@} &f직업 변경 쿨타임을 초기화 하였습니다."
+            delete {job.change::%uuid of player%}
+            stop
+
+on inventory close:
+    if {gui.%uuid of player%::jobChangeGUI} is true:
+        delete {gui.%uuid of player%::jobChangeGUI}
+
+
+command /일급 [<text>]:
+    trigger:
+        if arg 1 is "받기":
+            jobSalaryGive(player)
+            
+        else:
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            send "   {@@} &f/일급 받기 &7- 자신의 직업 일급을 지급받습니다."
+            send "       &6└ &f%jobSalaryGroup(player)% &7일급을 받습니다."
+            send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            stop
+
+command /job_tax:
+    permission: op.user
+    trigger:
+        send " {@@} &f현재까지 징수한 세금은 &a%moneyDigit({job.tax})%원&f입니다."
+
+command /job_change_with_permission_Lantum [<text>]:
+    trigger:
+        if arg-1 is "강도" or "공인중개사" or "광부" or "농부" or "도축업자" or "변호사" or "사업가" or "사진작가" or "시민" or "어부" or "요리사" or "의사" or "작가" or "주례사" or "화가" or "기자" or "영화감독":
+            set {_temp} to true
+        if {_temp} isn't set:
+            stop
+        if {job.change::%uuid of player%} is true:
+            send " {@@} &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player is "가이드":
+            set {_guide} to true
+        execute console command "lp user %player% parent clear"
+        if arg-1 isn't "시민":
+            execute console command "lp user %player% parent add %arg-1%"
+        else:
+            execute console command "lp user %player% parent add %arg-1%"
+            execute console command "lp user %player% parent add 가이드" if {_guide} is true
+        send " {@@} &f성공적으로 직업을 &a%arg-1%&f(으)로 변경하였습니다." to player
+        set {job.change::%uuid of player%} to true
+        if {quest.%uuid of player%.main} is 4:
+            make player run command "quest done main 4" as op
+    
+command /job_salary_reset [<offlineplayer>]:
+    permission: op.user
+    permission: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg-1 is "all":
+            delete {job.salary::*}
+            send " {@@} &e모든 플레이어&f의 일급 지급 데이터를 정상적으로 초기화하였습니다."
+            stop
+        delete {job.salary::%uuid of arg-1%::*}
+        delete {job.salary::%uuid of arg-1%}
+        send " {@@} &e%arg-1%&f님의 일급 지급 데이터를 정상적으로 초기화하였습니다."
+        stop
+
+command /job_change_reset:
+    permission: op.user
+    trigger:
+        delete {job.change::*}
+        stop
+
+command /job_guide_reset:
+    permission: op.user
+    trigger:
+        delete {guide.salary::*}
+        stop
+
+command /job_reset_all:
+    permission: op.user
+    trigger:
+        loop {job.salary::*}:
+            delete {job.salary::%loop-index%::*}
+        delete {job.salary::*}
+        delete {job.change::*}
+        delete {guide.salary::*}
+        delete {guide.salary::*}
+        budgetAdd("국고", {_none}, {job.tax}, "Tax")
+        set {job.tax} to 0
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} &7관리자에 의해 모든 직업 변경 및 일급 지급 데이터가 삭제되었습니다." to all players
+        send " {@@} &7지금부터 직업을 &f변경&7하거나 일급을 &f지급&7받을 수 있습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+command /job_time_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {job.change::%uuid of arg-1%}
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        send " {@@} &7관리자에 의해 %arg-1%님의 직업 변경 쿨타임이 삭제되었습니다."
+        send " {@@} &7다시 직업을 바꿀 수 있습니다."
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        stop
+
+every 1 minute:
+    if now formatted as "HH:mm" contains "23:58":
+        loop {job.salary::*}:
+            delete {job.salary::%loop-index%::*}
+        delete {job.salary::*}
+        delete {job.change::*}
+        delete {guide.salary::*}
+        delete {guide.salary::*}
+        budgetAdd("국고", {_none}, {job.tax}, "Tax")
+        set {job.tax} to 0
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} &7모든 직업 변경 및 일급 지급 데이터가 삭제되었습니다." to all players
+        send " {@@} &7지금부터 직업을 &f변경&7하거나 일급을 &f지급&7받을 수 있습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+command /월급:
+    trigger:
+        send "{@@} &7이제부터는 &f&l/일급 &7명령어를 사용해주세요!"
+        send "     &7└ 언제나 시대를 선도하는 &b&l상어온라인&7이 되겠습니다!"
+        stop
+
+command /줄테스트:
+    trigger:
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " &6&l[&o!]&7 &7관리자에 의해 일간 플레이타임 데이터가 삭제되었습니다." to all players
+        send " &6&l[&o!]&7 &7지금부터 일간 플레이타임이 계산됩니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+function jobCheck(p: player) :: text:
+    set {_group::*} to groups of {_p}
+    remove "수감자" from {_group::*}
+    remove "죄수" from {_group::*}
+    remove "현상수배" from {_group::*}
+    remove "default" from {_group::*}
+    set {_text} to ""
+    loop {_group::*}:
+        set {_text} to "%loop-value%, %{_text}%"
+    set {_size} to length of {_text} - 2
+    return first {_size} characters of {_text}
+
+options:
+    prefix: &f[ &6&l!&f ]
+
+command /직업확인 [<offlineplayer>]:
+    permission: culbro.user
+    trigger:
+        send "&f"
+        send "{@prefix} &e%arg-1%&f님의 직업은 아래와 같습니다."
+        make player run command "lp user %arg-1% parent info" as op

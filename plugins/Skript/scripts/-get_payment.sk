@@ -1,0 +1,35 @@
+import:
+    java.net.URL
+    java.net.HttpURLConnection
+    java.io.BufferedReader
+    java.io.InputStreamReader
+
+
+every 3 seconds:
+    payment_get()
+
+
+function payment_get():
+    set {_url} to new URL("http://shkworld.shop/payment-get-request-server-qNA7VdO")
+    set {_con} to {_url}.openConnection()
+    {_con}.setRequestMethod("GET")
+    set {_inputStream} to {_con}.getInputStream()
+    if {_inputStream} is not set:
+        stop
+    set {_br} to new BufferedReader(new InputStreamReader({_con}.getInputStream(), "utf-8"))
+    set {_line} to {_br}.readLine()
+    replace all "{" and ":" and "}" and """" and "nickname" and "amount" and "error" with "" in {_line}
+    set {_data::*} to split {_line} at ","
+    if {_data::1} is "No data available":
+        stop
+
+    set {_nickname} to {_data::2} parsed as offlineplayer
+    set {_amount} to {_data::1} parsed as integer
+
+    send "nick: %{_nickname}%" to console
+    send "am: %{_amount}%" to console
+    send "---------------" to console
+    
+    add {_amount} to {cash::%uuid of {_nickname}%}
+
+

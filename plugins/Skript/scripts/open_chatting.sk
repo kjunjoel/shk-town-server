@@ -1,0 +1,545 @@
+options:
+    # 접두사
+    prefix: &a&l》 &f
+
+    # GUI
+    gui: &eSHARK TALK &f&l오픈채팅
+
+# 변수
+# {openchatting.number}             | 오픈채팅 ID
+# {openchatting.head::%number%}     | 오픈채팅 방장
+# {openchatting.user::%number%::*}  | %number%번 오픈채팅에 참여중인 유저 목록
+# {openchatting.title::%number%}    | 방제
+# {openchatting.max::%number%}      | 최대 인원수
+# {openchatting.password::%number%} | 비밀번호
+# {openchatting.recent::%number%}   | 최근 활동일
+
+command /openchatting_time:
+    permission: op.user
+    trigger:
+        loop {openchatting.recent::*}:
+            if difference between loop-value and now > 14 days:
+                send "%loop-index% %loop-value%"
+
+command /open_chatting_test:
+    permission: op.user
+    trigger:
+        loop {openchatting.recent::*}:
+            if difference between loop-value and now > 14 days:
+                if {openchatting.title::%loop-index%} is set:
+                    send "{@prefix} 오픈채팅 '%{openchatting.title::%loop-index%}% &7(ID ##%loop-index%)&f'이(가) 삭제되었습니다."
+                else:
+                    send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%loop-index%)&f'이 삭제되었습니다."
+
+                loop {openchatting.user::%loop-index%::*}:
+                    if {openchatting.title::%loop-index-1%} is set:
+                        send "{@prefix} 최근 14일간 활동이 없어 오픈채팅 '%{openchatting.title::%loop-index-1%}% &7(ID ##%loop-index-1%)&f'이(가) 삭제되었습니다." to loop-value-2
+                    else:
+                        send "{@prefix} 최근 14일간 활동이 없어 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%loop-index-1%)&f'이 삭제되었습니다." to loop-value-2
+
+                delete {openchatting.head::%loop-index%}
+                delete {openchatting.user::%loop-index%::*}
+                delete {openchatting.title::%loop-index%}
+                delete {openchatting.max::%loop-index%}
+                delete {openchatting.password::%loop-index%}
+                delete {openchatting.recent::%loop-index%}
+
+every 1 minute:
+    if now formatted as "HH:mm" is "12:00":
+        execute console command "open_chatting_test"
+
+on load:
+    set {openchatting.number} to 0 if {openchatting.number} isn't set
+
+function openChattingList(id: number) :: text:
+    set {_text} to ""
+    set {_ind} to 0
+    loop {openchatting.user::%{_id}%::*}:
+        add 1 to {_ind}
+        if {_ind} is size of {openchatting.user::%{_id}%::*}:
+            if loop-value is online:
+                set {_text} to "%{_text}%&a%loop-value%"
+            else:
+                set {_text} to "%{_text}%&c%loop-value%"
+        else:
+            if loop-value is online:
+                set {_text} to "%{_text}%&a%loop-value%&f, "
+            else:
+                set {_text} to "%{_text}%&c%loop-value%&f, "
+    return {_text}
+
+function openChattingListGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@gui}&f 목록"
+    set {_ind} to 0
+    loop {openchatting.head::*}:
+        if {openchatting.user::%loop-index%::*} doesn't contain {_p}:
+            if {_ind} is between ({_n}-1)*45 and {_n}*45-1:
+                set {_online} to 0
+                set {_count} to 0
+                loop {openchatting.user::%loop-index%::*}:
+                    add 1 to {_online} if loop-value-2 is online
+                    add 1 to {_count}
+                if {openchatting.title::%loop-index%} is set:
+                    set {_item} to (skull of loop-value) named "&f%{openchatting.title::%loop-index%}%" with lore "&8아이디   &7 | &f%loop-index%" and "&e대화 인원&7 | &f%moneyDigit({_count})%명 &7(&f%{_online}%명 &a온라인&7)"
+                else:
+                    set {_item} to (skull of loop-value) named "&f제목 없는 오픈채팅" with lore "&8아이디   &7 | &f%loop-index%" and "&e대화 인원&7 | &f%moneyDigit({_count})%명 &7(&f%{_online}%명 &a온라인&7)"
+                if {openchatting.max::%loop-index%} is set:
+                    add "&d최대 인원&7 | &f%moneyDigit({openchatting.max::%loop-index%})%명" to lore of {_item}
+                add "&3최근 활동&7 | &f%{openchatting.recent::%loop-index%} formatted as "yy.MM.dd. HH:mm:ss"%" to lore of {_item}
+                add "&f" to lore of {_item}
+                add "&c좌클릭&7하여 참여할 수 있습니다." to lore of {_item}
+                add "&a우클릭&7하여 참여자를 확인합니다." to lore of {_item}
+                set slot mod({_ind}, 45) of {_inv} to {_item}
+            add 1 to {_ind}
+    loop 7 times:
+        set slot (loop-number)+45 of {_inv} to black stained glass pane named "&f"
+    set slot 45 of {_inv} to arrow named "&f이전 페이지로"
+    set slot 49 of {_inv} to barrier named "&c이전으로"
+    set slot 53 of {_inv} to arrow named "&f다음 페이지로"
+    open {_inv} to {_p}
+
+function openChattingGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@gui}&f 참여중인 대화"
+    set {_ind} to 0
+    loop {openchatting.head::*}:
+        if {openchatting.user::%loop-index%::*} contains {_p}:
+            if {_ind} is between ({_n}-1)*45 and {_n}*45-1:
+                set {_online} to 0
+                set {_count} to 0
+                loop {openchatting.user::%loop-index%::*}:
+                    add 1 to {_online} if loop-value-2 is online
+                    add 1 to {_count}
+                if {openchatting.title::%loop-index%} is set:
+                    set {_item} to (skull of loop-value) named "&f%{openchatting.title::%loop-index%}%" with lore "&8아이디   &7 | &f%loop-index%" and "&e대화 인원&7 | &f%moneyDigit({_count})%명 &7(&f%{_online}%명 &a온라인&7)"
+                else:
+                    set {_item} to (skull of loop-value) named "&f제목 없는 오픈채팅" with lore "&8아이디   &7 | &f%loop-index%" and "&e대화 인원&7 | &f%moneyDigit({_count})%명 &7(&f%{_online}%명 &a온라인&7)"
+                if {openchatting.max::%loop-index%} is set:
+                    add "&d최대 인원&7 | &f%moneyDigit({openchatting.max::%loop-index%})%명" to lore of {_item}
+                add "&3최근 활동&7 | &f%{openchatting.recent::%loop-index%} formatted as "yy.MM.dd. HH:mm:ss"%" to lore of {_item}
+                if {openchatting::%{_p}%} is loop-index parsed as number:
+                    add "&f" to lore of {_item}
+                    add "&a우클릭&7하여 퇴장할 수 있습니다." to lore of {_item}
+                    add "&c좌클릭&7하여 참여자를 확인합니다." to lore of {_item}
+                else:
+                    add "&f" to lore of {_item}
+                    add "&c좌클릭&7하여 입장할 수 있습니다." to lore of {_item}
+                if loop-value is {_p}:
+                    add "&bSHIFT + 좌클릭&7하여 오픈채팅 설정창 열기" to lore of {_item}
+                add "&6SHIFT + 우클릭&7하여 오픈채팅 나가기" to lore of {_item}
+                set slot mod({_ind}, 45) of {_inv} to {_item}
+            add 1 to {_ind}
+    loop 7 times:
+        set slot (loop-number)+45 of {_inv} to black stained glass pane named "&f"
+    set slot 45 of {_inv} to arrow named "&f이전 페이지로"
+    set slot 48 of {_inv} to green stained glass pane named "&a오픈채팅 개설하기"
+    set slot 50 of {_inv} to yellow stained glass pane named "&e오픈채팅 참여하기"
+    set slot 53 of {_inv} to arrow named "&f다음 페이지로"
+    open {_inv} to {_p}
+
+function openChattingSettingGUI(p: player, id: number):
+    set {_inv} to chest inventory with 3 rows named "{@gui}&f 설정 &7(##%{_id}%)"
+    if {openchatting.title::%{_id}%} is set:
+        set slot 10 of {_inv} to nametag named "&e&l방제 설정하기" with lore "&7현재 방제: &f%{openchatting.title::%{_id}%}%"
+    else:
+        set slot 10 of {_inv} to nametag named "&e&l방제 설정하기" with lore "&7현재 방제: &f설정되지 않음"
+    if {openchatting.max::%{_id}%} is set:
+        set slot 11 of {_inv} to leash named "&e&l최대 인원 설정하기" with lore "&7현재 최대 인원: &f%moneyDigit({openchatting.max::%{_id}%})%명"
+    else:
+        set slot 11 of {_inv} to leash named "&e&l최대 인원 설정하기" with lore "&7현재 최대 인원: &f설정되지 않음"
+    if {openchatting.password::%{_id}%} is set:
+        set slot 12 of {_inv} to anvil named "&e&l비밀번호 설정하기" with lore "&7현재 비밀번호: &f%{openchatting.password::%{_id}%}%"
+    else:
+        set slot 12 of {_inv} to anvil named "&e&l비밀번호 설정하기" with lore "&7현재 비밀번호: &f없음"
+    set slot 14 of {_inv} to diamond sword named "&e&l방장 위임하기"
+    set slot 15 of {_inv} to player head item named "&a&l오픈채팅 참여자 강퇴하기"
+    set slot 16 of {_inv} to barrier named "&c&l방 삭제하기"
+    open {_inv} to {_p}
+
+function openChattingGiveGUI(p: player, id: number):
+    set {_user::*} to {openchatting.user::%{_id}%::*}
+    set {_n} to round up ((size of {_user::*} - 1) / 9)
+    set {_n} to 6 if {_n} >= 6
+    set {_inv} to chest inventory with {_n} rows named "{@gui}&f 설정 - 방장 위임하기 &7(##%{_id}%)"
+    set {_ind} to 0
+    loop {_user::*}:
+        if loop-value is {_p}:
+            continue
+        set slot {_ind} of {_inv} to skull of loop-value named "&f%loop-value%" with lore "&a클릭하여 방장 위임하기"
+        add 1 to {_ind}
+    open {_inv} to {_p}
+
+function openChattingKickGUI(p: player, id: number):
+    set {_user::*} to {openchatting.user::%{_id}%::*}
+    set {_n} to round up ((size of {_user::*} - 1) / 9)
+    set {_n} to 6 if {_n} >= 6
+    set {_inv} to chest inventory with {_n} rows named "{@gui}&f 설정 - 강퇴하기 &7(##%{_id}%)"
+    set {_ind} to 0
+    loop {_user::*}:
+        if loop-value is {_p}:
+            continue
+        set slot {_ind} of {_inv} to skull of loop-value named "&f%loop-value%" with lore "&c클릭하여 강퇴하기"
+        add 1 to {_ind}
+    open {_inv} to {_p}
+
+on inventory click:
+    if uncolored display name of event-inventory contains "SHARK TALK 오픈채팅 설정 - 방장 위임하기":
+        cancel event
+        set {_name::*} to uncolored display name of event-inventory split by "##"
+        replace all ")" in {_name::2} with ""
+        set {_id} to {_name::2} parsed as number
+
+        if type of clicked item isn't set:
+            stop
+        set {_player} to uncolored name of clicked item parsed as player
+        set {openchatting.head::%{_id}%} to {_player}
+        loop {openchatting.user::%{_id}%::*}:
+            if {openchatting.title::%{_id}%} is set:
+                send "&7[%{openchatting.title::%{_id}%}%] &6%{_player}%님이 방장이 되었습니다." to loop-value
+            else:
+                send "&7[오픈채팅 ##%{_id}%] &6%{_player}%님이 방장이 되었습니다." to loop-value
+            set {openchatting.recent::%{_id}%} to now
+        close player's inventory
+
+    else if uncolored display name of event-inventory contains "SHARK TALK 오픈채팅 설정 - 강퇴하기":
+        cancel event
+        set {_name::*} to uncolored display name of event-inventory split by "##"
+        replace all ")" in {_name::2} with ""
+        set {_id} to {_name::2} parsed as number
+
+        if type of clicked item isn't set:
+            stop
+        set {_player} to uncolored name of clicked item parsed as offlineplayer
+        delete {openchatting::%{_player}%}
+        remove {_player} from {openchatting.user::%{_id}%::*}
+        loop {openchatting.user::%{_id}%::*}:
+            if {openchatting.title::%{_id}%} is set:
+                send "&7[%{openchatting.title::%{_id}%}%] &6%{_player}%님이 오픈채팅에서 강퇴되었습니다." to loop-value
+            else:
+                send "&7[오픈채팅 ##%{_id}%] &6%{_player}%님이 오픈채팅에서 강퇴되었습니다." to loop-value
+        if {openchatting.title::%{_id}%} is set:
+            send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에서 강퇴되었습니다." to {_player}
+        else:
+            send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에서 강퇴되었습니다." to {_player}
+        set {openchatting.recent::%{_id}%} to now
+        close player's inventory
+
+    else if uncolored display name of event-inventory contains "SHARK TALK 오픈채팅 설정":
+        cancel event
+        set {_name::*} to uncolored display name of event-inventory split by "##"
+        replace all ")" in {_name::2} with ""
+        set {_id} to {_name::2} parsed as number
+
+        if clicked slot is 10:
+            set {openchatting.settitle::%player%} to {_id}
+            send "{@prefix} 방제를 입력해주세요. 방제를 삭제하려면 &c삭제&f라고 입력해주세요."
+            close player's inventory
+
+        else if clicked slot is 11:
+            set {openchatting.setmax::%player%} to {_id}
+            send "{@prefix} 최대 인원수를 입력해주세요. 최대 인원수를 삭제하려면 &c0&f을 입력해주세요."
+            close player's inventory
+
+        else if clicked slot is 12:
+            set {openchatting.setpassword::%player%} to {_id}
+            send "{@prefix} 비밀번호를 입력해주세요. 비밀번호 삭제하려면 &c삭제&f를 입력해주세요."
+            close player's inventory
+
+        else if clicked slot is 14:
+            openChattingGiveGUI(player, {_id})
+
+        else if clicked slot is 15:
+            openChattingKickGUI(player, {_id})
+
+        else if clicked slot is 16:
+            delete {openchatting::%player%}
+            delete {openchatting.head::%{_id}%}
+            loop {openchatting.user::%{_id}%::*}:
+                delete {openchatting::%loop-value%}
+                if {openchatting.title::%{_id}%} is set:
+                    send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'이(가) 삭제되었습니다." to loop-value
+                else:
+                    send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'이 삭제되었습니다." to loop-value
+            delete {openchatting.user::%{_id}%::*}
+            delete {openchatting.title::%{_id}%}
+            delete {openchatting.max::%{_id}%}
+            delete {openchatting.password::%{_id}%}
+            delete {openchatting.recent::%{_id}%}
+            if size of {openchatting.head::*} is 0:
+                set {openchatting.number} to 0
+            close player's inventory
+
+    else if uncolored display name of event-inventory contains "SHARK TALK 오픈채팅 참여중인 대화":
+        cancel event
+        if type of clicked item is green stained glass pane:
+            loop {openchatting.number}+1 times:
+                if {openchatting.head::%loop-number%} isn't set:
+                    set {_id} to loop-number
+                    exit 1 loop
+            if {_id} is {openchatting.number} + 1:
+                add 1 to {openchatting.number}
+            set {openchatting.head::%{_id}%} to player
+            add player to {openchatting.user::%{_id}%::*}
+            set {openchatting::%player%} to {_id}
+            set {openchatting.recent::%{_id}%} to now
+            send "{@prefix} 오픈채팅이 개설되었습니다. &7(ID ##%{_id}%)"
+            send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에 참여했습니다."
+            openChattingGUI(player, {openchatting.page::%player%})
+
+        if type of clicked item is yellow stained glass pane:
+            cancel event
+            openChattingListGUI(player, 1)
+            set {openchatting.page::%player%} to 1
+
+        if uncolored name of clicked item is "이전 페이지로":
+            if {openchatting.page::%player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {openchatting.page::%player%}
+            openChattingGUI(player, {openchatting.page::%player%})
+
+        else if uncolored name of clicked item is "다음 페이지로":
+            if {openchatting.page::%player%} * 45 >= size of {openchatting.head::*}:
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {openchatting.page::%player%}
+            openChattingGUI(player, {openchatting.page::%player%})
+
+        else if type of clicked item is black stained glass pane:
+            stop
+
+        else if type of clicked item is player head item:
+            set {_lore::*} to uncolored lore of clicked item
+            set {_data::*} to {_lore::1} split by "|"
+            replace all " " in {_data::2} with ""
+            set {_id} to {_data::2} parsed as number
+            if click type is left mouse button with shift:
+                if {openchatting.head::%{_id}%} is player:
+                    openChattingSettingGUI(player, {_id})
+                else:
+                    stop
+                
+            else if click type is right mouse button with shift:
+                if {openchatting.user::%{_id}%::*} contains player:
+                    delete {openchatting::%player%}
+                    remove player from {openchatting.user::%{_id}%::*}
+                    loop {openchatting.user::%{_id}%::*}:
+                        if {openchatting.title::%{_id}%} is set:
+                            send "&7[%{openchatting.title::%{_id}%}%] &6%player%님이 오픈채팅에서 나갔습니다." to loop-value
+                        else:
+                            send "&7[오픈채팅 ##%{_id}%] &6%player%님이 오픈채팅에서 나갔습니다." to loop-value
+                    if {openchatting.title::%{_id}%} is set:
+                        send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에서 나갔습니다."
+                    else:
+                        send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에서 나갔습니다."
+                    set {openchatting.recent::%{_id}%} to now
+                    if size of {openchatting.user::%{_id}%::*} is 0:
+                        delete {openchatting.head::%{_id}%}
+                        delete {openchatting.user::%{_id}%::*}
+                        delete {openchatting.title::%{_id}%}
+                        delete {openchatting.max::%{_id}%}
+                        delete {openchatting.password::%{_id}%}
+                        delete {openchatting.recent::%{_id}%}
+                        if size of {openchatting.head::*} is 0:
+                            set {openchatting.number} to 0
+                    close player's inventory
+
+            else if click type is left mouse button:
+                if {openchatting::%player%} is {_id}:
+                    if {openchatting.title::%{_id}%} is set:
+                        send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'의 참여자는 다음과 같습니다."
+                    else:
+                        send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'의 참여자는 다음과 같습니다."
+                    send "{@prefix}"
+                    set {_list} to openChattingList({_id})
+                    send "{@prefix} %{_list}%"
+                    send "{@prefix} &7└ &c빨간색&7은 오프라인, &a초록색&7은 온라인"
+                    stop
+                set {openchatting::%player%} to {_id}
+                if {openchatting.title::%{_id}%} is set:
+                    send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에 입장했습니다."
+                else:
+                    send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에 입장했습니다."
+                close player's inventory
+
+            else if click type is right mouse button:
+                {openchatting::%player%} is {_id}
+                delete {openchatting::%player%}
+                if {openchatting.title::%{_id}%} is set:
+                    send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에서 퇴장했습니다."
+                else:
+                    send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에서 퇴장했습니다."
+                set {_page} to {openchatting.page::%player%}
+                openChattingGUI(player, {_page})
+                set {openchatting.page::%player%} to {_page}
+
+    else if uncolored display name of event-inventory contains "SHARK TALK 오픈채팅 목록":
+        cancel event
+
+        if uncolored name of clicked item is "이전 페이지로":
+            if {openchatting.page::%player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {openchatting.page::%player%}
+            openChattingListGUI(player, {openchatting.page::%player%})
+
+        else if uncolored name of clicked item is "다음 페이지로":
+            if {openchatting.page::%player%} * 45 >= size of {openchatting.head::*}:
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {openchatting.page::%player%}
+            openChattingListGUI(player, {openchatting.page::%player%})
+
+        else if type of clicked item is barrier:
+            openChattingGUI(player, {openchatting.page::%player%})
+            set {openchatting.page::%player%} to 1
+
+        else if type of clicked item is black stained glass pane:
+            stop
+
+        else if type of clicked item is player head item:
+            set {_lore::*} to uncolored lore of clicked item
+            set {_data::*} to {_lore::1} split by "|"
+            replace all " " in {_data::2} with ""
+            set {_id} to {_data::2} parsed as number
+            
+            if click type is right mouse button:
+                if {openchatting.title::%{_id}%} is set:
+                    send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'의 참여자는 다음과 같습니다."
+                else:
+                    send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'의 참여자는 다음과 같습니다."
+                send "{@prefix}"
+                set {_list} to openChattingList({_id})
+                send "{@prefix} %{_list}%"
+                send "{@prefix} &7└ &c빨간색&7은 오프라인, &a초록색&7은 온라인"
+                stop
+
+            else if click type is left mouse button:
+                if player isn't op:
+                    if {openchatting.max::%{_id}%} <= size of {openchatting.user::%{_id}%::*}:
+                        send "{@prefix} 최대 인원을 초과하여 참여할 수 없습니다."
+                        openChattingListGUI(player, 1)
+                        set {openchatting.page::%player%} to 1
+                        stop
+
+                    if {openchatting.password::%{_id}%} is set:
+                        send "{@prefix} 방 비밀번호를 입력해주세요."
+                        set {openchatting.enterpassword::%player%} to {_id}
+                        close player's inventory
+                        stop
+
+            else:
+                stop
+
+            set {openchatting::%player%} to {_id}
+            loop {openchatting.user::%{_id}%::*}:
+                send "&7[오픈채팅 ##%{_id}%] &6%player%님이 오픈채팅에 참여했습니다." to loop-value
+            add player to {openchatting.user::%{_id}%::*}
+            if {openchatting.title::%{_id}%} is set:
+                send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에 참여했습니다."
+            else:
+                send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에 참여했습니다."
+            set {openchatting.recent::%{_id}%} to now
+            close player's inventory
+
+
+on chat:
+    if {openchatting.enterid::%player%} is set:
+        delete {openchatting.enterid::%player%}
+
+    else if {openchatting.enterpassword::%player%} is set:
+        set {_id} to {openchatting.enterpassword::%player%}
+        if {openchatting.password::%{_id}%} is message:
+            set {openchatting::%player%} to {_id}
+            add player to {openchatting.user::%{_id}%::*}
+            if {openchatting.title::%{_id}%} is set:
+                send "{@prefix} 오픈채팅 '%{openchatting.title::%{_id}%}% &7(ID ##%{_id}%)&f'에 참여했습니다."
+            else:
+                send "{@prefix} 오픈채팅 '제목 없는 오픈채팅 &7(ID ##%{_id}%)&f'에 참여했습니다."
+            set {openchatting.recent::%{_id}%} to now
+        else:
+            send "{@prefix} 비밀번호가 일치하지 않습니다. 다시 시도해주세요."
+            openChattingGUI(player, 1)
+            set {openchatting.page::%player%} to 1
+        wait 1 tick
+        delete {openchatting.enterpassword::%player%}
+
+    if {openchatting.settitle::%player%} is set:
+        set {_id} to {openchatting.settitle::%player%}
+        if message is "삭제":
+            delete {openchatting.title::%{_id}%}
+            send "{@prefix} 방제가 삭제되었습니다."
+        else:
+            if {openchatting.title::*} contains message:
+                send "{@prefix} 이미 존재하는 방제입니다. 다시 설정해주세요."
+                openChattingSettingGUI(player, {_id})
+                wait 1 tick
+                delete {openchatting.settitle::%player%}
+                stop
+            else:
+                set {openchatting.title::%{_id}%} to message
+                send "{@prefix} 방제가 &e%message%&f(으)로 설정되었습니다."
+        openChattingSettingGUI(player, {_id})
+        set {openchatting.recent::%{_id}%} to now
+        wait 1 tick
+        delete {openchatting.settitle::%player%}
+
+    if {openchatting.setmax::%player%} is set:
+        set {_id} to {openchatting.setmax::%player%}
+        if message is "0":
+            delete {openchatting.max::%{_id}%}
+            send "{@prefix} 최대 인원수가 삭제되었습니다."
+        else:
+            if message parsed as number < size of {openchatting.user::%{_id}%::*}:
+                send "{@prefix} 최대 인원수는 현재 인원수보다 작을 수 없습니다."
+            else:
+                set {openchatting.max::%{_id}%} to message parsed as number
+                send "{@prefix} 최대 인원수가 &e%moneyDigit({openchatting.max::%{_id}%})%명&f으로 설정되었습니다."
+        set {openchatting.recent::%{_id}%} to now
+        openChattingSettingGUI(player, {_id})
+        wait 1 tick
+        delete {openchatting.setmax::%player%}
+
+    if {openchatting.setpassword::%player%} is set:
+        set {_id} to {openchatting.setpassword::%player%}
+        if message is "삭제":
+            delete {openchatting.password::%{_id}%}
+            send "{@prefix} 비밀번호가 삭제되었습니다."
+        else:
+            set {openchatting.password::%{_id}%} to message
+            send "{@prefix} 비밀번호가 &e%message%&f(으)로 설정되었습니다."
+        set {openchatting.recent::%{_id}%} to now
+        openChattingSettingGUI(player, {_id})
+        wait 1 tick
+        delete {openchatting.setpassword::%player%}
+
+command /openchatting_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {openchatting::%arg-1%}
+
+on inventory close:
+    if uncolored display name of event-inventory is "SHARK TALK 오픈채팅 참여중인 대화":
+        delete {openchatting.page::%player%}
+
+on join:
+    loop {openchatting.head::*}:
+        if {openchatting.user::%loop-index%::*} contains player:
+            loop {openchatting.user::%loop-index%::*}:
+                if loop-value-2 isn't player:
+                    if {openchatting.title::%loop-index-1%} is set:
+                        send "&7[%{openchatting.title::%loop-index-1%}%] &6%player%님이 온라인 상태입니다." to loop-value-2
+                    else:
+                        send "&7[오픈채팅 ##%loop-index-1%] &6%player%님이 온라인 상태입니다." to loop-value-2
+
+on quit:
+    delete {openchatting::%player%}
+    loop {openchatting.head::*}:
+        if {openchatting.user::%loop-index%::*} contains player:
+            loop {openchatting.user::%loop-index%::*}:
+                if {openchatting.title::%loop-index-1%} is set:
+                    send "&7[%{openchatting.title::%loop-index-1%}%] &6%player%님이 오프라인 상태입니다." to loop-value-2
+                else:
+                    send "&7[오픈채팅 ##%loop-index-1%] &6%player%님이 오프라인 상태입니다." to loop-value-2
+    delete {openchatting.page::%player%}
+    if size of {openchatting.head::*} is 0:
+        set {openchatting.number} to 0

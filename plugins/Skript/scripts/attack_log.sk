@@ -1,0 +1,76 @@
+options:
+    Prefix: &f[ &6&l&o! &f]&f
+    
+on damage:
+    if gamemode of attacker is creative:
+        stop
+    if gamemode of victim is creative:
+        stop
+    if {terror.nopvp::%victim%} is set:
+        cancel event
+        send "{@Prefix} 리스폰 후 무적 시간인 플레이어는 때릴 수 없습니다." to attacker
+        stop
+    if {terror::%attacker%} is set:
+        if {terror::%attacker%} is {terror::%victim%}:
+            if {terror::%attacker%} is 1:
+                cancel event
+        else:
+            stop
+    if {pvpdeny::%uuid of victim%} is set:
+        send "&c&lHey!&7 Sorry, but you can't PVP here." to attacker
+        cancel event
+        stop
+    if "%region at victim%" contains "police_jail":
+        if {pvpdeny::%uuid of attacker%} isn't set:
+            if {pvpdeny::%uuid of victim%} isn't set:
+                send "&c&lHey!&7 Sorry, but you can't PVP here." to attacker
+                cancel event
+                stop
+    if "%region at victim%" contains "squidgame":
+        stop
+    if {newbie::%uuid of attacker%} is set:
+        send "{@Prefix} &c뉴비는 다른 플레이어를 공격할 수 없습니다. 해제하려면 /뉴비보호해제를 입력하세요." to attacker
+        cancel event
+        stop
+    if {newbie::%uuid of victim%} is set:
+        attacker isn't op
+        send "{@Prefix} &c뉴비를 공격할 수 없습니다." to attacker
+        cancel event
+        stop
+    if uncolored name of attacker's tool is "도축업자 칼":
+        victim is player
+        send "{@Prefix} &c&l도축업자 칼&7을 통해 피해를 입힐 수 없습니다." to attacker
+        cancel event
+        stop
+    if attacker's tool's type is pickaxe:   
+        attacker isn't op
+        send "{@Prefix} &c&l곡괭이&7를 통해 피해를 입힐 수 없습니다." to attacker
+        cancel event
+        stop
+    if attacker's tool's type is shovel:
+        attacker isn't op
+        send "{@Prefix} &c&l삽&7을 통해 피해를 입힐 수 없습니다." to attacker
+        cancel event
+        stop
+    if attacker's tool's type is axe:
+        attacker isn't op
+        send "{@Prefix} &c&l도끼&f를 통해 피해를 입힐 수 없습니다." to attacker
+        cancel event
+        stop
+    if attacker's tool's type is hoe:
+        attacker isn't op
+        send "{@Prefix} &c&l괭이&f를 통해 피해를 입힐 수 없습니다." to attacker
+        cancel event
+        stop
+    if attacker is player:
+        if "%region at victim%" contains "island-3":
+            if "%region at attacker%" contains "island-3":
+                stop
+        if {jobless.boolean::%victim%} is "%attacker%":
+            stop
+        if {mafia.hide::%attacker%} is set:
+            stop
+        if {mafia.hide::%victim%} is set:
+            stop
+        send "{@Prefix} &f%attacker%&7님이 당신을 &f폭행&7하였습니다." to victim
+        send "{@Prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%" to victim

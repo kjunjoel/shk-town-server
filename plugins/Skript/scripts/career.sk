@@ -1,0 +1,281 @@
+options:
+    prefix: &f[ &6&l!&f ]
+    경력퍼미션: career.admin
+
+# ------------------------------ 경력 ------------------------------
+
+#일반 유저의 경우:
+#/경력 : 자신의 경력을 조회할 수 있습니다. 
+#     ㄴ 정보는 아래 경력관리 명령어로 추가한 정보 보이게 해주세요.
+#/경력 조회 닉네임 : 타인의 경력을 조회할 수 있습니다.
+#     ㄴ 가능하다면: 일반 유저의 경우 일 3회 최대. 조회권 개당 1천원 및 MVP 이상의 유저는 제한 없음.
+#     ㄴ 위에가 채택된다면: 시청, 대학교 공무원은 제한 없음.
+#
+#담당자(시청, 대학교)의 경우:
+#/경력관리 닉네임 추가/삭제/변경 경력종류 세부사항 연월일 : 경력관리 명령어를 통해서 /경력 조회 에 뜨는 정보를 보여줍니다.
+#     ㄴ 경력는 [1] [2] 같이(부동산 시스템과 유사) 번호대로 뜹니다.
+#     ㄴ 경력관리 추가: 경력을 추가합니다.
+#     ㄴ 경력관리 삭제: 번호에 해당하는 경력을 삭제합니다.
+#     ㄴ 경력관리 변경: 귀찮으시면, 경력 삭제하고 추가하는 것이 맞겠지만 연월일에 따라서 타임라인으로 뜨게 하고 싶어서. 변경을 추가하고자 합니다. 명령어를 치면, 경력종류, 일자 연월일을 바꿀 수 있습니다. (X)
+
+# 변수
+# {career::%uuid of player%::*}   | 플레이어의 경력 -> "경력종류(학력/경력) 세부사항 연월일" | String type
+# {career.time::%uuid of player%} | 플레이어가 해당일에 경력을 조회한 횟수
+
+command /경력 [<text>] [<offlineplayer>]:
+    trigger:
+        if arg-1 isn't set:
+            if {career::%uuid of player%::*} isn't set:
+                send "&f"   
+                send "{@prefix} &e%player%&f님의 경력 기록을 찾을 수 없습니다."
+                send "&f"  
+                send "{@prefix} &e&l&oTIP!&f 혹시 아래 명령어를 찾으셨나요?"
+                send "{@prefix} /경력 조회 <닉네임> &8&l|&f 다른 플레이어의 경력을 조회할 수 있습니다."
+                send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+                send "{@prefix} &7└ MVP와 시청, 대학교 소속 공무원은 제한 없이 사용할 수 있습니다."
+                send "&f"
+                stop
+            send "&f"
+            send "{@prefix} &e%player%&f님의 경력 기록은 다음과 같습니다."
+            send "&f"
+            set {_ind} to 1
+            loop {career::%uuid of player%::*}:
+                set {_data::*} to loop-value split by " "
+                send "&e[%{_ind}%]&f %{_data::1}% &8&l|&f %{_data::2}% &8&l|&f %{_data::3}% &8&l|&f %{_data::4}%"
+                add 1 to {_ind}
+            send "&f"
+            send "{@prefix} &e&l&oTIP!&f 혹시 아래 명령어를 찾으셨나요?"
+            send "{@prefix} /경력 조회 <닉네임> &8&l|&f 다른 플레이어의 경력을 조회할 수 있습니다."
+            send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+            send "{@prefix} &7└ MVP와 시청, 대학교 소속 공무원은 제한 없이 사용할 수 있습니다."
+            send "&f"
+
+        else if arg-1 is "조회":
+            if uuid of player is "029189db-abe3-43ac-a6ec-0bf4b216e278" or "253902dc-2287-4697-8472-6fa905916797" or "4a3f73b7-9cea-459c-95cd-df437ea0dc3b" or "67f3b56d-7f77-4325-974b-ff1d6aceef79" or "91b5d16d-86f0-4344-8e28-b9e3c14f190f" or "ac683b06-0717-47a2-a690-1debaa673046" or "bac2bca2-c558-4f5d-b59a-6549c5d60882": # MVP 명단
+                set {_temp} to true
+
+            else if player has permission "{@경력퍼미션}":
+                set {_temp} to true
+            else if {career.time::%uuid of player%} isn't set:
+                set {_temp} to true
+            else if {career.time::%uuid of player%} < 3:
+                set {_temp} to true
+            else if {career.time::%uuid of player%} >= 3:
+                if balance of player < 1000:
+                    send "&f"
+                    send "{@prefix} 다른 플레이어의 경력을 조회하기 위한 잔액이 부족합니다."
+                    send "&f"
+                    stop
+            if arg-2 isn't set:
+                send "&f"
+                send "{@prefix} 경력을 조회할 플레이어를 입력해주세요."
+                send "&f"
+                stop
+
+            if arg-2 isn't player:
+                add 1 to {career.time::%uuid of player%}
+                if {career.time::%uuid of player%} > 3:
+                    balanceRemove(player, 1000, "CareerFind")
+                    send "&f"
+                    send "{@prefix} %arg-2%의 경력을 조회하여 &61,000원&f이 출금되었습니다."
+                    send "&f"
+                    if uuid of player is "029189db-abe3-43ac-a6ec-0bf4b216e278" or "253902dc-2287-4697-8472-6fa905916797" or "4a3f73b7-9cea-459c-95cd-df437ea0dc3b" or "67f3b56d-7f77-4325-974b-ff1d6aceef79" or "91b5d16d-86f0-4344-8e28-b9e3c14f190f" or "ac683b06-0717-47a2-a690-1debaa673046" or "bac2bca2-c558-4f5d-b59a-6549c5d60882":
+                        balanceAdd(player, 1000, "CareerMVPFind")
+                        send "{@prefix} 당신은 &b&l&nMVP&f여서 &61,000원&f이 출금되지 않았습니다!"
+
+                    else if player has permission "{@경력퍼미션}":
+                        balanceAdd(player, 1000, "CareerOfficeFind")
+                        send "{@prefix} 당신은 &d&l&n시청&f, &3&l&n대학교&f 소속 공무원&f이여서 &61,000원&f이 출금되지 않았습니다!"
+
+            if {career::%uuid of arg-2%::*} isn't set:
+                send "&f"
+                send "{@prefix} &e%arg-2%&f님의 경력 기록을 찾을 수 없습니다."
+                send "&f"
+                stop
+            send "&f"
+            send "{@prefix} &e%arg-2%&f님의 경력 기록은 다음과 같습니다."
+            send "&f"
+            set {_ind} to 1
+            loop {career::%uuid of arg-2%::*}:
+                set {_data::*} to loop-value split by " "
+                send "&e[%{_ind}%]&f %{_data::1}% &8&l|&f %{_data::2}% &8&l|&f %{_data::3}% &8&l|&f %{_data::4}%" to player
+                add 1 to {_ind}
+
+        else:
+            send "&f"
+            send "{@prefix} /경력 조회 <닉네임> &8&l|&f 다른 플레이어의 경력을 조회할 수 있습니다."
+            send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+            send "{@prefix} &7└ MVP와 시청, 대학교 소속 공무원은 제한 없이 사용할 수 있습니다."
+            send "&f"
+
+command /경력관리 [<offlineplayer>] [<text>] [<text>] [<text>] [<integer>] [<integer>]:
+    permission: {@경력퍼미션}
+    trigger:
+        if arg-1 isn't set:
+            send "&f"
+            send "{@prefix} 경력을 관리할 플레이어를 입력해주세요."
+            send "{@prefix} /경력관리 <닉네임> 추가 <경력종류> <세부정보> <연월일> <연월일> &8&l|&f 경력 정보를 등록합니다."
+            send "{@prefix} /경력관리 <닉네임> 삭제 <번호> &8&l|&f 경력 정보를 삭제합니다."
+            send "&f"
+            stop
+
+        if arg-1 is player:
+            if player isn't op:
+                send "&f"
+                send "{@prefix} 본인의 경력을 관리할 수 없습니다."
+                stop
+
+        if arg-2 isn't "추가" or "삭제":
+            send "&f"
+            send "{@prefix} 추가 또는 삭제를 선택하여 주세요."
+            stop
+
+
+        if arg-2 is "추가":
+            if arg-3 isn't set:
+                send "&f"
+                send "{@prefix} 경력 종류를 띄어쓰기 없이 입력해주세요."
+                stop
+            else if arg-3 isn't "학위" or "공무원":
+                send "&f"
+                send "{@prefix} 형벌의 종류는 &b학위(대학교)&f, &b공무원(시청)&f입니다."
+                stop
+            if arg-4 isn't set:
+                send "&f"
+                send "{@prefix} 세부사항를 띄어쓰기 없이 입력해주세요."
+                send "{@prefix} &7└ ex) 법학과(졸), 법학과(자), 대법원장(1대)"
+                stop
+            if arg-5 isn't set:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if arg-5 < 10000000:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if arg-5 > 99991231:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            set {_year} to round down (arg-5 / 10000)
+            set {_month} to round down (mod(arg-5, 10000) / 100)
+            set {_day} to mod(arg-5, 100)
+            if {_month} > 12:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_day} > 31:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_month} is 4 or 6 or 9 or 11:
+                if {_day} is 31:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_month} is 2:
+                if {_day} is 30:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_year} > now formatted as "yyyy" parsed as integer:
+                send "&f"
+                send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} > now formatted as "MM" parsed as integer:
+                    send "&f"
+                    send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                    stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} is now formatted as "MM" parsed as integer:
+                    if {_day} > now formatted as "dd" parsed as integer:
+                        send "&f"
+                        send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                        stop
+            if arg-6 > 99991231:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            set {_year} to round down (arg-6 / 10000)
+            set {_month} to round down (mod(arg-6, 10000) / 100)
+            set {_day} to mod(arg-6, 100)
+            if {_month} > 12:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_day} > 31:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_month} is 4 or 6 or 9 or 11:
+                if {_day} is 31:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_month} is 2:
+                if {_day} is 30:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_year} > now formatted as "yyyy" parsed as integer:
+                send "&f"
+                send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} > now formatted as "MM" parsed as integer:
+                    send "&f"
+                    send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                    stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} is now formatted as "MM" parsed as integer:
+                    if {_day} > now formatted as "dd" parsed as integer:
+                        send "&f"
+                        send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                        stop
+            if {career::%uuid of arg-1%::*} contains "%arg-3% %arg-4% %arg-5% %arg-6%":
+                send "&f"
+                send "{@prefix} 해당 경력은 이미 등록된 경력입니다."
+                stop
+            add "%arg-3% %arg-4% %arg-5% %arg-6%" to {career::%uuid of arg-1%::*}
+            send "&f"
+            send "{@prefix} &e%arg-1%&f님의 경력에 다음 정보가 등록되었습니다."
+            send "{@prefix} └ 경력종류: %arg-3% &8&l|&f 세부사항: %arg-4% &8&l|&f 연월일: %arg-5% &8&l|&f 연월일: %arg-6%"
+            send "&f"
+
+        else if arg-2 is "삭제":
+            set {_number} to arg-3 parsed as integer
+            if {_number} <= 0:
+                send "&f"
+                send "{@prefix} 올바른 번호를 입력해주세요."
+                send "{@prefix} &7└ 번호는 /경력 조회 <닉네임>으로 확인할 수 있습니다."
+                send "&f"
+                stop
+            set {_count} to size of {career::%uuid of arg-1%::*}
+            if {_count} is 0:
+                send "&f"
+                send "{@prefix} 해당 플레이어의 경력 기록을 찾을 수 없습니다."
+                send "&f"
+                stop
+            if {_number} > {_count}:
+                send "&f"
+                send "{@prefix} 올바른 번호를 입력해주세요."
+                send "{@prefix} &7└ 번호는 /경력 조회 <닉네임>으로 확인할 수 있습니다."
+                send "&f"
+                stop
+            set {_ind} to 1
+            loop {career::%uuid of arg-1%::*}:
+                if {_ind} is {_number}:
+                    send "&f"
+                    send "{@prefix} &e%arg-1%&f님의 경력 중 다음 정보가 삭제되었습니다."
+                    set {_data::*} to loop-value split by " "
+                    send "{@prefix} └ 경력종류: %{_data::1}% &8&l|&f 세부사항: %{_data::2}% &8&l|&f 연월일: %{_data::3}% &8&l|&f %{_data::4}%"
+                    send "&f"
+                    delete {career::%uuid of arg-1%::%loop-index%}
+                add 1 to {_ind}
+
+        else:
+            send "&f"
+            send "{@prefix} /경력관리 <닉네임> 추가 <경력종류> <세부사항> <연월일> <연월일> &8&l|&f 경력 정보를 등록합니다."
+            send "{@prefix} /경력관리 <닉네임> 삭제 <번호> &8&l|&f 경력 정보를 삭제합니다."
+            send "&f"

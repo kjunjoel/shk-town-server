@@ -1,0 +1,145 @@
+options:
+    JUNGANG: station-jungan
+    SEOCHON: station-seochon
+    BUNPYEONG: station-bunpyeong
+    JUNGANG_TO_SEOCHON: train-js
+    SEOCHON_TO_BUNPYEONG: train-sb
+    BUNPYEONG_TO_SEOCHON: train-bs
+    SEOCHON_TO_JUNGANG: train-sj
+    
+    STATION_DOWNSIDE_BUNPYEONG: train.train_station_downside_bunpyeong
+    STATION_DOWNSIDE_TERMINATE: train.train_station_upside_terminate
+    STATION_UPSIDE_JUNGANG: train.train_station_upside_jungang
+    STATION_UPSIDE_TERMINATE: train.train_station_downside_terminate
+    TRAIN_BOUND_BUNPYEONG: train.train_train_bunpyeong_start
+    TRAIN_BOUND_JUNGANG: train.train_train_jungang_start
+    TRAIN_SEOCHON: train.train_train_seochon
+    TRAIN_LAST_BUNPYEONG: train.train_train_bunpyeong_stop
+    TRAIN_LAST_JUNGANG: train.train_train_jungang_stop
+
+on load:
+    loop 1, 4, 7, 10, 13, and 16:
+        delete {train.%loop-value%}
+        execute console command "hd setline train-%loop-value% 4 위치: &a정보 없음"
+
+on unload:
+    loop 1, 4, 7, 10, 13, and 16:
+        delete {train.%loop-value%}
+        execute console command "hd setline train-%loop-value% 4 위치: &a정보 없음"
+
+function trainHologram(n: number):
+    loop 1, 4, 7, 10, 13, and 16:
+        delete {_diff}
+        set {_i} to loop-value
+        set {_diff} to mod({_i}-{_n}+18, 18)
+        if {train.%loop-value%} isn't set:
+            set {train.%loop-value%} to {_diff}
+        else if {train.%loop-value%} is 0:
+            if {_diff} is 17:
+                set {train.%loop-value%} to {_diff}
+        else if {train.%loop-value%} >= {_diff}:
+            set {train.%loop-value%} to {_diff}
+        if {train.%loop-value%} is 0:
+            execute console command "hd setline train-%loop-value% 4 위치: &a당역 도착"
+        else if {train.%loop-value%} is 1:
+            execute console command "hd setline train-%loop-value% 4 위치: &a당역 접근"
+        else if {train.%loop-value%} is 2:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전역 출발"
+        else if {train.%loop-value%} is 3:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전역 도착"
+        else if {train.%loop-value%} is 4:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전역 접근"
+        else if {train.%loop-value%} is 5:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전전역 출발"
+        else if {train.%loop-value%} is 6:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전전역 도착"
+        else if {train.%loop-value%} is 7:
+            execute console command "hd setline train-%loop-value% 4 위치: &a전전역 접근"
+        else if {train.%loop-value%} is 8:
+            execute console command "hd setline train-%loop-value% 4 위치: &a3전역 출발"
+        else if {train.%loop-value%} is 9:
+            execute console command "hd setline train-%loop-value% 4 위치: &a3전역 도착"
+        else if {train.%loop-value%} is 10:
+            execute console command "hd setline train-%loop-value% 4 위치: &a3전역 접근"
+        else if {train.%loop-value%} is 11:
+            execute console command "hd setline train-%loop-value% 4 위치: &a4전역 출발"
+        else if {train.%loop-value%} is 12:
+            execute console command "hd setline train-%loop-value% 4 위치: &a4전역 도착"
+        else if {train.%loop-value%} is 13:
+            execute console command "hd setline train-%loop-value% 4 위치: &a4전역 접근"
+        else if {train.%loop-value%} is 14:
+            execute console command "hd setline train-%loop-value% 4 위치: &a5전역 출발"
+        else if {train.%loop-value%} is 15:
+            execute console command "hd setline train-%loop-value% 4 위치: &a5전역 도착"
+        else if {train.%loop-value%} is 16:
+            execute console command "hd setline train-%loop-value% 4 위치: &a5전역 접근"
+        else if {train.%loop-value%} is 17:
+            execute console command "hd setline train-%loop-value% 4 위치: &a당역 출발"
+
+command /train_bal [<text>]:
+    trigger:
+        (command sender).getBlock() is set
+        set {_location} to (command sender).getBlock().getLocation()
+        loop all players:
+            if {_closest-player} is not set:
+                set {_closest-player} to loop-player
+            else if (distance between loop-player and {_location}) < (distance between {_closest-player} and {_location}):
+                set {_closest-player} to loop-player            
+        if {_closest-player}'s balance < 0:
+            send "[ &6&l! &f] 잔액이 부족합니다." to {_closest-player}
+            make {_closest-player} run command "warp %arg-1%-out" as op
+            stop
+        send "[ &6&l! &f] 요금 &e0원&f이 이체되었습니다." to {_closest-player}
+        balanceRemove({_closest-player}, 0, "Train")
+
+
+command /train_sound [<number>]:
+    trigger:
+        trainHologram(arg-1)
+        if arg-1 is 2: # 중앙(하행) 출발
+            loop all players:
+                if "%region at loop-player%" contains "{@JUNGANG_TO_SEOCHON}":
+                    play sound "{@TRAIN_BOUND_BUNPYEONG}" with volume 1 at loop-player
+
+        else if arg-1 is 3: # 서촌(하행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@JUNGANG_TO_SEOCHON}":
+                    play sound "{@TRAIN_SEOCHON}" with volume 1 at loop-player
+                else if "%region at loop-player%" contains "{@SEOCHON}":
+                    play sound "{@STATION_DOWNSIDE_BUNPYEONG}" with volume 1 at loop-player
+
+        else if arg-1 is 6: # 분평(하행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@SEOCHON_TO_BUNPYEONG}":
+                    play sound "{@TRAIN_LAST_BUNPYEONG}" with volume 1 at loop-player
+                else if "%region at loop-player%" contains "{@BUNPYEONG}":
+                    play sound "{@STATION_DOWNSIDE_TERMINATE}" with volume 1 at loop-player
+        
+        else if arg-1 is 9: # 분평(상행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@BUNPYEONG}":
+                    play sound "{@STATION_UPSIDE_JUNGANG}" with volume 1 at loop-player
+
+        else if arg-1 is 11: # 분평(상행) 출발
+            loop all players:
+                if "%region at loop-player%" contains "{@BUNPYEONG_TO_SEOCHON}":
+                    play sound "{@TRAIN_BOUND_JUNGANG}" with volume 1 at loop-player
+
+        else if arg-1 is 12: # 서촌(상행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@BUNPYEONG_TO_SEOCHON}":
+                    play sound "{@TRAIN_SEOCHON}" with volume 1 at loop-player
+                else if "%region at loop-player%" contains "{@SEOCHON}":
+                    play sound "{@STATION_UPSIDE_JUNGANG}" with volume 1 at loop-player
+
+        else if arg-1 is 15: # 중앙(상행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@SEOCHON_TO_JUNGANG}":
+                    play sound "{@TRAIN_LAST_JUNGANG}" with volume 1 at loop-player
+                else if "%region at loop-player%" contains "{@JUNGANG}":
+                    play sound "{@STATION_UPSIDE_TERMINATE}" with volume 1 at loop-player
+
+        else if arg-1 is 18: # 중앙(하행) 접근
+            loop all players:
+                if "%region at loop-player%" contains "{@JUNGANG}":
+                    play sound "{@STATION_DOWNSIDE_BUNPYEONG}" with volume 1 at loop-player

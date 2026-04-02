@@ -1,0 +1,7 @@
+options:
+    prefix: [ &6&l!&f ]
+
+command /npc_pos:
+    permission: op
+    trigger:
+        send "%x coord of event-entity%, %y coord of event-entity%, %z coord of event-entity%"

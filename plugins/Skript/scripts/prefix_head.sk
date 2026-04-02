@@ -1,0 +1,254 @@
+options:
+    # 접두사
+    prefix: &c&l》 &f
+
+    # GUI
+    guiSet: &c&l< &f머리칭호 &c&l>
+    guiEdit: &c&l< &f머리칭호관리 &c&l>
+
+# 변수
+# {prefixhead.prefix::*}               | 전체 칭호 목록
+# {prefixhead.%uuid of player%::*}     | 플레이어의 칭호 목록
+# {prefixhead.preifx.%uuid of player}  | 플레이어의 칭호
+# {prefixhead.page.%uuid of player%}   | 칭호 페이지
+# {prefixhead.enable.%uuid of player%} | 채팅이 취소되지 않는지
+
+function prefixheadGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@guiSet}"
+    set slot 45, 46, 47, 51, and 52 of {_inv} to white stained glass pane named "&f"
+    set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+    set {_page} to round up ((size of {prefix.%uuid of {_p}%::*}) / 45)
+    if {prefixhead.prefix.%uuid of {_p}%} isn't set:
+        set slot 49 of {_inv} to {_p}'s skull named "&e착용중인 머리칭호" with lore "&f없음" and "&f%{_n}%/%{_page}% 페이지"
+    else:
+        set slot 49 of {_inv} to {_p}'s skull named "&e착용중인 머리칭호" with lore colored "%{prefix.prefix.%uuid of {_p}%}%" and "&f%{_n}%/%{_page}% 페이지"
+    set slot 53 of {_inv} to barrier named "&c머리칭호 착용 해제"
+    set {_ind} to 0
+    loop {prefixhead.%uuid of {_p}%::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            if {prefixhead.%uuid of {_p}%::%loop-index%::set} is true:
+                set {_item} to enchanted book named colored loop-value with lore "&7착용 중인 칭호입니다."
+            else:
+                set {_item} to knowledge book named colored loop-value with lore "&7좌클릭하여 칭호 착용"
+            set {_i} to {_ind} - ({_n}-1)*45
+            set slot ({_i} - 1) of {_inv} to {_item}
+    open {_inv} to {_p}
+
+function prefixheadEdit(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@guiEdit}"
+    set slot 45, 46, 47, 51, and 52 of {_inv} to pink stained glass pane named "&f"
+    set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+    set {_page} to round up ((size of {prefixhead.prefix::*}) / 45)
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%{_page}% 페이지"
+    set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+    set {_ind} to 0
+    loop sorted {prefixhead.prefix::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_item} to knowledge book named "&f%loop-value%" with lore colored "&e&l표시&f: %loop-value%", "&a좌클릭&f하여 머리칭호책 얻기" and "&c우클릭&f하여 머리칭호 삭제"
+            set {_i} to {_ind} - ({_n}-1)*45
+            set slot ({_i} - 1) of {_inv} to {_item}
+    open {_inv} to {_p}
+
+command /prefixhead [<text>] [<text>]:
+    permission: op.user
+    permission message: {@prefix} 이 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "list":
+            set {prefixhead.page.%uuid of player%} to 1
+            prefixheadEdit(player, 1)
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadEditGUI} to true
+        
+        else if arg 1 is "add":
+            if arg 2 isn't set:
+                send "{@prefix} 추가할 머리칭호를 입력해주시기 바랍니다."
+                stop
+            loop {prefixhead.prefix::*}:
+                if colored arg-2 is colored loop-value:
+                    set {_temp} to true
+            if {_temp} is true:
+                send "{@prefix} 이미 존재하는 머리칭호입니다."
+                stop
+            set {prefixhead.prefix::%arg-2%} to arg-2
+            send "{@prefix} 머리칭호를 추가했습니다."
+            stop
+
+        else if arg 1 is "get":
+            if arg 2 isn't set:
+                send "{@prefix} 얻을 머리칭호를 입력해주시기 바랍니다."
+                stop
+            loop {prefixhead.prefix::*}:
+                if uncolored arg-2 is uncolored loop-value:
+                    itemGive(player, knowledge book named colored loop-value with lore "&7우클릭하여 머리칭호를 획득합니다.", 1, "Prefix")
+            send "{@prefix} 머리칭호책을 얻었습니다."
+            
+        else:
+            send "{@prefix} /prefixhead list &8&l| &f머리칭호 리스트를 확인합니다."
+            send "{@prefix} /prefixhead add [칭호] &8&l| &f머리칭호를 추가합니다."
+            send "{@prefix} /prefixhead get [칭호] &8&l| &f머리칭호를 획득합니다."
+            stop
+
+command /머리칭호확인 [<offlineplayer>]:
+    permission: op.user
+    permission message: {@prefix} 이 명령어를 사용할 권한이 없습니다.
+    trigger:
+        set {_inv} to chest inventory with 6 rows named "&f머리칭호 관리 &6%arg-1%"
+        set slot 45, 46, 47, 51, 52, and 53 of {_inv} to white stained glass pane named "&f"
+        set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+        set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+        set {_page} to round up ((size of {prefixhead.%uuid of arg-1%::*}) / 45)
+        if {prefixhead.prefix.%uuid of arg-1%} isn't set:
+            set slot 49 of {_inv} to arg-1's skull named "&e착용중인 머리칭호" with lore "&f없음" and "&f%{_n}%/%{_page}% 페이지"
+        else:
+            set slot 49 of {_inv} to arg-1's skull named "&e착용중인 머리칭호" with lore colored "%{prefixhead.prefix.%uuid of arg-1%}%" and "&6%{_n}%/%{_page}% 페이지"
+        set {_ind} to 0
+        loop {prefixhead.%uuid of arg-1%::*}:
+            add 1 to {_ind}
+            if {prefixhead.%uuid of arg-1%::%loop-index%::set} is true:
+                set {_item} to enchanted book named colored loop-value with lore "&7착용 중인 머리칭호입니다." and "&c우클릭하여 삭제"
+            else:
+                set {_item} to knowledge book named colored loop-value with lore "&7미착용 중인 머리칭호입니다." and "&c우클릭하여 삭제"
+            set {_i} to {_ind}
+            set slot ({_i} - 1) of {_inv} to {_item}
+        open {_inv} to player
+
+on inventory click:
+    if uncolored display name of event-inventory contains "머리칭호 관리":
+        player is op
+        set {_name::*} to uncolored display name of event-inventory split by " "
+        set {_player} to uncolored {_name::3} parsed as offlineplayer
+        set {_lore::*} to lore of clicked item
+        if {_lore::2} contains "&c우클릭하여 삭제":
+            click type is right mouse button
+            loop {prefixhead.%uuid of {_player}%::*}:
+                if uncolored loop-value is uncolored name of clicked item:
+                    delete {prefixhead.%uuid of {_player}%::%loop-index%}
+            if {_lore::1} contains "&7착용 중인 머리칭호입니다.":
+                delete {prefixhead.prefix.%uuid of {_player}%}
+        execute player command "머리칭호확인 %{_player}%"
+
+    else if {gui.%uuid of player%::prefixheadGUI} is true:
+        cancel event
+        if clicked slot is 48:
+            if {prefixhead.page.%uuid of player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {prefixhead.page.%uuid of player%}
+            prefixheadGUI(player, {prefixhead.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadGUI} to true
+            stop
+
+        else if clicked slot is 50:
+            if ({prefixhead.page.%uuid of player%} * 18) >= (size of {prefixhead.%uuid of player%::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {prefixhead.page.%uuid of player%}
+            prefixheadGUI(player, {prefixhead.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadGUI} to true
+            stop
+
+        else if clicked slot is 53:
+            delete {prefixhead.prefix.%uuid of player%}
+            loop {prefixhead.%uuid of player%::*}:
+                if {prefixhead.%uuid of player%::%loop-index%::set} is true:
+                    delete {prefixhead.%uuid of player%::%loop-index%::set}
+            send "{@prefix} 머리칭호가 해제되었습니다."
+            execute console command "tab player %player% prefixhead"
+            prefixheadGUI(player, {prefixhead.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadGUI} to true
+            stop
+
+        else if clicked slot is 45 or 46 or 47 or 49 or 51 or 52:
+            stop
+        
+        else:
+            if type of clicked slot is knowledge book:
+                loop {prefixhead.%uuid of player%::*}:
+                    if {prefixhead.%uuid of player%::%loop-index%::set} is true:
+                        delete {prefixhead.%uuid of player%::%loop-index%::set}
+                    if uncolored name of clicked slot is uncolored loop-value:
+                        set {prefixhead.prefix.%uuid of player%} to loop-value
+                        execute console command "tab player %player% prefixhead %{prefixhead.prefix.%uuid of player%}%"
+                        set {prefixhead.%uuid of player%::%loop-index%::set} to true
+                send "{@prefix} 머리칭호를 착용했습니다."
+                prefixheadGUI(player, {prefixhead.page.%uuid of player%})
+                wait 1 tick
+                set {gui.%uuid of player%::prefixheadGUI} to true
+                stop
+            else if type of clicked slot is enchanted book:
+                send "{@prefix} 이미 착용 중인 머리칭호입니다."
+                stop
+            else:
+                stop
+
+    else if {gui.%uuid of player%::prefixheadEditGUI} is true:
+        cancel event
+        if clicked slot is 48:
+            if {prefixhead.page.%uuid of player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {prefixhead.page.%uuid of player%}
+            prefixheadEdit(player, {prefixhead.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadEditGUI} to true
+            stop
+
+        else if clicked slot is 50:
+            if ({prefixhead.page.%uuid of player%} * 18) >= (size of {prefixhead.prefix::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {prefixhead.page.%uuid of player%}
+            prefixheadEdit(player, {prefixhead.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::prefixheadEditGUI} to true
+            stop
+
+        else if clicked slot is 45 or 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+        
+        else:
+            if clicked slot isn't air:
+                if click type is left mouse button:
+                    loop {prefixhead.prefix::*}:
+                        if uncolored name of clicked slot is uncolored loop-value:
+                            itemGive(player, knowledge book named colored loop-value with lore "&7우클릭하여 머리칭호를 획득합니다.", 1, "Prefix")
+                            send "{@prefix} 머리칭호책을 얻었습니다."
+                            exit 1 loop
+                    stop
+                else if click type is right mouse button:
+                    loop {prefixhead.prefix::*}:
+                        if uncolored name of clicked slot is uncolored loop-value:
+                            delete {prefixhead.prefix::%loop-index%}
+                            send "{@prefix} 머리칭호를 삭제했습니다."
+                            exit 1 loop
+                    prefixheadEdit(player, {prefixhead.page.%uuid of player%})
+                    wait 1 tick
+                    set {gui.%uuid of player%::prefixheadEditGUI} to true
+                    stop
+
+on inventory close:
+    if {gui.%uuid of player%::prefixheadGUI} is true:
+        delete {gui.%uuid of player%::prefixheadGUI}
+    if {gui.%uuid of player%::prefixheadEditGUI} is true:
+        delete {gui.%uuid of player%::prefixheadEditGUI}
+
+on rightclick:
+    if uncolored lore of player's tool contains "우클릭하여 머리칭호를 획득합니다.":
+        set {_n} to name of player's tool
+        loop {prefixhead.%uuid of player%::*}:
+            if colored {_n} is uncolored loop-value:
+                send "{@prefix} 이미 획득한 머리칭호입니다."
+                stop
+        set {prefixhead.%uuid of player%::%{_n}%} to {_n}
+        remove 1 of player's tool from player's tool
+        send "{@prefix} 머리칭호를 획득하였습니다." 
+        stop
+
+on quit:
+    delete {prefix.page.%uuid of player%}

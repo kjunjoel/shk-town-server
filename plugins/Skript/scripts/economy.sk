@@ -1,0 +1,974 @@
+import:
+    java.lang.Object
+
+options:
+    # 접두사
+    prefix: <##F77E21>&l[은행]&f
+
+    # 은행 GUI
+    bankGUI: &f[<##F77E21>상어은행&f]
+    putGUI: &f[<##F77E21>입금&f]
+    getGUI: &f[<##F77E21>입력된 금액 &f]
+
+    # 은행 NPC
+    npc: [&6&l은행&f] 김필원
+
+    # 통장
+    bookname: &f[<##F77E21>상어은행&f] 통장
+
+    # 로그 저장 장소
+    account: plugins/Skript/data/logs/account
+    account_do: plugins/Skript/data/economy/account_do
+    max: 135
+    atm: plugins/Skript/data/economy/atm.txt
+    dir: plugins/Skript/data/logs/economy/economy_%now formatted as "yyyy-MM-dd"%_%round down (now formatted as "H" parsed as number)/3%.txt
+
+# 변수
+# {bank.number}                    | 전체 번호
+# {bank.account::%uuid of player%} | 플레이어의 계좌번호
+# {bank.put.%uuid of player%}      | 플레이어가 입금 중인지
+# {bank.money.%uuid of player%}    | 플레어이가 입력 중인 금액
+# {bank.get.%uuid of player%}      | 플레이어가 출금 중인지
+# {bank.player.%uuid of player%}   | 플레어이가 송금 하려는 수취인
+# {bank.send.%uuid of player%}     | 플레이어가 송금 중인지
+# {bank.chat.%uuid of player%}     | 플레이어가 수취인을 입력했는지
+# {bank.page.%player%}
+
+function balanceToWon(t: text) :: text:
+    return {_t}
+
+function moneyDigit(int: number) :: text:
+	set {_int} to "%{_int}%"
+	set {_split.int::*} to {_int} split at ""
+	set {_length} to length of {_int} 
+
+	set {_n} to round up ({_length}/3)
+	loop {_n} times:
+		loop 3 times:
+			if {_t} is not set:
+				set {_t} to "%{_split.int::%{_length}%}%"
+			else:
+				{_split.int::%{_length}%} is set
+				set {_t} to "%{_split.int::%{_length}%}%%{_t}%"
+			set {_length} to {_length} - 1
+		loop-number < {_n}
+		set {_t} to ",%{_t}%"
+	return {_t}
+
+function balanceAdd(p: offlineplayer, n: number, option: text):
+    add {_n} to {_p}'s balance
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_option}% MoneyAdd %{_p}% %{_n}% (잔액: %{_p}'s balance%)" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function balanceRemove(p: offlineplayer, n: number, option: text):
+    remove {_n} from {_p}'s balance
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_option}% MoneyRemove %{_p}% %{_n}% (잔액: %{_p}'s balance%)" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function balanceSet(p: offlineplayer, n: number, option: text):
+    set {_p}'s balance to {_n}
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_option}% MoneySet %{_p}% %{_n}% (잔액: %{_p}'s balance%)" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function balanceClear(p: offlineplayer, option: text):
+    set {_p}'s balance to 0
+    create file "{@dir}" if file "{@dir}" doesn't exist
+    write "[%now%] %{_option}% MoneyClear %{_p}% (잔액: %{_p}'s balance%)" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function giveMoney(p: player, n: number):
+    set {_50000} to round down ({_n} / 50000)
+    set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "{@bankGUI}"
+    itemGive({_p}, {_item}, {_50000}, "Bank")
+    remove ({_50000} * 50000) from {_n}
+    set {_10000} to round down ({_n} / 10000)
+    set {_item} to gold ingot with custom model data 3 named "&f10,000원" with lore "{@bankGUI}"
+    itemGive({_p}, {_item}, {_10000}, "Bank")
+    remove ({_10000} * 10000) from {_n}
+    set {_5000} to round down ({_n} / 5000)
+    set {_item} to gold ingot with custom model data 2 named "&f5,000원" with lore "{@bankGUI}"
+    itemGive({_p}, {_item}, {_5000}, "Bank")
+    remove ({_5000} * 5000) from {_n}
+    set {_1000} to round down ({_n} / 1000)
+    set {_item} to gold ingot with custom model data 1 named "&f1,000원" with lore "{@bankGUI}"
+    itemGive({_p}, {_item}, {_1000}, "Bank")
+    remove ({_1000} * 1000) from {_n}
+    dailyquestSound({_p}, 9)
+
+function makeAccount(p: player):
+    if {bank.number} is between 1 and 9:
+        set {bank.account::%uuid of {_p}%} to "110-35-00000%{bank.number}%"
+    else if {bank.number} is between 10 and 99:
+        set {bank.account::%uuid of {_p}%} to "110-35-0000%{bank.number}%"
+    else if {bank.number} is between 100 and 999:
+        set {bank.account::%uuid of {_p}%} to "110-35-000%{bank.number}%"
+    else if {bank.number} is between 1000 and 9999:
+        set {bank.account::%uuid of {_p}%} to "110-35-00%{bank.number}%"
+    else if {bank.number} is between 10000 and 99999:
+        set {bank.account::%uuid of {_p}%} to "110-35-0%{bank.number}%"
+    else if {bank.number} is between 100000 and 999999:
+        set {bank.account::%uuid of {_p}%} to "110-35-%{bank.number}%"
+    add 1 to {bank.number}
+
+command /account_set [<offlineplayer>] [<text>]:
+    permission: op
+    trigger:
+        set {bank.account::%uuid of arg-1%} to "110-35-%arg-2%"
+        stop
+
+function economyAccountOrganize(f: text, p: object):
+    loop 8 times:
+        set {_file} to "plugins/Skript/data/logs/economy/economy_%{_f}%_%loop-number -1%.txt"
+        set {_file::*} to file contents of {_file}
+        set {_ind} to 0
+        loop {_file::*}:
+            set {_data::*} to loop-value-2 split by " "
+            if {_data::6} is "AccountTransfer":
+                if {_data::7} is "MoneyRemove":
+                    set {_give} to uuid of ({_data::8} parsed as offlineplayer)
+                    sync create file path "{@account}/%{_give}%.txt" if file path "{@account}/%{_give}%.txt" isn't available
+                else if {_data::7} is "MoneyAdd":
+                    set {_take} to uuid of ({_data::8} parsed as offlineplayer)
+                    sync create file path "{@account}/%{_take}%.txt" if file path "{@account}/%{_take}%.txt" isn't available
+                    if {_take} is set:
+                        if {_give} is set:
+                            set {_year} to {_data::1}
+                            replace all "[" in {_year} with ""
+                            replace all "." in {_year} with ""
+                            set {_month} to {_data::2}
+                            replace all "." in {_month} with ""
+                            set {_day} to {_data::3}
+                            replace all "." in {_day} with ""
+                            set {_time::*} to {_data::5} split by ":"
+                            set {_hour} to {_time::1}
+                            set {_minute} to {_time::2}
+                            replace all "]" in {_minute} with ""
+                            if {_data::4} is "오후" or "PM":
+                                if {_hour} parsed as integer < 12:
+                                    set {_hour} to "%({_hour} parsed as integer) + 12%"
+                            else if {_data::4} is "오전" or "AM":
+                                if {_hour} is "12":
+                                    set {_hour} to "0"
+                            set {_amount} to {_data::9}
+                            set {_money} to {_data::11}
+                            replace all "," in {_money} with ""
+                            replace all "원" in {_money} with ""
+                            replace all ")" in {_money} with ""
+                            if {_hour} parsed as integer < 10:
+                                set {_hour} to "0%{_hour}%"
+                            if {_month} parsed as integer < 10:
+                                set {_month} to "0%{_month}%"
+                            if {_day} parsed as integer < 10:
+                                set {_day} to "0%{_day}%"
+                            sync insert "20%{_year}%-%{_month}%-%{_day}% %{_hour}%:%{_minute}% Withdraw %{_take}% %{_amount}% -> %{_money}%" at line 1 of file path "plugins/Skript/data/logs/account/%{_give}%.txt"
+                            sync insert "20%{_year}%-%{_month}%-%{_day}% %{_hour}%:%{_minute}% Deposit %{_give}% %{_amount}% -> %{_money}%" at line 1 of file path "plugins/Skript/data/logs/account/%{_take}%.txt"
+                            delete {_give}
+                            delete {_take}
+                    wait 3 ticks
+            add 1 to {_ind}
+            if {_ind} is 10:
+                set {_ind} to 0
+                wait 1 tick
+        send "%{_file}% 파일 정리가 완료되었습니다." to {_p}
+        wait 1 second
+
+command /계좌정리전체:
+    permission: op
+    trigger:
+        loop files in dir "plugins/Skript/data/logs/economy_temp":
+            set {_file} to loop-value
+            set {_file::*} to file contents of {_file}
+            set {_ind} to 0
+            loop {_file::*}:
+                set {_data::*} to loop-value-2 split by " "
+                if {_data::6} is "AccountTransfer":
+                    if {_data::7} is "MoneyRemove":
+                        set {_give} to uuid of ({_data::8} parsed as offlineplayer)
+                        sync create file path "{@account}/%{_give}%.txt" if file path "{@account}/%{_give}%.txt" isn't available
+                    else if {_data::7} is "MoneyAdd":
+                        set {_take} to uuid of ({_data::8} parsed as offlineplayer)
+                        sync create file path "{@account}/%{_take}%.txt" if file path "{@account}/%{_take}%.txt" isn't available
+                        if {_take} is set:
+                            if {_give} is set:
+                                set {_year} to {_data::1}
+                                replace all "[" in {_year} with ""
+                                replace all "." in {_year} with ""
+                                set {_month} to {_data::2}
+                                replace all "." in {_month} with ""
+                                set {_day} to {_data::3}
+                                replace all "." in {_day} with ""
+                                set {_time::*} to {_data::5} split by ":"
+                                set {_hour} to {_time::1}
+                                set {_minute} to {_time::2}
+                                replace all "]" in {_minute} with ""
+                                if {_data::4} is "오후" or "PM":
+                                    if {_hour} parsed as integer < 12:
+                                        set {_hour} to "%({_hour} parsed as integer) + 12%"
+                                else if {_data::4} is "오전" or "AM":
+                                    if {_hour} is "12":
+                                        set {_hour} to "0"
+                                set {_amount} to {_data::9}
+                                set {_money} to {_data::11}
+                                replace all "," in {_money} with ""
+                                replace all "원" in {_money} with ""
+                                replace all ")" in {_money} with ""
+                                if {_hour} parsed as integer < 10:
+                                    set {_hour} to "0%{_hour}%"
+                                if {_month} parsed as integer < 10:
+                                    set {_month} to "0%{_month}%"
+                                if {_day} parsed as integer < 10:
+                                    set {_day} to "0%{_day}%"
+                                sync insert "20%{_year}%-%{_month}%-%{_day}% %{_hour}%:%{_minute}% Withdraw %{_take}% %{_amount}% -> %{_money}%" at line 1 of file path "plugins/Skript/data/logs/account/%{_give}%.txt"
+                                sync insert "20%{_year}%-%{_month}%-%{_day}% %{_hour}%:%{_minute}% Deposit %{_give}% %{_amount}% -> %{_money}%" at line 1 of file path "plugins/Skript/data/logs/account/%{_take}%.txt"
+                                delete {_give}
+                                delete {_take}
+                        wait 3 ticks
+                add 1 to {_ind}
+                if {_ind} is 10:
+                    set {_ind} to 0
+                    wait 1 tick
+            send "%{_file}% 파일 정리가 완료되었습니다."
+            wait 1 second
+
+every 1 minute:
+    if now formatted as "HH:mm" is "00:05":
+        set {_now} to convert date now to unix date
+        remove 86400 from {_now}
+        set {_now} to convert unix date {_now} to date
+        set {_date} to {_now} formatted as "yyyy-MM-dd"
+        economyAccountOrganize({_date}, console)
+            
+function bankGUI(p: player):
+    open chest inventory with 3 rows named "{@bankGUI}" to {_p}
+    loop 27 times:
+        set slot (loop-value)-1 of {_p}'s current inventory to white stained glass pane named "&f"
+    set slot 0, 8, 9, 17, 18 and 26 of {_p}'s current inventory to white stained glass pane named "&f"
+    set {_money} to balanceToWon("%{_p}'s money%")
+    set slot 4 of {_p}'s current inventory to gold ingot with custom model data 4 named "&f[&6&l잔액&f]" with lore "&e%{_money}%"
+    set slot 11 of {_p}'s current inventory to green stained glass pane named "&f[&a&l입금&f]"
+    set slot 13 of {_p}'s current inventory to red stained glass pane named "&f[&c&l출금&f]"
+    set slot 15 of {_p}'s current inventory to pink stained glass pane named "&f[&e&l송금&f]"
+    
+function putGUI(p: player):
+    open chest inventory with 5 row named "{@putGUI}" to {_p}
+    set {_blank} to white stained glass pane named "&f"
+    loop 9 times:
+        set slot (loop-number)-1 of {_p}'s current inventory to {_blank}
+        set slot (loop-number)+35 of {_p}'s current inventory to {_blank}
+    loop 5 times:
+        set slot 9*(loop-number)-9 of {_p}'s current inventory to {_blank}
+        set slot 9*(loop-number)-1 of {_p}'s current inventory to {_blank}
+    set slot 39 of {_p}'s current inventory to red stained glass pane named "&c&l뒤로 가기"
+    set slot 41 of {_p}'s current inventory to green stained glass pane named "&a&l확인"
+
+function getGUI(p: player):
+    if {bank.money.%uuid of {_p}%} isn't set:
+        set {_money} to 0
+    else if {bank.money.%uuid of {_p}%} is "":
+        set {_money} to 0
+    else:
+        set {_money} to {bank.money.%uuid of {_p}%} parsed as number
+    if {bank.get.%uuid of {_p}%} is true:
+        open chest inventory with 6 rows named "{@getGUI} &e%moneyDigit({_money})%&f원" to {_p}
+    else if {bank.guildGet.%uuid of {_p}%} is true:
+        open chest inventory with 6 rows named "{@getGUI} &e%moneyDigit({_money})%&f원" to {_p}
+    else if {bank.send.%uuid of {_p}%} is true:
+        if {bank.player.%uuid of {_p}%} is "SHK 국고":
+            open chest inventory with 6 rows named "{@getGUI} &6SHK 국고 &f| &e%moneyDigit({_money})%&f원" to {_p}
+        else if {bank.player.%uuid of {_p}%} is "SHK대법원 인지대":
+            open chest inventory with 6 rows named "{@getGUI} &6SHK대법원 인지대 &f| &e%moneyDigit({_money})%&f원" to {_p}
+        else if {bank.player.%uuid of {_p}%} is "상어대학교 등록금":
+            open chest inventory with 6 rows named "{@getGUI} &6상어대학교 등록금 &f| &e%moneyDigit({_money})%&f원" to {_p}
+        else:
+            set {_player} to {bank.player.%uuid of {_p}%} parsed as offlineplayer
+            if {_player} is set:
+                open chest inventory with 6 rows named "{@getGUI} &6%{_player}% &f| &e%moneyDigit({_money})%&f원" to {_p}
+            else:
+                set {_guild} to {bank.guild.%uuid of {_p}%}
+                open chest inventory with 6 rows named "{@getGUI} %colored {_guild}% &f| &e%moneyDigit({_money})%&f원" to {_p}
+    set slot 12 of {_p}'s current inventory to blue stained glass pane named "&b&l1"
+    set slot 13 of {_p}'s current inventory to blue stained glass pane named "&b&l2"
+    set slot 14 of {_p}'s current inventory to blue stained glass pane named "&b&l3"
+    set slot 21 of {_p}'s current inventory to blue stained glass pane named "&b&l4"
+    set slot 22 of {_p}'s current inventory to blue stained glass pane named "&b&l5"
+    set slot 23 of {_p}'s current inventory to blue stained glass pane named "&b&l6"
+    set slot 30 of {_p}'s current inventory to blue stained glass pane named "&b&l7"
+    set slot 31 of {_p}'s current inventory to blue stained glass pane named "&b&l8"
+    set slot 32 of {_p}'s current inventory to blue stained glass pane named "&b&l9"
+    set slot 40 of {_p}'s current inventory to blue stained glass pane named "&b&l0"
+    set slot 41 of {_p}'s current inventory to orange stained glass pane named "&6&l←"
+    set slot 19 of {_p}'s current inventory to red stained glass pane named "&c&l뒤로 가기"
+    set slot 39 of {_p}'s current inventory to pink stained glass pane named "&e&lC"
+    set slot 25 of {_p}'s current inventory to green stained glass pane named "&a&l확인"
+    set slot 47 of {_p}'s current inventory to stick named "&f" with custom model data 2002
+
+command /기록 [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        set {_p} to arg-1
+        set {_p} to player if arg-1 isn't set
+        economyAccountGUI(player, {_p}, 1)
+        wait 1 tick
+        set {gui.%uuid of player%::accountGUI} to true
+        set {bank.%player%.player} to {_p}
+        set {bank.%player%.page} to 1
+
+function economyAccountGUI(player: player, p: offlineplayer, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@bankGUI} 예금주 &e%{_p}%"
+    set {_file::*} to content of file path "{@account}/%uuid of {_p}%.txt"
+    loop 9 times:
+        set slot (loop-number)+44 of {_inv} to white stained glass pane named "&f"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set {_page} to round up ((size of {_file::*}) / 45)
+    set slot 49 of {_inv} to emerald named "&7통장 페이지 %{_n}%/%{_page}%"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set {_ind} to 1
+    loop {_file::*}:
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_list::*} to loop-value split by " "
+            set {_dest} to {_list::4} parsed as offlineplayer
+            set {_item} to {_dest}'s skull
+            set name of {_item} to "&c&l입금" if {_list::3} is "Deposit"
+            set name of {_item} to "&b&l출금" if {_list::3} is "Withdraw"
+            add "&7일시 &8| &f%{_list::1}% %{_list::2}%" to lore of {_item}
+            set {_price} to {_list::5} parsed as integer
+            add "&7금액 &8| &f%moneyDigit({_price})%원" to lore of {_item}
+            add "&7대상 &8| &f%{_dest}%" to lore of {_item}
+            set slot mod({_ind}-1, 45) of {_inv} to {_item}
+        add 1 to {_ind}
+    open {_inv} to {_player}
+
+command /돈 [<text>] [<text>] [<number>]:
+    trigger:
+        if arg 1 is "순위":
+            if arg 2 isn't set:
+                make player run command "baltop" as op
+            else:
+                make player run command "baltop %arg-2%" as op
+        else:
+            send "[ &6&l! &f] &e%player%님&f의 잔액은 &a%player's balance%&f입니다." 
+        stop
+
+function economyProperty(p: player) :: number:
+    set {_balance} to {_p}'s balance
+    set {_cryptocurrency} to cryptocurrencyProperty({_p})
+    set {_stock} to stockProperty({_p})
+    set {_oneroom} to estatePrice({_p}, "oneroom")
+    set {_apt} to estatePrice({_p}, "apt")
+    set {_farm} to farmPrice({_p})
+    set {_building} to buildingPrice({_p})
+    set {_total} to ({_balance} + {_stock} + {_cryptocurrency} + {_oneroom} + {_apt} + {_farm} + {_building})
+    return {_total}
+
+command /재산 [<text>] [<number>]:
+    trigger:
+        set {_balance} to player's balance
+        set {_stock} to stockProperty(player)
+        set {_cryptocurrency} to cryptocurrencyProperty(player)
+        set {_oneroom} to estatePrice(player, "oneroom")
+        set {_apt} to estatePrice(player, "apt")
+        set {_farm} to farmPrice(player)
+        set {_store} to storePrice(player)
+        set {_building} to buildingPrice(player)
+        set {_money} to (player's balance + {_stock} + {_cryptocurrency} + {_oneroom} + {_apt} + {_farm} + {_store} + {_building})
+        send "[ &6&l! &f] &e%player%님&f의 재산 내역은 아래와 같습니다."
+        send "> 잔액: &a%moneyDigit({_balance})%원"
+        send "> 주식: &a%moneyDigit({_stock})%원"
+        send "> 가상화폐: &a%moneyDigit({_cryptocurrency})%원"
+        send "> 부동산: &a%moneyDigit({_oneroom} + {_apt})%원"
+        send "> 상가: &a%moneyDigit({_store})%원"
+        send "> 농장: &a%moneyDigit({_farm})%원" if player's group contains "농부"
+        send "> 빌딩: &a%moneyDigit({_building})%원"
+        send "> &l총합: &c%moneyDigit({_money})%원"
+        
+command /계좌 [<text>] [<offlineplayer>] [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "재발급":
+            if {bank.account::%uuid of arg-2%} isn't set:
+                send "[ &6&l! &f] 해당 플레이어는 통장을 발급받지 않았습니다."
+                stop
+            set {_item} to book named "{@bookname}" with lore "&e&l예금주"
+            add "&f%arg-2%" to lore of {_item}
+            add "" to lore of {_item}
+            add "&e&l계좌번호" to lore of {_item}
+            add "&f%{bank.account::%uuid of arg-2%}%" to lore of {_item}
+            if arg-3 is set:
+                itemGive(arg-3, {_item}, 1, "AccountRemake")
+            else:
+                itemGive(player, {_item}, 1, "AccountRemake")
+            stop
+        else if arg-1 is "확인":
+            if {bank.account::%uuid of arg-2%} isn't set:
+                send "[ &6&l! &f] 해당 플레이어는 통장을 발급받지 않았습니다."
+                stop
+            send "[ &6&l! &f] &a%arg-2%&f님의 계좌번호는 &e%{bank.account::%uuid of arg-2%}%&f입니다."
+            stop
+
+command /계좌목록 [<integer>]:
+    permission: op.user
+    trigger:
+        set {_n} to arg-1
+        set {_n} to 1 if {_n} isn't set
+        set {_n} to 1 if {_n} <= 0
+        set {_ind} to ({_n}-1)*10
+        loop 10 times:
+            add 1 to {_ind}
+
+on load:
+    if {bank.number} isn't set:
+        set {bank.number} to 1
+    if file "{@dir}" exists:
+        stop
+    create file "{@dir}"
+
+command /atm:
+    permission: op.user
+    trigger:
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] ATM(방벽)을 보고 다시 입력해주세요."
+            stop
+        sync append "%x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@atm}"
+        send "[ &6&l! &f] &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) ATM.txt에 추가했습니다."
+
+# 은행 직원 NPC 클릭 시 GUI 열기
+on rightclick on barrier:
+    set {_file::*} to file contents of "{@atm}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of event-block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        if player's tool isn't book:
+            send "[ &6&l! &f] 통장을 들고 ATM을 우클릭해주세요." to player
+            stop
+        if name of player's tool isn't "{@bookname}":
+            send "[ &6&l! &f] 통장을 들고 ATM을 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::2} isn't "&f%player%":
+            send "[ &6&l! &f] 본인 명의의 통장을 들고 ATM을 우클릭해주세요." to player
+            stop
+        bankGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::bankGUI} to true
+        stop
+
+on rightclick with book:
+    player is sneaking
+    if name of player's tool is "{@bookname}":
+        set {_lore::*} to lore of player's tool
+        set {_p} to uncolored {_lore::2} parsed as offlineplayer
+        economyAccountGUI(player, {_p}, 1)
+        wait 1 tick
+        set {gui.%uuid of player%::accountGUI} to true
+        set {bank.%player%.player} to {_p}
+        set {bank.%player%.page} to 1
+    
+# GUI 관리
+on inventory click:
+    if {gui.%uuid of player%::bankGUI} is true:
+        cancel event
+        if clicked slot is 11:
+            set {bank.put.%uuid of player%} to true
+            delete {bank.get.%uuid of player%}
+            delete {bank.guildGet.%uuid of player%}
+            delete {bank.send.%uuid of player%}
+            delete {bank.chat.%uuid of player%}
+            putGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::putGUI} to true
+            stop
+        
+        else if clicked slot is 13:
+            delete {bank.put.%uuid of player%}
+            delete {bank.send.%uuid of player%}
+            delete {bank.guildGet.%uuid of player%}
+            delete {bank.chat.%uuid of player%}
+            set {bank.get.%uuid of player%} to true
+            set {bank.money.%uuid of player%} to ""
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop
+        
+        else if clicked slot is 15:
+            delete {bank.put.%uuid of player%}
+            delete {bank.get.%uuid of player%}
+            delete {bank.guildGet.%uuid of player%}
+            set {bank.send.%uuid of player%} to true
+            delete {bank.player.%uuid of player%}
+            delete {bank.guild.%uuid of player%}
+            set {bank.money.%uuid of player%} to ""
+            close player's inventory
+            send "{@prefix} 송금하시려는 계좌번호 13자리를 '-'를 제외하고 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            stop
+
+    else if event-inventory is player's inventory:
+        if {gui.%uuid of player%::getGUI} is true:
+            cancel event
+        stop
+
+    else if {gui.%uuid of player%::putGUI} is true:
+        if clicked slot is 41:
+            cancel event
+            set {_total} to 0
+            loop 21 times:
+                if loop-value is between 1 and 7:
+                    set {_item} to slot (loop-value)+9 of player's current inventory
+                else if loop-value is between 8 and 14:
+                    set {_item} to slot (loop-value)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-value)+13 of player's current inventory
+                set {_lore::*} to lore of {_item}
+                if {_lore::1} contains "{@bankGUI}":
+                    set {_amount} to item amount of {_item}
+                    if uncolored name of {_item} contains "1,000원":
+                        add (1000 * {_amount}) to {_total}
+                    else if uncolored name of {_item} contains "5,000원":
+                        add (5000 * {_amount}) to {_total}
+                    else if uncolored name of {_item} contains "10,000원":
+                        add (10000 * {_amount}) to {_total}
+                    else if uncolored name of {_item} contains "50,000원":
+                        add (50000 * {_amount}) to {_total}
+                else:
+                    give {_item} to player
+            balanceAdd(player, {_total}, "ATM")
+            if {_total} isn't 0:
+                send "{@prefix} &e%moneyDigit({_total})%&f원을 입금했습니다."
+                send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+            delete {bank.put.%uuid of player%}
+            close player's inventory
+            stop
+        else if clicked slot is 39:
+            cancel event
+            loop 21 times:
+                if loop-value is between 1 and 7:
+                    set {_item} to slot (loop-value)+9 of player's current inventory
+                else if loop-value is between 8 and 14:
+                    set {_item} to slot (loop-value)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-value)+13 of player's current inventory
+                give {_item} to player
+            delete {bank.put.%uuid of player%}
+            delete {gui.%uuid of player%::putGUI}
+            bankGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::bankGUI} to true
+            stop
+        else if clicked slot is between 0 and 9:
+            cancel event
+            stop
+        else if clicked slot is 17 or 18 or 26 or 27:
+            cancel event
+            stop
+        else if clicked slot is between 35 and 44:
+            cancel event
+            stop
+    
+    else if {gui.%uuid of player%::getGUI} is true:
+        cancel event
+        set {_temp} to {bank.money.%uuid of player%}
+        if clicked slot is 12:
+            set {bank.money.%uuid of player%} to "%{_temp}%1"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop    
+        else if clicked slot is 13:
+            set {bank.money.%uuid of player%} to "%{_temp}%2"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 14:
+            set {bank.money.%uuid of player%} to "%{_temp}%3"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 21:
+            set {bank.money.%uuid of player%} to "%{_temp}%4"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 22:
+            set {bank.money.%uuid of player%} to "%{_temp}%5"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 23:
+            set {bank.money.%uuid of player%} to "%{_temp}%6"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 30:
+            set {bank.money.%uuid of player%} to "%{_temp}%7"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 31:
+            set {bank.money.%uuid of player%} to "%{_temp}%8"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 32:
+            set {bank.money.%uuid of player%} to "%{_temp}%9"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 40:
+            set {bank.money.%uuid of player%} to "%{_temp}%0"
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 41:
+            if {bank.money.%uuid of player%} is "":
+                set {bank.money.%uuid of player%} to ""
+            else if {bank.money.%uuid of player%} isn't set:
+                set {bank.money.%uuid of player%} to ""
+            else:
+                set {bank.money.%uuid of player%} to subtext of {bank.money.%uuid of player%} between 1 and ((length of {bank.money.%uuid of player%}) - 1)
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop 
+        else if clicked slot is 39:
+            set {bank.money.%uuid of player%} to ""
+            getGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::getGUI} to true
+            stop
+        else if clicked slot is 19:
+            if {bank.get.%uuid of player%} is true:
+                delete {bank.get.%uuid of player%}
+                delete {bank.money.%uuid of player%}
+                delete {gui.%uuid of player%::getGUI}
+                bankGUI(player)
+                wait 1 tick
+                set {gui.%uuid of player%::bankGUI} to true
+                stop
+            else if {bank.guildGet.%uuid of player%} is true:
+                delete {bank.guildGet.%uuid of player%}
+                delete {bank.money.%uuid of player%}
+                delete {gui.%uuid of player%::getGUI}
+                close player's inventory
+                stop
+            else if {bank.send.%uuid of player%} is true:
+                delete {bank.player.%uuid of player%}
+                delete {bank.guild.%uuid of player%}
+                delete {bank.money.%uuid of player%}
+                delete {bank.chat.%uuid of player%}
+                close player's inventory
+                send "{@prefix} 송금하시려는 계좌번호 13자리를 '-'를 제외하고 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+                stop
+        else if clicked slot is 25:
+            if {bank.money.%uuid of player%} is "":
+                set {_money} to 0
+            else:
+                set {_money} to {bank.money.%uuid of player%} parsed as number
+            if {bank.get.%uuid of player%} is true:
+                if {_money} > player's balance:
+                    send "{@prefix} 소지금보다 많은 돈은 출금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                else if {_money} < 1000:
+                    send "{@prefix} 1,000원 이하는 출금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                else:
+                    set {_result} to (round down ({_money} / 1000)) * 1000
+                    set {_mod} to {_money} - {_result}
+                    balanceRemove(player, {_result}, "ATM")
+                    send "{@prefix} &e%moneyDigit({_result})%&f원을 출금했습니다."
+                    send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    giveMoney(player, {_result})
+                    delete {bank.get.%uuid of player%}
+            else if {bank.guildGet.%uuid of player%} is true:
+                if {_money} > {guild.money::%{guild.%uuid of player%}%}:
+                    send "{@prefix} 파벌 소지금보다 많은 돈은 출금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                else:
+                    set {_result} to {_money}
+                    guildBalanceRemove({guild.%uuid of player%}, {_result}, "AccountTransfer-%player%")
+                    send "{@prefix} &e%moneyDigit({_result})%&f원을 파벌 %colored {guild.%uuid of player%}%&f의 계좌에서 출금했습니다."
+                    send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    balanceAdd(player, {_result}, "AccountTransfer")
+                    delete {bank.guildGet.%uuid of player%}
+            else if {bank.send.%uuid of player%} is true:
+                if {_money} > player's balance:
+                    send "{@prefix} 소지금보다 많은 돈은 송금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                if {_money} isn't set:
+                    send "{@prefix} 0원보다 적은 돈은 송금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                if {_money} <= 0:
+                    send "{@prefix} 0원보다 적은 돈은 송금할 수 없습니다."
+                    getGUI(player)
+                    wait 1 tick
+                    set {gui.%uuid of player%::getGUI} to true
+                    stop
+                if {bank.guild.%uuid of player%} is set:
+                    balanceRemove(player, {_money}, "GuildTransfer")
+                    guildBalanceAdd({bank.guild.%uuid of player%}, {_money}, "AccountTransfer-%player%")
+                    set {_p} to {guild.head::%{bank.guild.%uuid of player%}%}
+                    send "{@prefix} %colored {bank.guild.%uuid of player%}% &f파벌에 &e%moneyDigit({_money})%&f원을 송금했습니다."
+                    send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    loop all players:
+                        if {guild.%uuid of loop-player%} is {bank.guild.%uuid of player%}:
+                            send "{@prefix} &6%player%&f님이 &e%moneyDigit({_money})%&f원을 %colored {bank.guild.%uuid of player%}% &f파벌에 송금하셨습니다." to loop-player
+                            send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%" to loop-player
+                else if {bank.player.%uuid of player%} is set:
+                    if {bank.player.%uuid of player%} is "SHK 국고":
+                        budgetAdd("국고", player, {_money}, "None")
+                        send "{@prefix} &6SHK 국고&f에 &e%moneyDigit({_money})%&f원을 송금했습니다."
+                        send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    else if {bank.player.%uuid of player%} is "SHK대법원 인지대":
+                        budgetAdd("인지대", player, {_money}, "None")
+                        send "{@prefix} &6SHK대법원 인지대&f에 &e%moneyDigit({_money})%&f원을 송금했습니다."
+                        send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    else if {bank.player.%uuid of player%} is "상어대학교 등록금":
+                        budgetAdd("등록금", player, {_money}, "None")
+                        send "{@prefix} &6상어대학교 등록금&f에 &e%moneyDigit({_money})%&f원을 송금했습니다."
+                        send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                    else:
+                        balanceRemove(player, {_money}, "AccountTransfer")
+                        set {_p} to {bank.player.%uuid of player%} parsed as offlineplayer
+                        balanceAdd({_p}, {_money}, "AccountTransfer")
+                        send "{@prefix} &6%{_p}%&f님에게 &e%moneyDigit({_money})%&f원을 송금했습니다."
+                        send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%"
+                        send "{@prefix} &6%player%&f님이 &e%moneyDigit({_money})%&f원을 송금하셨습니다." to {_p}
+                        send "{@prefix} &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%" to {_p}
+                delete {bank.player.%uuid of player%}
+                delete {bank.guild.%uuid of player%}
+                delete {bank.send.%uuid of player%}
+                delete {bank.chat.%uuid of player%}
+            delete {bank.money.%uuid of player%}
+            close player's inventory
+            stop
+
+    else if {gui.%uuid of player%::accountGUI} is true:
+        cancel event
+        set {_page} to {bank.%player%.page}
+        set {_p} to {bank.%player%.player}
+        if clicked slot is 48:
+            if {_page} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            economyAccountGUI(player, {_p}, {_page}-1)
+            wait 1 tick
+            set {gui.%uuid of player%::accountGUI} to true
+            set {bank.%player%.page} to {_page} - 1
+            set {bank.%player%.player} to {_p}
+            stop
+        else if clicked slot is 50:
+            set {_file::*} to content of file path "{@account}/%uuid of {_p}%.txt"
+            if ({_page}*45) >= (size of {_file::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            economyAccountGUI(player, {_p}, {_page}+1)
+            wait 1 tick
+            set {gui.%uuid of player%::accountGUI} to true
+            set {bank.%player%.page} to {_page} + 1
+            set {bank.%player%.player} to {_p}
+            stop
+            
+# 창을 닫았을 때
+on inventory close:
+    if event-inventory's display name contains "{@putGUI}":
+        if {bank.put.%uuid of player%} is true:
+            loop 21 times:
+                if loop-value is between 1 and 7:
+                    set {_item} to slot (loop-value)+9 of player's current inventory
+                else if loop-value is between 8 and 14:
+                    set {_item} to slot (loop-value)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-value)+13 of player's current inventory
+                if {_item} is set:
+                    give {_item} to player
+            delete {bank.put.%uuid of player%}
+            stop
+    if {gui.%uuid of player%::bankGUI} is true:
+        delete {gui.%uuid of player%::bankGUI}
+    if {gui.%uuid of player%::putGUI} is true:
+        delete {gui.%uuid of player%::putGUI}
+    if {gui.%uuid of player%::getGUI} is true:
+        delete {gui.%uuid of player%::getGUI}
+    if {gui.%uuid of player%::accountGUI} is true:
+        delete {gui.%uuid of player%::accountGUI}
+        delete {bank.%player%.page}
+        delete {bank.%player%.player}
+
+# 채팅 입력할 때
+on chat:
+    if {bank.chat.%uuid of player%} is true:
+        cancel event
+        if message is "예" or "dp":
+            send "{@prefix} 송금하시려는 금액을 다음 창에서 입력해주세요."
+            delete {bank.chat.%uuid of player%}
+            wait 10 ticks
+            set {gui.%uuid of player%::getGUI} to true
+            set {bank.money.%uuid of player%} to ""
+            getGUI(player)
+            stop
+        else if message is "취소" or "cnlth":
+            send "{@prefix} 계좌번호를 다시 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            wait 5 ticks
+            delete {bank.chat.%uuid of player%}
+            stop
+        else:
+            send "{@prefix} &a예&f 혹은 &c취소&f를 입력해주세요."
+            stop
+    else if {bank.send.%uuid of player%} is true:
+        cancel event
+        if message is "취소":
+            send "{@prefix} 송금이 취소되었습니다."
+            wait 5 ticks
+            delete {bank.send.%uuid of player%}
+            delete {bank.chat.%uuid of player%}
+            delete {bank.player.%uuid of player%}
+            delete {bank.guild.%uuid of player%}
+            stop
+        set {_id} to message
+        if {_id} contains "-":
+            send "{@prefix} '-'를 제외하고 계좌번호를 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            stop
+        set {_f} to subtext of {_id} from 1 to 3
+        set {_s} to subtext of {_id} from 4 to 5
+        set {_t} to subtext of {_id} from 6 to 13
+        set {_id} to "%{_f}%-%{_s}%-%{_t}%"
+        if {_id} is "110-34-000001":
+            set {bank.player.%uuid of player%} to "SHK 국고"
+            send "{@prefix} 송금하시려는 계좌가 &6SHK 국고&f가 맞습니까? 맞으면 &a예&f, 아니면 &c취소&f를 입력해주세요."
+            set {bank.chat.%uuid of player%} to true
+            stop
+        if {_id} is "110-34-000002":
+            set {bank.player.%uuid of player%} to "SHK대법원 인지대"
+            send "{@prefix} 송금하시려는 계좌가 &6SHK대법원 인지대&f가 맞습니까? 맞으면 &a예&f, 아니면 &c취소&f를 입력해주세요."
+            set {bank.chat.%uuid of player%} to true
+            stop
+        if {_id} is "110-34-000003":
+            set {bank.player.%uuid of player%} to "상어대학교 등록금"
+            send "{@prefix} 송금하시려는 계좌가 &6상어대학교 등록금&f이 맞습니까? 맞으면 &a예&f, 아니면 &c취소&f를 입력해주세요."
+            set {bank.chat.%uuid of player%} to true
+            stop
+        loop {bank.account::*}:
+            if {_id} is loop-value:
+                set {bank.player.%uuid of player%} to loop-index
+                set {_p} to {bank.player.%uuid of player%} parsed as offlineplayer
+                send "{@prefix} 송금하시려는 플레이어가 &6%{_p}%&f님이 맞습니까? 맞으면 &a예&f, 아니면 &c취소&f를 입력해주세요."
+                set {bank.chat.%uuid of player%} to true
+                stop
+        loop {guild.account::*}:
+            if {_id} is loop-value:
+                set {bank.guild.%uuid of player%} to loop-index
+                send "{@prefix} 송금하시려는 파벌 이름이 %{guild.name::%{bank.guild.%uuid of player%}%}%&f이(가) 맞습니까? 맞으면 &a예&f, 아니면 &c취소&f를 입력해주세요."
+                set {bank.chat.%uuid of player%} to true
+                stop
+        send "{@prefix} 계좌번호를 찾을 수 없습니다. 계좌번호를 다시 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+        stop
+
+# 변수 삭제
+on quit:
+    delete {bank.get.%uuid of player%}
+    delete {bank.send.%uuid of player%}
+    delete {bank.player.%uuid of player%}
+    delete {bank.money.%uuid of player%}
+    delete {bank.chat.%uuid of player%}
+
+function moneySend(p: player):
+    send "&6명령어 도움말: &f/money" to {_p}
+    send "&6설명: &f서버 경제를 관리합니다." to {_p}
+    send "&6사용법(s);" to {_p}
+    send "&f/money give <플레이어> <수량> &6- 해당 플레이어에게 주어진 값만큼의 돈을 줍니다." to {_p}
+    send "&f/money take <플레이어> <수량> &6- 해당 플레이어에게 주어진 값만큼의 돈을 뺍니다." to {_p}
+    send "&f/money set <플레이어> <수량> &6- 해당 플레이어의 잔고를 주어진 값으로 설정합니다." to {_p}
+    send "&f/money reset <플레이어> <수량> &6- 해당 플레이어의 잔고를 서버의 시작 잔고로 초기화합니다." to {_p}
+    
+command /money [<text>] [<offlineplayer>] [<number>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "give":
+            if arg-2 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 <= 0:
+                set {_n} to -1 * arg-3
+            else:
+                set {_n} to arg-3
+            balanceAdd(arg-2, {_n}, "Command")
+            send "&a%moneyDigit({_n})%원이 당신의 계좌에 추가되었습니다." to arg-2
+            if arg-2 is offline:
+                send "&a%moneyDigit({_n})%원이 %arg-2%님의 계좌에 추가되었습니다."
+            else:
+                send "&a%moneyDigit({_n})%원이 %arg-2's display name%&a의 계좌에 추가되었습니다."
+        else if arg-1 is "take":
+            if arg-2 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 <= 0:
+                set {_n} to -1 * arg-3
+            else:
+                set {_n} to arg-3
+            if arg-2's balance < {_n}:
+                send "&4플레이어의 소지금은 음수일 수 없습니다."
+                stop
+            balanceRemove(arg-2, {_n}, "Command")
+            send "&e%moneyDigit({_n})%원 &a만큼 지불했습니다." to arg-2
+            if arg-2 is offline:
+                send "&a%arg-2% 의 지갑에서 &e%moneyDigit({_n})%원 &a이 빠져나갔습니다. 새 잔고: &e%moneyDigit(arg-2's balance)%원"
+            else:
+                send "&a%arg-2's display name%&a 의 지갑에서 &e%moneyDigit({_n})%원 &a이 빠져나갔습니다. 새 잔고: &e%moneyDigit(arg-2's balance)%원"
+        else if arg-1 is "set":
+            if arg-2 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 isn't set:
+                moneySend(player)
+                stop
+            if arg-3 <= 0:
+                set {_n} to -1 * arg-3
+            else:
+                set {_n} to arg-3
+            balanceSet(arg-2, {_n}, "Command")
+            send "&a잔고가 %moneyDigit({_n})%원으로 설정되었습니다." to arg-2
+            if arg-2 is offline:
+                send "&a%arg-2%의 잔고를 %moneyDigit({_n})%원으로 설정합니다."
+            else:
+                send "&a%arg-2's display name%&a의 잔고를 %moneyDigit({_n})%원으로 설정합니다."
+        else if arg-1 is "reset":
+            if arg-2 isn't set:
+                moneySend(player)
+                stop
+            balanceClear(arg-2, "Command")
+            send "&a잔고가 0원으로 설정되었습니다." to arg-2
+            if arg-2 is offline:
+                send "&a%arg-2%의 잔고를 0원으로 설정합니다."
+            else:
+                send "&a%arg-2's display name%&a의 잔고를 0원으로 설정합니다."
+        else:
+            moneySend(player)

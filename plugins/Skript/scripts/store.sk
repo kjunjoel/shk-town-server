@@ -1,0 +1,354 @@
+options:
+    # 접두사
+    prefix: &6&l[상가]&f
+
+    # GUI
+    storeGUI: &f[&6&l구매할 상가 선택&f]
+
+    # NPC
+    npc: [&6&l상가&f] 김필원
+
+    # 판매가(%)
+    price: 70
+
+    max: 2 # 소유할 수 있는 최대 상가 개수
+    
+    dir: plugins/Skript/data/store/store.txt
+
+
+# 변수
+# {store::%unit%}                  | 상가의 소유주
+# {store::%unit::couser::*}        | 상가의 공동소유주 (최대 3명)
+# {store.page.%uuid of player%}    | 상가 페이지
+
+command /store_find [<offlineplayer>]:
+    trigger:
+        set {_file::*} to file contents of "{@dir}"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            send "%{_data::1}% %{store::%{_data::1}%::couser::*}%"
+            if {store::%{_data::1}%::couser::*} contains arg-1:
+                stop
+            wait 2 ticks
+
+command /store_reset <text>:
+    permission: op.user
+    trigger:
+        delete {store::%arg-1%::couser::*}
+        delete {store::%arg-1%}
+        set {_region} to storeLoadRegion(arg-1)
+        execute console command "rg removemember %{_region}% -w island -a"
+
+command /store_time:
+    permission: op.user
+    trigger:
+        set {_file::*} to file contents of "{@dir}"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            if difference between now and {estate.lasttime.%uuid of {store::%{_data::1}%}%} > 30 days:
+                send "%{_data::1}% %{store::%{_data::1}%}%"
+
+function storeLoadRegion(u: text) :: text:
+    set {_file::*} to file contents of "{@dir}"
+    loop {_file::*}:
+        set {_data::*} to {_file::%loop-index%} split by " "
+        if {_data::1} is {_u}:
+            return {_data::2}
+
+function storeLoadPrice(u: text) :: number:
+    set {_file::*} to file contents of "{@dir}"
+    loop {_file::*}:
+        set {_data::*} to {_file::%loop-index%} split by " "
+        if {_data::1} is {_u}:
+            return {_data::3} parsed as number
+
+function storeCalculate(p: player) :: number:
+    set {_ind} to 0
+    loop {store::*}:
+        if loop-value is {_p}:
+            add 1 to {_ind}
+    return {_ind}
+
+function storePrice(p: offlineplayer) :: number:
+    set {_total} to 0
+    loop {store::*}:
+        if loop-value is {_p}:
+            set {_price} to storeLoadPrice(loop-index)
+            add {_price} to {_total}
+    return {_total}
+
+function storeGUI(p: player, n: number):
+    set {_file::*} to file contents of "{@dir}"
+    set {_inv} to chest inventory with 6 rows named "{@storeGUI}"
+    set slot 45, 46, 47, 51, 52, and 53 of {_inv} to white stained glass pane named "&f"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%round up ((size of {_file::*})/45)% 페이지"
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        set {_data::*} to loop-value split by " "
+        set {_u} to {_data::1}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            if {store::%{_u}%} isn't set:
+                set {_item} to white shulker box named "&6&l%{_u}%"
+            else:
+                set {_item} to red shulker box named "&6&l%{_u}%"
+            set {_price} to storeLoadPrice({_u})
+            add "&e&l공시지가&f: %moneyDigit({_price})%원" to lore of {_item}
+            if {store::%{_u}%} isn't set:
+                add "&a좌클릭&f하여 구매 가능" to lore of {_item}
+            else:
+                add "&6&l소유주&f: %{store::%{_u}%}%" to lore of {_item}
+                add "&c구매 불가능" to lore of {_item}
+            set {_i} to {_ind} - ({_n}-1)*45 - 1
+            set slot {_i} of {_inv} to {_item}
+    open {_inv} to {_p}
+
+on rightclick on entity:
+    if entity's name is "{@npc}":
+        set {store.page.%uuid of player%} to 1
+        storeGUI(player, 1)
+        wait 1 tick
+        set {gui.%uuid of player%::storeGUI} to true
+        stop
+
+on inventory click:
+    if {gui.%uuid of player%::storeGUI} is true:
+        cancel event
+        if clicked slot is 48:
+            if {store.page.%uuid of player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {store.page.%uuid of player%}
+            storeGUI(player, {store.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::storeGUI} to true
+            stop
+
+        else if clicked slot is 50:
+            set {_file::*} to file contents of "{@dir}"
+            if ({store.page.%uuid of player%} * 45) >= (size of {_file::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {store.page.%uuid of player%}
+            storeGUI(player, {store.page.%uuid of player%})
+            wait 1 tick
+            set {gui.%uuid of player%::storeGUI} to true
+            stop
+
+        else if clicked slot is 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+        
+        else:
+            if type of clicked slot is white shulker box:
+                if click type is left mouse button:
+                    set {_n} to storeCalculate(player)
+                    if {_n} >= {@max}:
+                        send "{@prefix} 상가 소유 제한을 초과하여 구매할 수 없습니다."
+                        stop
+                    set {_name} to uncolored name of clicked item
+                    set {_price} to storeLoadPrice({_name})
+                    if {_price} > balance of player:
+                        send "{@prefix} 잔액이 부족합니다."
+                        stop
+                    balanceRemove(player, {_price}, "Store")
+                    set {_region} to storeLoadRegion({_name})
+                    set {store::%{_name}%} to player
+                    make player run command "rg addmember %{_region}% %player%" as op
+                    send "{@prefix} 성공적으로 %{_name}%호를 구매하였습니다."
+                    close player's inventory
+                    delete {store.page.%uuid of player%}
+                    delete {gui.%uuid of player%::storeGUI}
+                    stop
+
+            else:
+                stop
+
+on inventory close:
+    if {gui.%uuid of player%::storeGUI} is true:
+        delete {gui.%uuid of player%::storeGUI}
+
+command /store [<text>] [<text>] [<offlineplayer>]:
+    permission: op.user
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg-1 isn't set:
+            send "&f"
+            send "&f[ &6&l! &f] &6[give]&f: 상가를 줍니다. &8| &6[take]&f: 상가를 빼앗습니다."
+            send "&f"
+            stop
+        if arg-2 isn't set:
+            send "&f"
+            send "&f[ &6&l! &f] %arg-1%을 선택하였습니다. 이제, 상가 번호를 선택하여 주세요."
+            send "&7└ 예시: 2동 508호의 경우: 2-508"
+            send "&f"
+            stop
+        if arg-3 isn't set:
+            send "&f"
+            send "&f[ &6&l! &f] %arg-1% 타입을 선택하였고, %arg-2%을 선택하였습니다. 이제, 누구로부터 빼앗거나, 누구에게 줄지 선택하여 주세요."
+            send "&7└ 예시: GyeongRye"
+            send "&f"
+            stop
+        if arg-1 is "give":
+            set {_n} to storeCalculate(arg-3)
+            if {_n} >= {@max}:
+                send "{@prefix} Store limit."
+                stop
+            set {_region} to storeLoadRegion(arg-2)
+            make player run command "rg addmember %{_region}% %arg-3%" as op
+            set {store::%arg-2%} to arg-3
+            send "{@prefix} Successfully gave %arg-2% to %arg-3%."
+            stop
+
+        else if arg-1 is "take":
+            delete {store::%arg-2%::couser::*}
+            delete {store::%arg-2%}
+            set {_region} to storeLoadRegion(arg-2)
+            make player run command "rg removemember %{_region}% %arg-3%" as op
+            send "{@prefix} Successfully take %arg-2% from %arg-3%."
+    
+command /store_check [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        send "{@prefix} &6%arg-1%&f님이 소유하고 계신 상가는 아래와 같습니다."
+        set {_ind} to 1
+        loop {store::*}:
+            if loop-value is arg-1:
+                if size of {store::%loop-index%::couser::*} >= 1:
+                    send "{@prefix} [&b%{_ind}%&f] &e%loop-index%호 &f| 공동소유자 %{store::%loop-index%::couser::*}%"
+                else:
+                    send "{@prefix} [&b%{_ind}%&f] &e%loop-index%호 &f| 공동소유자 없음"
+                add 1 to {_ind}
+        
+command /상가 [<text>] [<number>] [<offlineplayer>]:
+    trigger:
+        if storeCalculate(player) is 0:
+            send "{@prefix} 소유하고 있는 상가가 없습니다."
+            stop
+    
+        if arg 1 is "정보":
+            send "{@prefix} &6%player%&f님이 소유하고 계신 상가는 아래와 같습니다."
+            set {_ind} to 1
+            loop {store::*}:
+                if loop-value is player:
+                    if size of {store::%loop-index%::couser::*} >= 1:
+                        send "{@prefix} [&b%{_ind}%&f] &e%loop-index%호 &f| 공동소유자 %{store::%loop-index%::couser::*}%"
+                    else:
+                        send "{@prefix} [&b%{_ind}%&f] &e%loop-index%호 &f| 공동소유자 없음"
+                    add 1 to {_ind}
+            stop
+
+        else if arg 1 is "추가":
+            if arg 2 is not set:
+                send "{@prefix} 상가 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and storeCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 상가 번호입니다."
+                stop
+            if arg 3 isn't set:
+                send "{@prefix} 추가할 플레이어를 입력해주시기 바랍니다."
+                stop
+            set {_ind} to 1
+            loop {store::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        if {store::%loop-index%::couser::*} contains arg-3:
+                            send "{@prefix} 해당 플레이어는 이미 공동소유자입니다."
+                            stop
+                        add arg-3 to {store::%loop-index%::couser::*}
+                        set {_region} to storeLoadRegion(loop-index)
+                        make player run command "rg addmember %{_region}% %arg-3%" as op
+                        send "{@prefix} &6%arg-3%&f님을 &e%loop-index%호&f의 공동소유자로 추가하였습니다."
+                        send "{@prefix} &6%player%&f님이 &6%arg-3%&f님을 &e%loop-index%호&f의 공동소유자로 추가하였습니다." to arg-3
+                        stop
+                    add 1 to {_ind}
+                
+
+        else if arg 1 is "삭제":
+            if arg 2 is not set:
+                send "{@prefix} 상가 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and storeCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 농장 번호입니다."
+                stop
+            if arg 3 isn't set:
+                send "{@prefix} 삭제할 플레이어를 입력해주시기 바랍니다."
+                stop
+            set {_ind} to 1
+            loop {store::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        if {store::%loop-index%::couser::*} doesn't contain arg-3:
+                            send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                            stop
+                        remove arg-3 from {store::%loop-index%::couser::*}
+                        set {_region} to storeLoadRegion(loop-index)
+                        make player run command "rg removemember %{_region}% %arg-3%" as op
+                        send "{@prefix} &6%arg-3%&f님을 &e%loop-index%호&f의 공동소유자에서 삭제하였습니다."
+                        send "{@prefix} &6%player%&f님이 &6%arg-3%&f님을 &e%loop-index%호&f의 공동소유자에서 삭제하였습니다." to arg-3
+                        stop
+                    add 1 to {_ind}
+            
+        else if arg 1 is "양도":
+            if arg 2 is not set:
+                send "{@prefix} 상가 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and storeCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 상가 번호입니다."
+                stop
+            if arg 3 isn't set:
+                send "{@prefix} 양도할 플레이어를 입력해주시기 바랍니다."
+                stop
+            if storeCalculate(arg-3) >= {@max}:
+                send "{@prefix} 해당 플레이어를 상가를 최대로 소유하고 있습니다."
+                stop
+            set {_ind} to 1
+            loop {store::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        set {store::%loop-index%} to arg-3
+                        delete {store::%loop-index%::couser::*}
+                        set {_region} to storeLoadRegion(loop-index)
+                        make player run command "rg removemember %{_region}% -a" as op
+                        make player run command "rg addmember %{_region}% %arg-3%" as op
+                        send "{@prefix} &e%loop-index%호&f를 &6%arg-3%&f님에게 양도하였습니다."
+                        send "{@prefix} &e%loop-index%호&f를 &6%player%&f님이 양도하였습니다." to arg-3
+                        stop
+                    add 1 to {_ind}
+      
+        else if arg 1 is "판매":
+            if arg 2 is not set:
+                send "{@prefix} 상가 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and storeCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 상가 번호입니다."
+                stop
+            set {_ind} to 1
+            loop {store::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        delete {stroe::%loop-index%::couser::*}
+                        delete {store::%loop-index%}
+                        set {_region} to storeLoadRegion(loop-index)
+                        make player run command "rg removemember %{_region}% -a" as op
+                        set {_money} to storeLoadPrice(loop-index)*{@price}/100
+                        balanceAdd(player, {_money}, "Store")
+                        send "{@prefix} &e%loop-index%번지&f를 팔아 &6%moneyDigit({_money})%원&f을 획득하였습니다."
+                        stop
+                    add 1 to {_ind}
+
+        else:
+            send "{@prefix} /상가 정보 &8&l| &f상가 정보를 확인합니다."
+            send "{@prefix} /상가 추가 [번호] [플레이어] &8&l| &f[번호]의 공동소유자로 [플레이어]를 추가합니다."
+            send "{@prefix} /상가 삭제 [번호] [플레이어] &8&l| &f[번호]의 공동소유자에서 [플레이어]를 삭제합니다."
+            send "{@prefix} /상가 양도 [번호] [플레이어] &8&l| &f[번호]를 [플레이어]에게 양도합니다."
+            send "{@prefix} /상가 판매 [번호] &8&l| &f[번호]를 {@price}%%에 판매합니다."
+            stop
+
+on quit:
+    delete {store.page.%uuid of player%}

@@ -1,0 +1,299 @@
+options:
+    dir: plugins/Skript/data/gps/gps.txt
+
+# 변수
+# {gps.page.%player%}
+
+function gpsGUI(p: player):
+    set {_inv} to chest inventory with 6 rows named "&a&l[ 길찾기 ]"
+    set {_file::*} to file contents of "{@dir}"
+    loop (size of {_file::*}) times:
+        set slot (loop-number)-1 of {_inv} to compass named "&e%{_file::%loop-number%}%" with lore "&a좌클릭&f하여 길안내 시작"
+    loop 7 times:
+        set slot (loop-number)+45 of {_inv} to white stained glass pane named "&f"
+    set slot 45 of {_inv} to sunflower named "&a상가 길찾기" with custom model data 9
+    set slot 46 of {_inv} to sunflower named "&a농장 길찾기" with custom model data 20
+    set slot 47 of {_inv} to diamond sword named "&a파벌 길찾기"
+    set slot 50 of {_inv} to ender chest named "&b가까운 버스 정류소 찾기" with lore "&7101번 버스만 지원합니다."
+    set slot 51 of {_inv} to chest named "&6가까운 택시 찾기"
+    set slot 53 of {_inv} to barrier named "&c길찾기 취소/중지"
+    open {_inv} to {_p}
+
+function gpsStoreGUI(p: player, n: number):
+    set {_file::*} to content of file path "plugins/Skript/data/store/store.txt"
+    set {_inv} to chest inventory with 6 rows named "&a&l[ 상가 길찾기 ]"
+    set slot 46, 47, 51, and 52 of {_inv} to white stained glass pane named "&f"
+    set slot 45 of {_inv} to red stained glass pane named "&c이전으로"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%round up ((size of {_file::*})/45)% 페이지"
+    set slot 53 of {_inv} to barrier named "&c길찾기 취소/중지"
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        set {_data::*} to loop-value split by " "
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_i} to {_ind} - ({_n}-1)*45 - 1
+            set slot {_i} of {_inv} to compass named "&e%{_data::1}%" with lore "&a좌클릭&f하여 길안내 시작"
+    open {_inv} to {_p}
+
+function gpsFarmGUI(p: player, n: number):
+    set {_file::*} to content of file path "plugins/Skript/data/gps/farm.txt"
+    set {_inv} to chest inventory with 6 rows named "&a&l[ 농장 길찾기 ]"
+    set slot 46, 47, 51, and 52 of {_inv} to white stained glass pane named "&f"
+    set slot 45 of {_inv} to red stained glass pane named "&c이전으로"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%round up ((size of {_file::*})/45)% 페이지"
+    set slot 53 of {_inv} to barrier named "&c길찾기 취소/중지"
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        set {_data::*} to loop-value split by "::"
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_i} to {_ind} - ({_n}-1)*45 - 1
+            set slot {_i} of {_inv} to compass named "&e%{_data::1}%번지" with lore "&a좌클릭&f하여 길안내 시작"
+    open {_inv} to {_p}
+
+function gpsGuildGUI(p: player, n: number):
+    set {_file::*} to content of file path  "plugins/Skript/data/gps/guild.txt"
+    set {_inv} to chest inventory with 6 rows named "&a&l[ 파벌 길찾기 ]"
+    set slot 46, 47, 51, and 52 of {_inv} to white stained glass pane named "&f"
+    set slot 45 of {_inv} to red stained glass pane named "&c이전으로"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%round up ((size of {_file::*})/45)% 페이지"
+    set slot 53 of {_inv} to barrier named "&c길찾기 취소/중지"
+    loop {guild.region::*}:
+        set {_name::%loop-value%} to loop-index
+    loop 24 times:
+        set {_i} to loop-number - 1
+        if {_name::%loop-number%} is set:
+            set slot {_i} of {_inv} to compass named "&e%loop-number%번지 (%{guild.name::%{_name::%loop-number%}%}%&e)" with lore "&a좌클릭&f하여 길안내 시작"
+        else:
+            set slot {_i} of {_inv} to compass named "&e%loop-number%번지" with lore "&a좌클릭&f하여 길안내 시작"
+    open {_inv} to {_p}
+
+function gpsBus(p: player):
+    set {_location} to location at {_p}
+    set {_file::*} to file contents of "plugins/Skript/data/bus/101.txt"
+    set {_min} to 100000
+    set {_goal} to "None"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by "::"
+        set {_pos} to location at ({_data::4} parsed as number, {_data::5} parsed as number, {_data::6} parsed as number) of {_p}'s world
+        set {_distance} to taxiDistanceCalculation({_location}, {_pos})
+        if {_distance} < {_min}:
+            set {_min} to {_distance}
+            set {_goal} to {_data::1}
+            set {_name} to {_data::2}
+    make {_p} run command "gps start 버스(%{_goal}%)" as op
+    send "&7[&eGPS&7] &a%{_name}%(으)로 안내합니다." to {_p}
+
+function gpsTaxi(p: player):
+    set {_location} to location at {_p}
+    set {_file::*} to content of file path "plugins/Skript/data/gps/taxi.txt"
+    set {_min} to 100000
+    set {_goal} to "None"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        set {_pos} to location at ({_data::2} parsed as number, {_data::3} parsed as number, {_data::4} parsed as number) of {_p}'s world
+        set {_distance} to taxiDistanceCalculation({_location}, {_pos})
+        if {_distance} < {_min}:
+            set {_min} to {_distance}
+            set {_goal} to {_data::1}
+    make {_p} run command "gps start %{_goal}%" as op
+    send "&7[&eGPS&7] &a%{_goal}%(으)로 안내합니다." to {_p}
+
+function gpsParttime(p: player):
+    set {_location} to location at {_p}
+    set {_file::*} to content of file path "plugins/Skript/data/gps/parttime.txt"
+    set {_min} to 100000
+    set {_goal} to "None"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        set {_pos} to location at ({_data::2} parsed as number, {_data::3} parsed as number, {_data::4} parsed as number) of {_p}'s world
+        set {_distance} to taxiDistanceCalculation({_location}, {_pos})
+        if {_distance} < {_min}:
+            set {_min} to {_distance}
+            set {_goal} to {_data::1}
+    make {_p} run command "gps start 상가(%{_goal}%)" as op
+    set {_name::*} to {_goal} split by "-"
+    send "&7[&eGPS&7] &a상가 %{_name::1}%동 %{_name::2}%호로 안내합니다." to {_p}
+
+function gpsConvenience(p: player):
+    set {_location} to location at {_p}
+    set {_file::*} to content of file path "plugins/Skript/data/gps/convenience.txt"
+    set {_min} to 100000
+    set {_goal} to "None"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by "::"
+        set {_pos} to location at ({_data::3} parsed as number, {_data::4} parsed as number, {_data::5} parsed as number) of {_p}'s world
+        set {_distance} to taxiDistanceCalculation({_location}, {_pos})
+        if {_distance} < {_min}:
+            set {_min} to {_distance}
+            set {_goal} to {_data::1}
+            set {_name} to {_data::2}
+    make {_p} run command "gps start %{_goal}%" as op
+    send "&7[&eGPS&7] &a%{_name}%으로 안내합니다." to {_p}
+
+on inventory click:
+    if uncolored display name of event-inventory is "[ 길찾기 ]":
+        cancel event
+        if clicked item isn't set:
+            stop
+        set {_ind} to index of clicked slot
+        if {_ind} is 48 or 49 or 52:
+            stop
+        
+        else if {_ind} is 45:
+            send "[ &6&l! &f] 점검 중입니다."
+            stop
+            gpsStoreGUI(player, 1)
+
+        else if {_ind} is 46:
+            gpsFarmGUI(player, 1)
+
+        else if {_ind} is 47:
+            gpsGuildGUI(player, 1)
+
+        else if {_ind} is 50:
+            gpsBus(player)
+
+        else if {_ind} is 51:
+            gpsTaxi(player)
+
+        else if {_ind} is 53:
+            close player's inventory
+            make player run command "gps stop" as op
+
+        else:
+            set {_name} to uncolored name of clicked item
+            close player's inventory
+            if {_name} is "아르바이트":
+                gpsParttime(player)
+            else if {_name} is "편의점":
+                gpsConvenience(player)
+            else:
+                make player run command "gps start %{_name}%" as op
+                send "&7[&eGPS&7] &a%{_name}%(으)로 안내합니다."
+        stop
+
+    else if uncolored display name of event-inventory is "[ 상가 길찾기 ]":
+        cancel event
+        if clicked slot is 48:
+            if {gps.page.%player%} is 1:
+                send "[ &6&l! &f] 처음 페이지입니다."
+                stop
+            add -1 to {gps.page.%player%}
+            gpsStoreGUI(player, {gps.page.%player%})
+            
+        else if clicked slot is 50:
+            set {_file::*} to content of file path "plugins/Skript/data/store/store.txt"
+            if ({gps.page.%player%}) >= (size of {_file::*}):
+                send "[ &6&l! &f] 마지막 페이지입니다."
+                stop
+            add 1 to {gps.page.%player%}
+            gpsStoreGUI(player, {gps.page.%player%})
+
+        else if clicked slot is 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+
+        else if clicked slot is 45:
+            set {gps.page.%player%} to 1
+            gpsGUI(player)
+
+        else if clicked slot is 53:
+            close player's inventory
+            make player run command "gps stop" as op
+        
+        else:
+            set {_name} to uncolored name of clicked item
+            send "[ &6&l! &f] 점검 중입니다."
+            stop
+            close player's inventory
+            make player run command "gps start 상가%{_name}%" as op
+            set {_name::*} to {_name} split by "-"
+            send "&7[&eGPS&7] &a상가 %{_name::1}%동 %{_name::2}%호로 안내합니다."
+        stop
+
+    else if uncolored display name of event-inventory is "[ 농장 길찾기 ]":
+        cancel event
+        if clicked slot is 48:
+            if {gps.page.%player%} is 1:
+                send "[ &6&l! &f] 처음 페이지입니다."
+                stop
+            add -1 to {gps.page.%player%}
+            gpsFarmGUI(player, {gps.page.%player%})
+
+        else if clicked slot is 50:
+            set {_file::*} to content of file path "plugins/Skript/data/gps/farm.txt"
+            if ({gps.page.%player%})*45 >= (size of {_file::*}):
+                send "[ &6&l! &f] 마지막 페이지입니다."
+                stop
+            add 1 to {gps.page.%player%}
+            gpsFarmGUI(player, {gps.page.%player%})
+
+        else if clicked slot is 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+
+        else if clicked slot is 45:
+            set {gps.page.%player%} to 1
+            gpsGUI(player)
+
+        else if clicked slot is 53:
+            close player's inventory
+            make player run command "gps stop" as op
+        
+        else:
+            set {_name} to uncolored name of clicked item
+            replace all "번지" in {_name} with ""
+            close player's inventory
+            make player run command "gps start 농장(%{_name}%)" as op
+            send "&7[&eGPS&7] &a농장 %{_name}%번지로 안내합니다."
+        stop
+
+    else if uncolored display name of event-inventory is "[ 파벌 길찾기 ]":
+        cancel event
+        if clicked slot is 48:
+            if {gps.page.%player%} is 1:
+                send "[ &6&l! &f] 처음 페이지입니다."
+                stop
+            add -1 to {gps.page.%player%}
+            gpsGuildGUI(player, {gps.page.%player%})
+
+        else if clicked slot is 50:
+            set {_file::*} to content of file path "plugins/Skript/data/gps/guild.txt"
+            if ({gps.page.%player%}) >= (size of {_file::*}):
+                send "[ &6&l! &f] 마지막 페이지입니다."
+                stop
+            add 1 to {gps.page.%player%}
+            gpsGuildGUI(player, {gps.page.%player%})
+
+        else if clicked slot is 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+
+        else if clicked slot is 45:
+            set {gps.page.%player%} to 1
+            gpsGUI(player)
+
+        else if clicked slot is 53:
+            close player's inventory
+            make player run command "gps stop" as op
+        
+        else:
+            set {_name} to uncolored name of clicked item
+            set {_name::*} to {_name} split by " "
+            replace all "(" in {_name::2} with ""
+            replace all ")" in {_name::2} with ""
+            close player's inventory
+            send "name is %{_name}%"
+            make player run command "gps start 분평면%{_name::1}%" as op
+            if {_name::2} is set:
+                send "&7[&eGPS&7] &a파벌 %{_name::2}%(으)로 안내합니다."
+            else:
+                send "&7[&eGPS&7] &a분평면 %{_name::1}%로 안내합니다."
+        stop
+
+on quit:
+    delete {gps.page.%players%}

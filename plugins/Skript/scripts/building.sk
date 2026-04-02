@@ -1,0 +1,186 @@
+options:
+    # 접두사
+    prefix: &6&l[빌딩]&f
+
+    dir: plugins/Skript/data/building/building.txt
+    tax: plugins/Skript/data/building/tax.txt
+
+# 변수
+# {building::%unit%}                  | 빌딩의 소유주
+# {building::%unit%::couser::*}       | 빌딩의 공동소유주 (최대 3명)
+# {building.tax::%unit%}              | 세금을 냈는지
+
+command /building_set:
+    permission: op.user
+    trigger:
+        set {_file::*} to content of file path "{@dir}"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            set {_region::*} to {_data::2} split by "::"
+            loop {_region::*}:
+                execute player command "rg flag %loop-value-2% build -g members allow"
+
+function buildingCalculate(p: player) :: number:
+    set {_ind} to 0
+    loop {building::*}:
+        if loop-value is {_p}:
+            add 1 to {_ind}
+    return {_ind}
+
+function buildingLoadRegion(u: text) :: objects:
+    set {_file::*} to content of file path "{@dir}"
+    loop {_file::*}:
+        set {_data::*} to {_file::%loop-index%} split by " "
+        if {_data::1} is {_u}:
+            return {_data::2} split by "::"
+
+function buildingLoadPrice(u: text) :: number:
+    set {_file::*} to content of file path "{@dir}"
+    loop {_file::*}:
+        set {_data::*} to {_file::%loop-index%} split by " "
+        if {_data::1} is {_u}:
+            return {_data::3} parsed as number
+
+function buildingPrice(p: offlineplayer) :: number:
+    set {_total} to 0
+    loop {building::*}:
+        if loop-value is {_p}:
+            set {_price} to buildingLoadPrice(loop-index)
+            add {_price} to {_total}
+    return {_total}
+
+function buildingLoadTax(p: player, u: text) :: number:
+	set {_file::*} to content of file path "{@tax}"
+	loop {_file::*}:
+		set {_data::*} to {_file::%loop-index%} split by " "
+		if {_data::1} is "%{_p}%":
+			if {_data::2} is {_u}:
+				set {_money} to {_data::3} parsed as integer
+				if {_data::3} isn't set:
+					return 0
+				return {_money}
+	return 0
+
+command /building [<text>] [<text>] [<offlineplayer>] [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "list":
+            set {_file::*} to content of file path "{@tax}"
+            loop {_file::*}:
+                set {_data::*} to {_file::%loop-index%} split by " "
+                set {_name::*} to {_data::2} split by "-"
+                send "{@prefix} &e제%{_name::1}%빌딩 %{_name::2}%층 &f| 소유주 &a%{_data::1}% &f| 월세 &6%moneyDigit({_data::3} parsed as integer)%원"
+
+        else if arg-1 is "give":
+            set {_region::*} to buildingLoadRegion(arg-2)
+            loop {_region::*}:
+                execute player command "rg addmember %loop-value% %arg-3%"
+            set {building::%arg-2%} to arg-3
+            send "{@prefix} 빌딩 %arg-2%를 %arg-3%님에게 주었습니다."
+
+        else if arg-1 is "take":
+            set {_region::*} to buildingLoadRegion(arg-2)
+            loop {_region::*}:
+                execute player command "rg removemember %loop-value% -a"
+            delete {building::%arg-2%}
+            delete {buliding::%arg-2%::couser::*}
+            send "{@prefix} 빌딩 %arg-2%를 뺏었습니다."
+
+
+        else if arg-1 is "move":
+            set {_region::*} to buildingLoadRegion(arg-2)
+            loop {_region::*}:
+                execute player command "rg removemember %loop-value% %arg-3%"
+                execute player command "rg addmember %loop-value% %arg-4%"
+            set {building::%arg-2%} to arg-4
+            send "{@prefix} 빌딩 %arg-2%를 %arg-3%님에게서 %arg-4%님에게로 양도하였습니다."
+
+        else:
+            send "{@prefix} /building list"
+            send "{@prefix} /building give 번호-층수 닉네임"
+            send "{@prefix} /building take 번호-층수"
+            send "{@prefix] /building move 번호-층수 닉네임 닉네임"
+
+command /빌딩 [<text>] [<number>] [<offlineplayer>]:
+    trigger:
+        if buildingCalculate(player) is 0:
+            send "{@prefix} 소유하고 있는 빌딩이 없습니다."
+            stop
+    
+        if arg 1 is "정보":
+            send "{@prefix} &6%player%&f님이 소유하고 계신 빌딩은 아래와 같습니다."
+            set {_ind} to 1
+            loop {building::*}:
+                if loop-value is player:
+                    set {_name::*} to loop-index split by "-"
+                    set {_tax} to buildingLoadTax(player, loop-index)
+                    if size of {building::%loop-index%::couser::*} >= 1:
+                        send "{@prefix} [&b%{_ind}%&f] &e제%{_name::1}%빌딩 %{_name::2}%층 &f| 월세 &6%moneyDigit({_tax})%원 &f| 공동소유자 %{building::%loop-index%::couser::*}%"
+                    else:
+                        send "{@prefix} [&b%{_ind}%&f] &e제%{_name::1}%빌딩 %{_name::2}%층 &f| 월세 &6%moneyDigit({_tax})%원 &f| 공동소유자 없음"
+                    add 1 to {_ind}
+            stop
+
+        else if arg 1 is "추가":
+            if arg 2 is not set:
+                send "{@prefix} 빌딩 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and buildingCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 빌딩 번호입니다. /빌딩 정보에서 확인할 수 있는 빌딩 번호를 입력해주시기 바랍니다."
+                stop
+            if arg 3 isn't set:
+                send "{@prefix} 추가할 플레이어를 입력해주시기 바랍니다."
+                stop
+            set {_ind} to 1
+            loop {building::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        if {building::%loop-index%::couser::*} contains arg-3:
+                            send "{@prefix} 해당 플레이어는 이미 공동소유자입니다."
+                            stop
+                        add arg-3 to {building::%loop-index%::couser::*}
+                        set {_region::*} to buildingLoadRegion(loop-index)
+                        loop {_region::*}:
+                            make player run command "rg addmember %loop-value-2% %arg-3%" as op
+                        set {_name::*} to loop-index split by "-"
+                        send "{@prefix} &6%arg-3%&f님을 &e제%{_name::1}%빌딩 %{_name::2}%층&f의 공동소유자로 추가하였습니다."
+                        send "{@prefix} &6%player%&f님이 &6%arg-3%&f님을 &e제%{_name::1}%빌딩 %{_name::2}%층&f의 공동소유자로 추가하였습니다." to arg-3
+                        stop
+                    add 1 to {_ind}
+                
+
+        else if arg 1 is "삭제":
+            if arg 2 is not set:
+                send "{@prefix} 빌딩 번호를 입력해주시기 바랍니다."
+                stop
+            set {_temp} to true if arg 2 is between 1 and buildingCalculate(player)
+            if {_temp} isn't set:
+                send "{@prefix} 올바르지 않은 빌딩 번호입니다. /빌딩 정보에서 확인할 수 있는 빌딩 번호를 입력해주시기 바랍니다."
+                stop
+            if arg 3 isn't set:
+                send "{@prefix} 삭제할 플레이어를 입력해주시기 바랍니다."
+                stop
+            set {_ind} to 1
+            loop {building::*}:
+                if loop-value is player:
+                    if {_ind} is arg-2:
+                        if {building::%loop-index%::couser::*} doesn't contain arg-3:
+                            send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                            stop
+                        remove arg-3 from {building::%loop-index%::couser::*}
+                        set {_region::*} to buildingLoadRegion(loop-index)
+                        loop {_region::*}:
+                            make player run command "rg removemember %loop-value-2% %arg-3%" as op
+                        set {_name::*} to loop-index split by "-"
+                        send "{@prefix} &6%arg-3%&f님을 &e제%{_name::1}%빌딩 %{_name::2}%층&f의 공동소유자로 삭제하였습니다."
+                        send "{@prefix} &6%player%&f님이 &6%arg-3%&f님을 &e제%{_name::1}%빌딩 %{_name::2}%층&f의 공동소유자에서 삭제하였습니다." to arg-3
+                        stop
+                    add 1 to {_ind}
+
+        else:
+            send "{@prefix} /빌딩 정보 &8&l| &f빌딩 정보를 확인합니다."
+            send "{@prefix} /빌딩 추가 [번호] [플레이어] &8&l| &f[번호]의 공동소유자로 [플레이어]를 추가합니다."
+            send "{@prefix} /빌딩 삭제 [번호] [플레이어] &8&l| &f[번호]의 공동소유자에서 [플레이어]를 삭제합니다."
+            send "{@prefix} /빌딩 납부 [번호] &8&l| &f빌딩의 월세를 납부합니다."
+            stop

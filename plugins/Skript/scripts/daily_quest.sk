@@ -1,0 +1,340 @@
+options:
+    prefix: &d&l[일일퀘스트]&f
+    gui: &f[&d&l일일퀘스트&f]
+    @: &f[ &6&l&o! &f]&f
+
+    item: slime ball named "&f[ &a&l추천&f ] &e&l코인" with lore "&7거래가 불가능한 아이템입니다." and "&7중앙광장에서 교환할 수 있습니다."
+    money: gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+
+# 변수
+# {dailyquest.%number%::%uuid of player%} | 플레이어가 n번 퀘스트 보상을 깼는지(1), n번 퀘스트 보상을 보상을 받았는지(2)
+
+command /reset_daily:
+    permission: op
+    trigger:
+        loop 11 times:
+            delete {dailyquest.%loop-number - 1%::*}
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} &7관리자에 의해 일일퀘스트 데이터가 삭제되었습니다." to all players
+        send " {@@} &7지금부터 일일퀘스트를 클리어 할 수 있습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+command /daily_reset_player [<offlineplayer>]:
+    permission: op
+    trigger:
+        loop 11 times:
+            delete {dailyquest.%loop-number - 1%::%uuid of arg-1%}
+        send "{@@} &7관리자에 의해 &6%arg-1%&7님의 일일퀘스트 데이터가 삭제되었습니다." to player
+        send "{@@} &7관리자에 의해 &6%arg-1%&7님의 일일퀘스트 데이터가 삭제되었습니다." to arg-1
+
+
+
+command /daily_check <offlineplayer>:
+    permission: op
+    permission message: {@prefix} &c당신은 권한이 없습니다.
+    trigger:
+
+        send "&f"
+        send "{@prefix} %arg-1%님에 대한 일일퀘스트 정보입니다."
+        send "&f"
+
+        if {dailyquest.0::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l모든 일일퀘스트 완료하기%nl%&7└ 보상 | 추천 코인 3개>{@prefix} 전체 퀘스트 미완료<reset>"
+        else if {dailyquest.0::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l모든 일일퀘스트 완료하기%nl%&7└ 보상 | 추천 코인 3개>{@prefix} 전체 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.0::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l모든 일일퀘스트 완료하기%nl%&7└ 보상 | 추천 코인 3개>{@prefix} 전체 퀘스트 완료(수령)<reset>"
+
+        send "&f"
+
+        if {dailyquest.1::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l마인리스트 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인페이지에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 1번 퀘스트 미완료<reset>"
+        else if {dailyquest.1::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l마인리스트 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인페이지에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 1번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.1::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l마인리스트 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인페이지에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 1번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.2::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l마인페이지 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인리스트에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 2번 퀘스트 미완료<reset>"
+        else if {dailyquest.2::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l마인페이지 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인리스트에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 2번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.2::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l마인페이지 추천하기%nl%&7└ 보상 | 50,000원%nl%&7└ 보상 | 추천 코인 1~3개 무작위 지급%nl%&7└ 보상 | 이미 마인리스트에 추천했으면%nl%          &7추천 코인 1개 추가 지급>{@prefix} 2번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.3::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l채팅창에 '안녕하세요' 입력하기%nl%&7└ 보상 | 50,000원>{@prefix} 3번 퀘스트 미완료<reset>"
+        else if {dailyquest.3::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l채팅창에 '안녕하세요' 입력하기%nl%&7└ 보상 | 50,000원>{@prefix} 3번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.3::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l채팅창에 '안녕하세요' 입력하기%nl%&7└ 보상 | 50,000원>{@prefix} 3번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.4::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l아르바이트 하기%nl%&7└ 보상 | 50,000원>{@prefix} 4번 퀘스트 미완료<reset>"
+        else if {dailyquest.4::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l아르바이트 하기%nl%&7└ 보상 | 50,000원>{@prefix} 4번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.4::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l아르바이트 하기%nl%&7└ 보상 | 50,000원>{@prefix} 4번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.5::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l택시 타기%nl%&7└ 보상 | 50,000원>{@prefix} 5번 퀘스트 미완료<reset>"
+        else if {dailyquest.5::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l택시 타기%nl%&7└ 보상 | 50,000원>{@prefix} 5번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.5::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l택시 타기%nl%&7└ 보상 | 50,000원>{@prefix} 5번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.6::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l상어마켓에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 6번 퀘스트 미완료<reset>"
+        else if {dailyquest.6::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l상어마켓에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 6번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.6::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l상어마켓에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 6번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.7::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l경매에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 7번 퀘스트 미완료<reset>"
+        else if {dailyquest.7::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l경매에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 7번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.7::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l경매에 아이템 등록하기%nl%&7└ 보상 | 50,000원>{@prefix} 7번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.8::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l서점에서 책 한 권 사기%nl%&7└ 보상 | 50,000원>{@prefix} 8번 퀘스트 미완료<reset>"
+        else if {dailyquest.8::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l서점에서 책 한 권 사기%nl%&7└ 보상 | 50,000원>{@prefix} 8번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.8::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l서점에서 책 한 권 사기%nl%&7└ 보상 | 50,000원>{@prefix} 8번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.9::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&lATM에서 돈 출금하기%nl%&7└ 보상 | 50,000원>{@prefix} 9번 퀘스트 미완료<reset>"
+        else if {dailyquest.9::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&lATM에서 돈 출금하기%nl%&7└ 보상 | 50,000원>{@prefix} 9번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.9::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&lATM에서 돈 출금하기%nl%&7└ 보상 | 50,000원>{@prefix} 9번 퀘스트 완료(수령)<reset>"
+
+        if {dailyquest.10::%uuid of arg-1%} isn't set:
+            send formatted "<tooltip:&e&l접속보상 받기%nl%&7└ 보상 | 50,000원>{@prefix} 10번 퀘스트 미완료<reset>"
+        else if {dailyquest.10::%uuid of arg-1%} = 1:
+            send formatted "<tooltip:&e&l접속보상 받기%nl%&7└ 보상 | 50,000원>{@prefix} 10번 퀘스트 완료(미수령)<reset>"
+        else if {dailyquest.10::%uuid of arg-1%} = 2:
+            send formatted "<tooltip:&e&l접속보상 받기%nl%&7└ 보상 | 50,000원>{@prefix} 10번 퀘스트 완료(수령)<reset>"
+
+command /경매:
+    trigger:
+        dailyquestSound(player, 7)
+
+command /daily_set <offlineplayer> <number>:
+    permission: op.user
+    trigger:
+        dailyquestSound(arg-1, arg-2)
+
+command /daily_remove <offlineplayer> <number>:
+    permission: op.user
+    trigger:
+        delete {dailyquest.%arg-2%::%uuid of arg-1%}
+
+function dailyquestCheck(p: player, n: number) :: boolean:
+    if {_n} is between 1 and 10:
+        if {dailyquest.%{_n}%::%uuid of {_p}%} >= 1:
+            return true
+        else:
+            return false
+    else:
+        loop 10 times:
+            if {dailyquest.%{_n}%::%uuid of {_p}%} isn't set:
+                return false
+        return true
+
+function dailyquestCount(p: player) :: number:
+    set {_result} to 0
+    loop 10 times:
+        set {_temp} to dailyquestCheck({_p}, loop-number)
+        add 1 to {_result} if {_temp} is true
+        remove 1 from {_result} if {dailyquest.%loop-number%::%uuid of {_p}%} is 2
+    return {_result}
+
+function dailyquestItem(p: player, n: number) :: item:
+    if {dailyquest.%{_n}%::%uuid of {_p}%} isn't set:
+        set {_item} to chest with lore "&c아직 보상을 수령할 수 없음"
+    else if {dailyquest.%{_n}%::%uuid of {_p}%} is 1:
+        set {_item} to ender chest with lore "&a클릭&f하여 보상 수령"
+    else if {dailyquest.%{_n}%::%uuid of {_p}%} is 2:
+        return barrier named "&c보상 수령 완료"
+    if {_n} is 1:
+        set name of {_item} to "&e&l마인리스트 추천하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+        add "&7└ 보상 | 추천 코인 1~3개 무작위 지급" to lore of {_item}
+        add "&7└ 보상 | 이미 마인페이지에 추천했으면" to lore of {_item}
+        add "          &7추천 코인 1개 추가 지급" to lore of {_item}
+    else if {_n} is 2:
+        set name of {_item} to "&e&l마인페이지 추천하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+        add "&7└ 보상 | 추천 코인 1~3개 무작위 지급" to lore of {_item}
+        add "&7└ 보상 | 이미 마인리스트에 추천했으면" to lore of {_item}
+        add "          &7추천 코인 1개 추가 지급" to lore of {_item}
+    else if {_n} is 3:
+        set name of {_item} to "&e&l채팅창에 '안녕하세요' 입력하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 4:
+        set name of {_item} to "&e&l아르바이트 하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 5:
+        set name of {_item} to "&e&l택시 타기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 6:
+        set name of {_item} to "&e&l상어마켓에 아이템 등록하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 7:
+        set name of {_item} to "&e&l경매에 아이템 등록하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 8:
+        set name of {_item} to "&e&l서점에서 책 한 권 사기"
+        add "&7└ 참여 방법 | /서점 열기" to lore of {_item}
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 9:
+        set name of {_item} to "&e&lATM에서 돈 출금하기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 10:
+        set name of {_item} to "&e&l접속보상 받기"
+        add "&7└ 보상 | 50,000원" to lore of {_item}
+    else if {_n} is 0:
+        set name of {_item} to "&e&l모든 일일퀘스트 완료하기"
+        add "&7└ 보상 | 추천 코인 3개" to lore of {_item}
+    return {_item}
+
+function dailyquestItemGive(p: player, n: number):
+    set {dailyquest.%{_n}%::%uuid of {_p}%} to 2
+    if {_n} is between 1 and 10:
+        add {@money} to {_item::*}
+    else:
+        add 3 of {@item} to {_item::*}
+    if {_n} is 1 or 2:
+        set {_rand} to random integer between 1 and 3
+        add {_rand} of {@item} to {_item::*}
+        if {_n} is 1:
+            add {@item} to {_item::*} if {dailyquest.%{_n}+1%::%uuid of {_p}%} is 2
+        else:
+            add {@item} to {_item::*} if {dailyquest.%{_n}-1%::%uuid of {_p}%} is 2
+    loop {_item::*}:
+        itemGive({_p}, loop-value, item amount of loop-value, "DailyQuest")
+    play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to {_p}
+    send "{@prefix} 보상을 수령했습니다." to {_p}
+    send "{@prefix} &e%{_p}%님&f이 모든 일일퀘스트를 완료했습니다." to all players if {_n} is 0
+
+function dailyquestSound(p: player, n: number):
+    if {_n} is 0:
+        {dailyquest.%{_n}%::%uuid of {_p}%} isn't set
+        loop 10 times:
+            if {dailyquest.%loop-number%::%uuid of {_p}%} isn't set:
+                stop
+        set {dailyquest.%{_n}%::%uuid of {_p}%} to 1
+        stop
+    if {dailyquest.%{_n}%::%uuid of {_p}%} isn't set:
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to {_p}
+        send title "&6&l일일퀘스트&f를 달성했습니다!" with subtitle "&7/일일퀘스트를 입력해 보상을 받을 수 있습니다." to {_p} for 2 seconds
+        set {dailyquest.%{_n}%::%uuid of {_p}%} to 1
+        loop 10 times:
+            if {dailyquest.%loop-number%::%uuid of {_p}%} isn't set:
+                stop
+        set {dailyquest.0::%uuid of {_p}%} to 1
+
+function dailyquestGUI(p: player):
+    dailyquestSound({_p}, 0)
+    set {_inv} to chest inventory with 6 rows named "{@gui}"
+    loop 54 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    loop 10 times:
+        if loop-number is between 1 and 5:
+            set {_slot} to loop-number + 10
+        else if loop-number is between 6 and 10:
+            set {_slot} to loop-number + 14
+        set {_item} to dailyquestItem({_p}, loop-number)
+        set slot {_slot} of {_inv} to {_item}
+    set {_item} to dailyquestItem({_p}, 0)
+    set slot 40 of {_inv} to {_item}
+    open {_inv} To {_p}
+
+on inventory click:
+    if {gui.%uuid of player%::dailyquestGUI} is true:
+        cancel event
+        if uncolored lore of clicked item contains "클릭하여 보상 수령":
+            set {_ind} to index of clicked slot
+            if {_ind} is between 11 and 15:
+                set {_n} to {_ind} - 10
+            else if {_ind} is between 20 and 24:
+                set {_n} to {_ind} - 14
+            else if {_ind} is 40:
+                set {_n} to {_ind} - 40
+            dailyquestItemGive(player, {_n})
+            dailyquestGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::dailyquestGUI} to true
+
+on inventory close:
+    if {gui.%uuid of player%::dailyquestGUI} is true:
+        delete {gui.%uuid of player%::dailyquestGUI}
+
+on chat:
+    if message contains "안녕하세요":
+        dailyquestSound(player, 3)
+
+command /일일퀘스트:
+    aliases: 일퀘
+    trigger:
+        dailyquestGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::dailyquestGUI} to true
+
+every 1 second:
+    if now formatted as "HH:mm:ss" contains "00:00:00":
+        loop 11 times:
+            delete {dailyquest.%loop-number - 1%::*}
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} &7일일퀘스트 데이터가 삭제되었습니다." to all players
+        send " {@@} &7지금부터 일일퀘스트를 클리어 할 수 있습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+            
+
+
+command /추천:
+    aliases: 마인리스트, 마인페이지
+    trigger:
+        send formatted "{@@}&f <url:https://minelist.kr/servers/12857/votes/new>&e&l&n&o여기<reset>&f를 눌러 &a마인리스트&f로 이동합니다."
+        send formatted "{@@}&f <url:https://mine.page/server/shkworld.kr>&e&l&n&o여기<reset>&f를 눌러 &a마인페이지&f로 이동합니다."
+        send "{@@}&f └ 추천상점은 중앙광장 기준 &e왼쪽의 라마&f입니다. 우클릭 해볼까요?"
+
+command /vote_set [<offlineplayer>] [<text>]:
+    permission: op
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg-1 isn't set:
+            send "{@@} 플레이어를 지정하여 주세요."
+            stop
+
+        if arg-2 isn't set:
+            send "{@@} minelist 또는 minepage 중 선택하여 주세요."
+            stop
+
+        if arg-2 isn't "minepage" or "minelist":
+            send "{@@} 올바르지 못한 표현입니다."
+            stop
+
+        if arg-2 is "minepage":
+            dailyquestSound(arg-1, 2)
+            send "{@@} 마인페이지에서 강제 추천 되었습니다." to arg-1
+            send "{@@} &7└ /추천 을 통해서 한 경우에도 이 문장이 뜹니다." to arg-1
+            send "{@@} &e%arg-1%님&f이 마인페이지에서 강제 추천 되었습니다." to player
+            stop
+
+        if arg-2 is "minelist":
+            dailyquestSound(arg-1, 1)
+            dailyquestSound(arg-1, 2)
+            send "{@@} 마인리스트 강제 추천이 되었습니다." to arg-1
+            send "{@@} &7└ /추천 을 통해서 한 경우에도 이 문장이 뜹니다." to arg-1
+            send "{@@} &e%arg-1%님&f이 마인리스트에서 강제 추천 되었습니다." to player
+            stop
+
+        else:
+            send "{@@} &f/vote_set [닉네임] minepage/minelist"
+            stop
+    

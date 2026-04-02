@@ -1,0 +1,305 @@
+options:
+    # 접두사
+    prefix: <##3AB0FF>&l[경매]&f
+    time: 180
+    max: 5
+    fee: 5
+    dir: plugins/Skript/data/auction/name.txt
+
+
+# 변수
+# {auction.time}         | 경매 시간 타임
+# {auction.head}         | 경매 구조체 head
+# {auction.tail}         | 경매 구조체 tail
+# {auction::*}           | 경매 목록 및 아이템
+# {auction::*::player}   | 경매 판매자
+# {auction::*::price}    | 경매 가격
+# {auction::*::buyer}    | 경매 구매자
+# {auction::*::newprice} | 경매 호가
+
+on load:
+    delete {auction.time} if {auction.time} < -5
+    delete {auction.index}
+    set {auction.head} to -1 if {auction.head} isn't set
+    set {auction.tail} to -1 if {auction.tail} isn't set
+
+function parsingName(i: item) :: text:
+    if unbreaking level of {_i} >= 1:
+        set {_unbreaking} to unbreaking level of {_i}
+    if lure level of {_i} >= 1:
+        set {_lure} to lure level of {_i}
+    if silk touch level of {_i} >= 1:
+        set {_silktouch} to silk touch level of {_i}
+    if max durability of {_i} >= 1:
+        set {_max} to max durability of {_i}
+        set {_durability} to max durability of {_i} - durability of {_i}
+    if {_unbreaking} is set:
+        if {_lure} is set:
+            if {_durability} is set:
+                set {_enchant} to "(내구성 %{_unbreaking}%, 미끼 %{_lure}%, 내구도 %{_durability}%/%{_max}%) "
+            else:
+                set {_enchant} to "(내구성 %{_unbreaking}%, 미끼 %{_lure}%) "
+        else:
+            if {_durability} is set:
+                set {_enchant} to "(내구성 %{_unbreaking}%, 내구도 %{_durability}%/%{_max}%) "
+            else:
+                set {_enchant} to "(내구성 %{_unbreaking}%) "
+    else:
+        if {_lure} is set:
+            if {_durability} is set:
+                set {_enchant} to "(미끼 %{_lure}%, 내구도 %{_durability}%/%{_max}%) "
+            else:
+                set {_enchant} to "(미끼 %{_lure}%) "
+        else:
+            if {_durability} is set:
+                if {_silktouch} is set:
+                    set {_enchant} to "(섬세한 손길, 내구도 %{_durability}%/%{_max}%) "
+                else:
+                    set {_enchant} to "(내구도 %{_durability}%/%{_max}%) "
+            else:
+                set {_enchant} to ""
+    if "%type of {_i}%" is "filled map":
+        return "그림 「%name of {_i}%&f」 %{_enchant}%%item amount of {_i}%개"
+    else if uncolored name of {_i} contains "의 머리":
+        set {_name} to uncolored name of {_i}
+        return "&f%{_name}% %{_enchant}%%item amount of {_i}%개"
+    else if "%type of {_i}%" is "player head item":
+        set {_name} to tag "tag;SkullOwner;Name" of nbt compound from {_i}
+        if {_name} is set:
+            return "%{_name}%&f의 머리 %{_enchant}%%item amount of {_i}%개"
+        else:
+            return "플레이어 머리 (&f%name of {_i}%&f) %{_enchant}%%item amount of {_i}%개"
+    else if name of {_i} is set:
+        return "%name of {_i}%&f %{_enchant}%%item amount of {_i}%개"
+    else if book name of {_i} is set:
+        return "책 「%book name of {_i}%&f」 %{_enchant}%%item amount of {_i}%개"
+    else:
+        set {_file::*} to content of file path "{@dir}"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by "::"
+            return "%{_data::2}%&f %{_enchant}%%item amount of {_i}%개" if {_data::1} is "%type of {_i}%"
+        return "%type of {_i}%&f %{_enchant}%%item amount of {_i}%개"
+
+function auctionList(p: player, n: number):
+    set {_maxpage} to round up (size of {auction::*} / 10)
+    send "&6경매 목록 (%now%)" to {_p}
+    send " &e&l ---- &6경매 목록 &e&l-- &6페이지 &c%{_n}%&6/&c%{_maxpage}% &e&l----" to {_p}
+    send "&6판매 대기 중인 품목: &c%size of {auction::*} - 1%개" to {_p} if {_n} is 1
+    loop 10 times:
+        set {_ind} to ({_n}-1)*10 + loop-number
+        set {_number} to {_ind} + {auction.head} - 1
+        if {auction::%{_number}%} isn't set:
+            continue
+        set {_player} to {auction::%{_number}%::player} parsed as offlineplayer
+        set {_item} to parsingName({auction::%{_number}%})
+        set {_price} to "%moneyDigit({auction::%{_number}%::price})%원"
+        set {_price} to "%moneyDigit({auction::%{_number}%::newprice})%원" if {auction::%{_number}%::newprice} is set
+        if {_number} is {auction.head}:
+            set {_timespan} to "%{auction.time}% seconds" parsed as timespan
+            set {_timespan.text} to "%{_timespan}%"
+            set {_name} to playtimeName({_timespan.text})
+            send "[%{_ind}%] %{_item}% | 판매자: &a%{_player}% &f| 가격: &e%{_price}% &f| &6%{_name}% 후 &f판매 종료" to {_p}
+        else:
+            set {_time} to ({@time}+5)*({_ind}-2) + {auction.time} + 5
+            set {_timespan} to "%{_time}% seconds" parsed as timespan
+            set {_timespan.text} to "%{_timespan}%"
+            set {_name} to playtimeName({_timespan.text})
+            send "[%{_ind}%] %{_item}% | 판매자: &a%{_player}% &f| 가격: &e%{_price}% &f| &6%{_name}% 후 &f판매 시작" to {_p}
+
+    send "&c/경매 목록 %{_n}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p} if {_n} < {_maxpage}
+
+command /경매 [<text>] [<integer>]:
+    trigger:
+        if arg 1 is "목록":
+            if {auction::*} isn't set:
+                send "{@prefix} 판매 대기 중인 경매 품목이 없습니다."
+                stop
+            if arg-2 isn't set:
+                auctionList(player, 1)
+            else:
+                auctionList(player, arg-2)
+
+        else if arg 1 is "등록":
+            if player's tool is air:
+                send "{@prefix} 등록할 상품을 손에 들고 다시 입력해주시기 바랍니다."
+                stop
+            if player's tool is cooked pork:
+                send "{@prefix} 음식은 경매에 등록할 수 없습니다."
+                stop
+            set {_lore::*} to uncolored lore of player's tool
+            loop {_lore::*}:
+                if loop-value contains "불가능한":
+                    send "{@prefix} 거래가 불가능한 아이템은 경매에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "예금주":
+                    send "{@prefix} 통장은 경매에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "[상어은행]":
+                    send "{@prefix} 화폐는 경매에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "싱크대":
+                    send "{@prefix} 그을린 불판은 경매에 등록하실 수 없습니다."
+                    stop
+            if player's tool is written book:
+                send "{@prefix} 책은 서점에서 등록하실 수 있습니다."
+                stop
+            if arg 2 isn't set:
+                send "{@prefix} 올바른 가격을 입력해주세요."
+                stop
+            if arg 2 < 1000:
+                send "{@prefix} 1,000원 이상의 가격을 입력해주세요."
+                stop
+            set {_price} to round up (arg-2 * {@fee} / 100)
+            if player's balance < {_price}:
+                send "{@prefix} 수수료를 납부할 잔액이 부족합니다. &7(수수료: %moneyDigit({_price})%원)"
+                stop
+            set {_number} to {auction.head}
+            set {_count} to 0
+            loop ({auction.tail} - {auction.head} + 1) times:
+                if uuid of player is {auction::%{_number} + loop-number - 1%::player}:
+                    add 1 to {_count}
+            if {_count} >= {@max}:
+                send "{@prefix} 최대 {@max}개의 품목을 등록할 수 있습니다."
+                stop
+            add 1 to {auction.tail}
+            set {auction::%{auction.tail}%} to player's tool
+            set {auction::%{auction.tail}%::player} to uuid of player
+            set {auction::%{auction.tail}%::price} to arg-2
+            if {auction.head} is -1:
+                set {auction.head} to 0
+                set {auction.time} to -1
+            send "{@prefix} %parsingName(player's tool)%를 등록했습니다. &7(수수료: %moneyDigit({_price})%원)"
+            set player's tool to air
+            balanceRemove(player, {_price}, "AuctionFee")
+            dailyquestSound(player, 7)
+            stop
+        
+        else if arg 1 is "참여":
+            if {auction.time} <= 0:
+                send "{@prefix} 현재 경매 중인 품목이 없습니다."
+                stop
+            if {auction.time} isn't set:
+                send "{@prefix} 현재 경매 중인 품목이 없습니다."
+                stop
+            if {auction::%{auction.head}%::player} is uuid of player:
+                send "{@prefix} 본인이 올린 경매품에 대해서 호가할 수 없습니다."
+                stop
+            if arg 2 isn't set:
+                send "{@prefix} 올바른 가격을 입력해주세요."
+                stop
+            if arg 2 <= 0:
+                send "{@prefix} 올바른 가격을 입력해주세요."
+                stop
+            if arg 2 > player's balance:
+                send "{@prefix} 잔액보다 높은 가격으로 호가할 수 없습니다."
+                stop
+            set {_price} to {auction::%{auction.head}%::price}
+            set {_price} to {auction::%{auction.head}%::newprice} if {auction::%{auction.head}%::newprice} is set
+            if arg 2 <= {_price}:
+                send "{@prefix} 현재 가격보다 높은 가격을 호가해야 합니다. &7(현재 가격 | %moneyDigit({_price})%원"
+                stop
+            if {auction::%{auction.head}%::buyer} is set:
+                balanceAdd({auction::%{auction.head}%::buyer}, {auction::%{auction.head}%::newprice}, "AuctionRefund")
+            set {auction::%{auction.head}%::buyer} to player
+            set {auction::%{auction.head}%::newprice} to arg-2
+            balanceRemove(player, arg-2, "Auction")
+            loop all players:
+                if {auction.mask::%uuid of loop-player%} isn't set:
+                    send "{@prefix} &a%player%&f님이 &e%moneyDigit(arg-2)%원&f을 호가했습니다!" to loop-player
+
+        else if arg-1 is "켜기":
+            if {auction.mask::%uuid of player%} isn't set:
+                send "{@prefix} 경매 알림이 이미 켜져 있습니다."
+            else:
+                delete {auction.mask::%uuid of player%}
+                send "{@prefix} 경매 알림을 켰습니다."
+
+        else if arg-1 is "끄기":
+            if {auction.mask::%uuid of player%} is set:
+                send "{@prefix} 경매 알림이 이미 꺼져 있습니다."
+            else:
+                set {auction.mask::%uuid of player%} to true
+                send "{@prefix} 경매 알림을 껐습니다."
+
+        else:
+            if {auction.head} >= 0:
+                if {auction::%{auction.head}%::newprice} is set:
+                    send "{@prefix} 현재 경매 중인 물품은 %parsingName({auction::%{auction.head}%})%입니다. 가격: &e%moneyDigit({auction::%{auction.head}%::newprice})%원" 
+                else:
+                    send "{@prefix} 현재 경매 중인 물품은 %parsingName({auction::%{auction.head}%})%입니다. 가격: &e%moneyDigit({auction::%{auction.head}%::price})%원"
+            send "{@prefix} /경매 목록 [페이지] &8&l| &f판매 대기 중인 경매품을 확인합니다."
+            send "{@prefix} /경매 등록 [시작가] &8&l| &f손에 든 아이템을 경매에 등록합니다. &7(수수료 {@fee}%%)"
+            send "{@prefix} /경매 참여 [가격] &8&l| &f현재 판매 중인 경매에 참여합니다."
+            send "{@prefix} /경매 켜기/끄기 &8&l| &f경매 알림을 받거나 받지 않습니다."
+            stop
+
+every 1 second:
+    {auction.head} >= 0
+    remove 1 from {auction.time} if {auction.time} is set
+    if {auction.time} isn't set:
+        set {auction.time} to {@time}
+        send "auction %{auction.time}%" to console
+        loop all players:
+            if {auction.mask::%uuid of loop-player%} isn't set:
+                send "" to loop-player
+                send "{@prefix} %parsingName({auction::%{auction.head}%})% 경매를 시작합니다. 시작가는 &e%moneyDigit({auction::%{auction.head}%::price})%원&f입니다! &7(판매자 | %{auction::%{auction.head}%::player} parsed as offlineplayer%)" to loop-player
+                send "" to loop-player
+    else if {auction.time} is 60:
+        set {_price} to {auction::%{auction.head}%::price}
+        set {_price} to {auction::%{auction.head}%::newprice} if {auction::%{auction.head}%::newprice} is set
+        loop all players:
+            if {auction.mask::%uuid of loop-player%} isn't set:
+                send "" to loop-player
+                send "{@prefix} %parsingName({auction::%{auction.head}%})% 경매 마감까지 &660초 &f남았습니다! 현재 가격: &e%moneyDigit({_price})%원" to loop-player
+                send "" to loop-player
+    else if {auction.time} is 30:
+        set {_price} to {auction::%{auction.head}%::price}
+        set {_price} to {auction::%{auction.head}%::newprice} if {auction::%{auction.head}%::newprice} is set
+        loop all players:
+            if {auction.mask::%uuid of loop-player%} isn't set:
+                send "" to loop-player
+                send "{@prefix} %parsingName({auction::%{auction.head}%})% 경매 마감까지 &630초 &f남았습니다! 현재 가격: &e%moneyDigit({_price})%원" to loop-player
+                send "" to loop-player
+    else if {auction.time} is 10:
+        set {_price} to {auction::%{auction.head}%::price}
+        set {_price} to {auction::%{auction.head}%::newprice} if {auction::%{auction.head}%::newprice} is set
+        loop all players:
+            if {auction.mask::%uuid of loop-player%} isn't set:
+                send "" to loop-player
+                send "{@prefix} %parsingName({auction::%{auction.head}%})% 경매 마감까지 &610초 &f남았습니다! 현재 가격: &e%moneyDigit({_price})%원" to loop-player
+                send "" to loop-player
+    else if {auction.time} is 3:
+        set {_price} to {auction::%{auction.head}%::price}
+        set {_price} to {auction::%{auction.head}%::newprice} if {auction::%{auction.head}%::newprice} is set
+        loop all players:
+            if {auction.mask::%uuid of loop-player%} isn't set:
+                send "" to loop-player
+                send "{@prefix} %parsingName({auction::%{auction.head}%})% 경매 마감까지 &63초 &f남았습니다! 현재 가격: &e%moneyDigit({_price})%원" to loop-player
+                send "" to loop-player
+    else if {auction.time} is 0:
+        if {auction::%{auction.head}%::newprice} isn't set:
+            loop all players:
+                if {auction.mask::%uuid of loop-player%} isn't set:
+                    send "" to loop-player
+                    send "{@prefix} 참여자가 아무도 없어 경매품이 반환되었습니다." to loop-player
+                    send "" to loop-player
+            itemGive({auction::%{auction.head}%::player} parsed as offlineplayer, {auction::%{auction.head}%}, item amount of {auction::%{auction.head}%}, "AuctionReturn")
+        else:
+            loop all players:
+                if {auction.mask::%uuid of loop-player%} isn't set:
+                    send "" to loop-player
+                    send "{@prefix} &a%{auction::%{auction.head}%::buyer}%님&f이 %parsingName({auction::%{auction.head}%})%를 &e%moneyDigit({auction::%{auction.head}%::newprice})%원&f에 낙찰되셨습니다!" to loop-player
+                    send "" to loop-player
+            itemGive({auction::%{auction.head}%::buyer}, {auction::%{auction.head}%}, item amount of {auction::%{auction.head}%}, "Auction")
+            balanceAdd({auction::%{auction.head}%::player} parsed as offlineplayer, {auction::%{auction.head}%::newprice}, "Auction")
+        delete {auction::%{auction.head}%}
+        delete {auction::%{auction.head}%::player}
+        delete {auction::%{auction.head}%::price}
+        delete {auction::%{auction.head}%::buyer}
+        delete {auction::%{auction.head}%::newprice}
+        add 1 to {auction.head}
+    else if {auction.time} is -4:
+        if {auction.head} > {auction.tail}:
+            set {auction.head} to -1
+            set {auction.tail} to -1
+        delete {auction.time}

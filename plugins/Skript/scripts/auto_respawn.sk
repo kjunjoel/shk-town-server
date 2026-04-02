@@ -1,0 +1,175 @@
+options:
+    warp: jail
+
+on death:
+    force victim to respawn
+    if "%region at victim%" contains "squidgame":
+        set death message to ""
+        stop
+    if {minigame.suddenattack::%victim%} is set:
+        set death message to ""
+        remove all items from victim's inventory
+        minigameSuddenattackMessage(attacker, victim)
+        wait 10 ticks
+        loop 41 times:
+            if loop-number is 37:
+                set victim's offhand to {minigame.suddenattack.inv.%victim%::%loop-number%}
+            else if loop-number is 38:
+                set the helmet of victim to {minigame.suddenattack.inv.%victim%::%loop-number%}
+            else if loop-number is 39:
+                set the chestplate of victim to {minigame.suddenattack.inv.%victim%::%loop-number%}
+            else if loop-number is 40:
+                set the leggings of victim to {minigame.suddenattack.inv.%victim%::%loop-number%}
+            else if loop-number is 41:
+                set the boots of victim to {minigame.suddenattack.inv.%victim%::%loop-number%}
+            else:
+                set slot (loop-number)-1 of victim's inventory to {minigame.suddenattack.inv.%victim%::%loop-number%}
+        stop
+    if {jobless.boolean::%victim%} is "%attacker%":
+        set death message to ""
+        stop
+    if {bug.kill::%uuid of victim%} is true:
+        set death message to ""
+        stop
+    if victim is player:
+        set death message to ""
+        if attacker is player:
+            if "%region at victim%" contains "island-3":
+                if "%region at attacker%" contains "island-3":
+                    stop
+            if "%region at victim%" contains "nis":
+                stop
+            if {mafia.hide::%victim%} is set:
+                if name of attacker's tool is set:
+                    set {_text} to ""
+                    loop lore of attacker's tool:
+                        set {_text} to "%{_text}%%nl%%loop-value%"
+                    send formatted "[ &6&l! &f] &e%attacker%님&f이 <tooltip:%{_text}%>%name of attacker's tool%<reset>&f(으)로 의문의 괴한을 제압하였습니다." to all players
+                    send "[ &6&l! &f] &e%attacker%님&f이 %name of attacker's tool%&f(으)로 의문의 괴한을 제압하였습니다." to console
+                else:
+                    send "[ &6&l! &f] &e%attacker%&f님이 의문의 괴한을 제압했습니다." to all players
+                    send "[ &6&l! &f] &e%attacker%&f님이 의문의 괴한을 제압했습니다." to console
+                stop
+            if {mafia.hide::%attacker%} is set:
+                send "[ &6&l! &f] &e???&f님이 &e%victim%님&f을 살해하였습니다." to all players
+                send "[ &6&l! &f] &e???&f님이 &e%victim%님&f을 살해하였습니다." to console
+                stop
+            if name of attacker's tool is set:
+                set {_text} to ""
+                loop lore of attacker's tool:
+                    set {_text} to "%{_text}%%nl%%loop-value%"
+                send formatted "[ &6&l! &f] &e%attacker%님&f이 <tooltip:%{_text}%>%name of attacker's tool%<reset>&f(으)로 &e%victim%님&f을 살해하였습니다." to all players
+                send "[ &6&l! &f] &e%attacker%님&f이 %name of attacker's tool%&f(으)로 &e%victim%님&f을 살해하였습니다." to console
+            else:
+                send "[ &6&l! &f] &e%attacker%님&f이 &e%victim%님&f을 살해하였습니다." to all players
+                send "[ &6&l! &f] &e%attacker%님&f이 &e%victim%님&f을 살해하였습니다." to console
+            # send formatted "[ &c&l! &f] &e%victim%님&f을 납치하시려면 <command:/kidnap %victim%>&c&l여기&f<reset>를 클릭해주세요." to attacker
+        else:
+            send "[ &6&l! &f] &e%victim%님&f이 죽었습니다." to all players
+            send "[ &6&l! &f] &e%victim%님&f이 죽었습니다." to console
+        wait 1 tick
+        send "[ &6&l! &f] &7&o%now formatted as "yyyy-MM-dd HH:mm:ss"%" to all players
+
+on respawn:
+    if "%region at player%" contains "event_light":
+        remove bossbar "event.light.%player%"
+        make player run command "warp event_light" as op
+        wait 10 ticks
+        make player run command "gm 3" as op
+        stop
+    if "%region at player%" contains "event_dalgona":
+        make player run command "warp event_dalgona" as op
+        wait 10 ticks
+        make player run command "gm 3" as op
+        stop
+    if "%region at player%" contains "event_fishing":
+        make player run command "warp event_fishing" as op
+        wait 10 ticks
+        make player run command "gm 3" as op
+        stop
+    if "%region at player%" contains "event_bridge":
+        make player run command "warp event_bridge" as op
+        wait 10 ticks
+        make player run command "gm 3" as op
+        stop
+    if "%region at player%" contains "maze":
+        make player run command "warp maze" as op
+        stop
+    if "%region at player%" contains "nis":
+        make player run command "warp nis" as op
+        stop
+    if {terror::%player%} is 1:
+        make player run command "warp mafia_die" as op
+        wait 60 seconds
+        make player run command "warp mafia_terror_%{mafia.terror.symbol}%" as op
+        set {terror.nopvp::%player%} to true
+        wait 3 seconds
+        delete {terror.nopvp::%player%}
+        stop
+    if {terror::%player%} is 2:
+        make player run command "warp police_die" as op
+        wait 60 seconds
+        make player run command "warp police_terror_%{mafia.terror.symbol}%" as op
+        set {terror.nopvp::%player%} to true
+        wait 5 seconds
+        delete {terror.nopvp::%player%}
+        stop
+    set {_location.1} to location(247.5, 47, 112.5)
+    set {_location.2} to location(-635.5, 46, -662.5)
+    set {_distance.1} to taxiTeleportCalculation(player's location, {_location.1})
+    set {_distance.2} to taxiTeleportCalculation(player's location, {_location.2})
+    if group of player is "튜토리얼":
+        make player run command "warp tutorial" as op
+        stop
+    if group of player is "현상수배":
+        set {_location.1} to location(252.5, 57, -83.5)
+        set {_location.2} to location(-547.5, 65, -653.5)
+        set {_distance.1} to taxiTeleportCalculation(player's location, {_location.1})
+        set {_distance.2} to taxiTeleportCalculation(player's location, {_location.2})
+        remove player from {police.criminal::*}
+        delete {police.criminal.%uuid of player%}
+        add player to {police.prisoner::*}
+        set {police.prisoner.%uuid of player%} to true
+        execute console command "lp user %player% parent remove 현상수배"
+        execute console command "lp user %player% parent add 수감자"
+        if {_distance.1} <= {_distance.2}:
+            make player run command "warp {@warp}" as op
+            stop
+        else:
+            make player run command "warp {@warp}2" as op
+            stop
+    else if group of player is "수감자":
+        set {_location.1} to location(252.5, 57, -83.5)
+        set {_location.2} to location(-547.5, 65, -653.5)
+        set {_distance.1} to taxiTeleportCalculation(player's location, {_location.1})
+        set {_distance.2} to taxiTeleportCalculation(player's location, {_location.2})
+        if {_distance.1} <= {_distance.2}:
+            make player run command "warp {@warp}" as op
+            stop
+        else:
+            make player run command "warp {@warp}2" as op
+            stop
+    else if group of player is "죄수":
+        make player run command "warp prison-%{prison.number.%uuid of player%}%" as op
+        stop
+    if "%region at player%" contains "prison":
+        make player run command "warp hospital_prison" as op
+        stop
+    if {minigame.suddenattack::%player%} isn't set:
+        if {_distance.1} <= {_distance.2}:
+            make player run command "warp hospital" as op 
+        else:
+            make player run command "warp hospital2" as op
+        wait 5 ticks
+        set {_chance} to random integer between 1 and 100
+        send "&2&l[의사]&f 사망하여 중환자실로 이송되었습니다." to player if {minigame.suddenattack::%player%} isn't set
+        if {doctor.pain.%uuid of player%} is true:
+            {minigame.suddenattack::%player%} isn't set
+            execute console command "effect give %player% slowness 1000000 2 true"
+        else:
+            if {_chance} <= 85:
+                set {doctor.pain.%uuid of player%} to true
+                execute console command "effect give %player% slowness 1000000 2 true"
+    loop all players:
+        if group of loop-player is "의사":
+            send "&2&l[의사]&f &6%player%&f님이 사망하여 중환자실로 이송되었습니다." to loop-player

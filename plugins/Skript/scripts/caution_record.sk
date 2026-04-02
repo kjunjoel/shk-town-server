@@ -1,0 +1,263 @@
+﻿options:
+    prefix: &f[ &6&l!&f ]
+    벌금퍼미션: prison.admin
+    전과퍼미션: jail.user
+
+# ------------------------------ 벌금 ------------------------------
+
+#일반 유저의 경우:
+#/벌금 : 자신이 납부해야 하는 벌금 액수, 선고번호, 납부 기한 연원일을 보여줌. 
+#     ㄴ 납부하지 않은 금액이 있을 경우 1시간 마다 채팅창에 벌금을 납부하라고 알림을 보냄.
+#     ㄴ 벌금은 /벌금관리 로 추가한 때로부터 3일 뒤까지 납부해야함.
+#/벌금 납부 액수 : 액수 만큼 벌금을 납부함.
+#
+#담당자(법원공무원 or 검사공무원) 경우: 
+#/벌금 조회 닉네임 : 법관/검사는 그 플레이어가 납부해야 하는 벌금 액수와 사건번호, 언제 벌금을 납부했는지를 보여줌.
+#/벌금관리 닉네임 추가/삭제 액수 선고번호 연월일 : 판결 번호와 더불어, 언제 벌금이 확정되어 납부해야 하는지를 보여줌.
+#     ㄴ 만약 시간이 남으신다면, 부탁드립니다. : 벌금을 납부하지 않으면 5만원 당 금고 5분. (남는 금액은 그냥 무시)
+
+# 변수
+# {fine::%uuid of player%::*}       | 플레이어의 벌금
+# {fine.amount::%uuid of player%}   | 플레이어가 납부해야하는 벌금 액수
+# {find.time::%uuid of player%}     | 플레이어가 해당일에 전과를 조회한 횟수
+
+
+
+
+
+# ------------------------------ 전과 ------------------------------
+
+#일반 유저의 경우:
+#/전과 : 자신의 전과를 조회할 수 있습니다. 
+#     ㄴ 정보는 아래 전과관리 명령어로 추가한 정보 보이게 해주세요.
+#/전과 조회 닉네임 : 타인의 전과를 조회할 수 있습니다.
+#     ㄴ 가능하다면: 일반 유저의 경우 일 3회 최대. 조회권 개당 1천원 및 MVP 이상의 유저는 제한 없음.
+#     ㄴ 위에가 채택된다면: 법원, 검찰, 경찰 공무원은 제한 없음.
+#
+#담당자(법원, 검찰, 경찰공무원)의 경우:
+#/전과관리 닉네임 추가/삭제/변경 전과종류 선고번호/처리번호 연월일 : 전과관리 명령어를 통해서 /전과 조회 에 뜨는 정보를 보여줍니다.
+#     ㄴ 전과는 [1] [2] 같이(부동산 시스템과 유사) 번호대로 뜹니다.
+#     ㄴ 전과관리 추가: 전과를 추가합니다.
+#     ㄴ 전과관리 삭제: 번호에 해당하는 전과를 삭제합니다.
+#     ㄴ 전과관리 변경: 귀찮으시면, 전과 삭제하고 추가하는 것이 맞겠지만 연월일에 따라서 타임라인으로 뜨게 하고 싶어서. 변경을 추가하고자 합니다. 명령어를 치면, 전과종류, 선고번호/처리번호 연월일을 바꿀 수 있습니다. (X)
+
+# 변수
+# {conviction::%uuid of player%::*}   | 플레이어의 전과 -> "전과종류 선고번호/처리번호 연월일" | String type
+# {conviction.time::%uuid of player%} | 플레이어가 해당일에 전과를 조회한 횟수
+
+every 1 minute:
+    if now formatted as "HH:mm" is "23:59":
+        delete {conviction.time::*}
+
+command /전과 [<text>] [<offlineplayer>]:
+    trigger:
+        if arg-1 isn't set:
+            if {conviction::%uuid of player%::*} isn't set:
+                send "&f"   
+                send "{@prefix} &e%player%&f님의 전과 기록을 찾을 수 없습니다."
+                send "&f"  
+                send "{@prefix} &e&l&oTIP!&f 혹시 아래 명령어를 찾으셨나요?"
+                send "{@prefix} /전과 조회 <닉네임> &8&l|&f 다른 플레이어의 전과를 조회할 수 있습니다."
+                send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+                send "{@prefix} &7└ MVP와 법원, 검찰청, 경찰청 소속 공무원은 제한 없이 사용할 수 있습니다."
+                send "&f"
+                stop
+            send "&f"
+            send "{@prefix} &e%player%&f님의 전과 기록은 다음과 같습니다."
+            send "&f"
+            send "&f[전과번호] &8&l| &f[형벌종류] &8&l| &f[사건번호/처리번호] &8&l| &f[연월일]"
+            set {_ind} to 1
+            loop {conviction::%uuid of player%::*}:
+                set {_data::*} to loop-value split by " "
+                send "&e[%{_ind}%]&f %{_data::1}% &8&l|&f %{_data::2}% &8&l|&f %{_data::3}%"
+                add 1 to {_ind}
+            send "&f"
+            send "{@prefix} &e&l&oTIP!&f 혹시 아래 명령어를 찾으셨나요?"
+            send "{@prefix} /전과 조회 <닉네임> &8&l|&f 다른 플레이어의 전과를 조회할 수 있습니다."
+            send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+            send "{@prefix} &7└ MVP와 법원, 검찰청, 경찰청 소속 공무원은 제한 없이 사용할 수 있습니다."
+            send "&f"
+
+        else if arg-1 is "조회":
+            if player has permission "MVP.user": # MVP 명단
+                set {_temp} to true
+
+            else if player has permission "{@전과퍼미션}":
+                set {_temp} to true
+            else if {conviction.time::%uuid of player%} isn't set:
+                set {_temp} to true
+            else if {conviction.time::%uuid of player%} < 3:
+                set {_temp} to true
+            else if {conviction.time::%uuid of player%} >= 3:
+                if balance of player < 1000:
+                    send "&f"
+                    send "{@prefix} 다른 플레이어의 전과를 조회하기 위한 잔액이 부족합니다."
+                    send "&f"
+                    stop
+            if arg-2 isn't set:
+                send "&f"
+                send "{@prefix} 전과를 조회할 플레이어를 입력해주세요."
+                send "&f"
+                stop
+
+            if arg-2 isn't player:
+                add 1 to {conviction.time::%uuid of player%}
+                if {_temp} isn't set:
+                    balanceRemove(player, 1000, "ConvictionFind")
+                    send "&f"
+                    send "{@prefix} %arg-2%의 전과를 조회하여 &61,000원&f이 출금되었습니다."
+                    send "&f"
+
+            if {conviction::%uuid of arg-2%::*} isn't set:
+                send "&f"
+                send "{@prefix} &e%arg-2%&f님의 전과 기록을 찾을 수 없습니다."
+                send "&f"
+                stop
+            send "&f"
+            send "{@prefix} &e%arg-2%&f님의 전과 기록은 다음과 같습니다."
+            send "&f"
+            send "&f[전과번호] &8&l| &f[형벌종류] &8&l| &f[사건번호/처리번호] &8&l| &f[연월일]"
+            set {_ind} to 1
+            loop {conviction::%uuid of arg-2%::*}:
+                set {_data::*} to loop-value split by " "
+                send "&e[%{_ind}%]&f %{_data::1}% &8&l|&f %{_data::2}% &8&l|&f %{_data::3}%" to player
+                add 1 to {_ind}
+
+        else:
+            send "&f"
+            send "{@prefix} /전과 조회 <닉네임> &8&l|&f 다른 플레이어의 전과를 조회할 수 있습니다."
+            send "{@prefix} &7└ 일 3회 이용 가능하며, 추가 조회 시 1천원이 차감됩니다."
+            send "{@prefix} &7└ MVP와 법원, 검찰청, 경찰청 소속 공무원은 제한 없이 사용할 수 있습니다."
+            send "&f"
+
+command /전과관리 [<offlineplayer>] [<text>] [<text>] [<text>] [<integer>]:
+    permission: {@전과퍼미션}
+    trigger:
+        if arg-1 isn't set:
+            send "&f"
+            send "{@prefix} 전과를 관리할 플레이어를 입력해주세요."
+            send "{@prefix} /전과관리 <닉네임> 추가 <형벌종류> <선고번호/처리번호> <연월일> &8&l|&f 전과 정보를 등록합니다."
+            send "{@prefix} /전과관리 <닉네임> 삭제 <번호> &8&l|&f 전과 정보를 삭제합니다."
+            send "&f"
+            stop
+
+        if arg-1 is player:
+            if player isn't op:
+                send "&f"
+                send "{@prefix} 본인의 전과를 관리할 수 없습니다."
+                stop
+
+        if arg-2 isn't "추가" or "삭제":
+            send "&f"
+            send "{@prefix} 추가 또는 삭제를 선택하여 주세요."
+            stop
+
+
+        if arg-2 is "추가":
+            if arg-3 isn't set:
+                send "&f"
+                send "{@prefix} 형벌 종류를 띄어쓰기 없이 입력해주세요."
+                stop
+            else if arg-3 isn't "징역" or "금고" or "자격상실" or "자격정지" or "벌금" or "구류" or "과료" or "몰수":
+                send "&f"
+                send "{@prefix} 형벌의 종류는 &b징역&f, &b금고&f, &b자격상실&f, &b자격정지&f, &b벌금&f, &b구류&f, &b과료&f, &b몰수&f입니다."
+                stop
+            if arg-4 isn't set:
+                send "&f"
+                send "{@prefix} 선고번호 또는 처리번호를 띄어쓰기 없이 입력해주세요."
+                send "{@prefix} &7└ ex) 2023조1, 2023고합11, 2023경찰1"
+                stop
+            if arg-5 isn't set:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if arg-5 < 10000000:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if arg-5 > 99991231:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            set {_year} to round down (arg-5 / 10000)
+            set {_month} to round down (mod(arg-5, 10000) / 100)
+            set {_day} to mod(arg-5, 100)
+            if {_month} > 12:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_day} > 31:
+                send "&f"
+                send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                stop
+            if {_month} is 4 or 6 or 9 or 11:
+                if {_day} is 31:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_month} is 2:
+                if {_day} is 30:
+                    send "&f"
+                    send "{@prefix} 연월일을 20230101과 같은 형식으로 입력해주세요."
+                    stop
+            if {_year} > now formatted as "yyyy" parsed as integer:
+                send "&f"
+                send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} > now formatted as "MM" parsed as integer:
+                    send "&f"
+                    send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                    stop
+            if {_year} is now formatted as "yyyy" parsed as integer:
+                if {_month} is now formatted as "MM" parsed as integer:
+                    if {_day} > now formatted as "dd" parsed as integer:
+                        send "&f"
+                        send "{@prefix} 연월일은 오늘 이후의 날짜를 작성할 수 없습니다."
+                        stop
+            if {conviction::%uuid of arg-1%::*} contains "%arg-3% %arg-4% %arg-5%":
+                send "&f"
+                send "{@prefix} 해당 전과는 이미 등록된 전과입니다."
+                stop
+            add "%arg-3% %arg-4% %arg-5%" to {conviction::%uuid of arg-1%::*}
+            send "&f"
+            send "{@prefix} &e%arg-1%&f님의 전과에 다음 정보가 등록되었습니다."
+            send "{@prefix} └ 형벌종류: %arg-3% &8&l|&f 선고번호/처리번호: %arg-4% &8&l|&f 연월일: %arg-5%"
+            send "&f"
+
+        else if arg-2 is "삭제":
+            set {_number} to arg-3 parsed as integer
+            if {_number} <= 0:
+                send "&f"
+                send "{@prefix} 올바른 번호를 입력해주세요."
+                send "{@prefix} &7└ 번호는 /전과 조회 <닉네임>으로 확인할 수 있습니다."
+                send "&f"
+                stop
+            set {_count} to size of {conviction::%uuid of arg-1%::*}
+            if {_count} is 0:
+                send "&f"
+                send "{@prefix} 해당 플레이어의 전과 기록을 찾을 수 없습니다."
+                send "&f"
+                stop
+            if {_number} > {_count}:
+                send "&f"
+                send "{@prefix} 올바른 번호를 입력해주세요."
+                send "{@prefix} &7└ 번호는 /전과 조회 <닉네임>으로 확인할 수 있습니다."
+                send "&f"
+                stop
+            set {_ind} to 1
+            loop {conviction::%uuid of arg-1%::*}:
+                if {_ind} is {_number}:
+                    send "&f"
+                    send "{@prefix} &e%arg-1%&f님의 전과에 다음 정보가 삭제되었습니다."
+                    set {_data::*} to loop-value split by " "
+                    send "{@prefix} └ 형벌종류: %{_data::1}% &8&l|&f 선고번호/처리번호: %{_data::2}% &8&l|&f 연월일: %{_data::3}%"
+                    send "&f"
+                    delete {conviction::%uuid of arg-1%::%loop-index%}
+                add 1 to {_ind}
+
+        else:
+            send "&f"
+            send "{@prefix} /전과관리 <닉네임> 추가 <형벌종류> <선고번호/처리번호> <연월일> &8&l|&f 전과 정보를 등록합니다."
+            send "{@prefix} /전과관리 <닉네임> 삭제 <번호> &8&l|&f 전과 정보를 삭제합니다."
+            send "&f"

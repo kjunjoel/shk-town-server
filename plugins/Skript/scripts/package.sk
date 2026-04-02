@@ -1,0 +1,431 @@
+ # 변수
+# {package.%uuid of player%::%name%} | 플레이어가 name 패키지를 산 횟수
+
+on rightclick on entity:
+    if name of event-entity is "패키지 구매":
+        execute player command "패키지"
+
+on rightclick:
+    if uncolored name of player's tool is "[ 초기화권 ] 스타터 패키지":
+        delete {package.%uuid of player%::starter}
+        send "&d&l[패키지]&f &e%player%님&f의 스타터 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 베이직 패키지":
+        delete {package.%uuid of player%::basic}
+        send "&d&l[패키지]&f &e%player%님&f의 베이직 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 크리미널 패키지":
+        delete {package.%uuid of player%::criminal}
+        send "&d&l[패키지]&f &e%player%님&f의 크리미널 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 파벌 패키지":
+        delete {package.%uuid of player%::guild}
+        send "&d&l[패키지]&f &e%player%님&f의 파벌 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 카지노 패키지":
+        delete {package.%uuid of player%::casino}
+        send "&d&l[패키지]&f &e%player%님&f의 카지노 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 스타트업 패키지":
+        delete {package.%uuid of player%::startup}
+        send "&d&l[패키지]&f &e%player%님&f의 스타트업 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 초기화권 ] 빌딩 패키지":
+        delete {package.%uuid of player%::building}
+        send "&d&l[패키지]&f &e%player%님&f의 빌딩 패키지 제한을 초기화했습니다."
+        remove 1 of player's tool from player's tool
+
+command /패키지:
+    trigger:
+        set {_inv} to chest inventory with 6 rows named "&a&l[상점] &f패키지상점"
+        set {_item} to paper named "&bSHK WORLD &f| &e&l스타터 &f패키지" with custom model data 11 with lore "&7└ 1,000,000원", "&7└ SHK SmartPhone v1.0", "&7└ 철 곡괭이 (내구성 3)", "&7└ 낚싯대 (내구성 3, 미끼 3)", "&7└ 철 괭이 (내구성 3)", "&7└ 직업 변경권", "&7└ 상어 모자", "&f", "&6구매 &f가격: &e&l9,980&e캐시", "&d계정 &f제한 개수: &b%1 - {package.%uuid of player%::starter}%/1개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 11 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &6&l베이직 &f패키지" with custom model data 11 with lore "&7└ 2,000,000원", "&7└ 택시 호출권 20개", "&7└ 스테이크 64개", "&7└ 직업 변경권 3개", "&7└ 상어 모자", "&f", "&6구매 &f가격: &e&l19,980&e캐시", "&d계정 &f제한 개수: &b%3 - {package.%uuid of player%::basic}%/3개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 12 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &4&l크리미널 &f패키지" with custom model data 11 with lore "&7└ 3,000,000원", "&7└ 택시 호출권 20개", "&7└ M1A1 Thompson", "&7└ .45 ACP(30발) 10개 상자 10개", "&7└ 직업 변경권", "&7└ 안경 치장 중 택 1", "&f", "&6구매 &f가격: &e&l49,980&e캐시", "&d계정 &f제한 개수: &b%3 - {package.%uuid of player%::criminal}%/3개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 13 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &a&l파벌 &f패키지" with custom model data 11 with lore "&7└ 500,000원", "&7└ 택시 호출권 20개", "&7└ 파벌 생성권", "&7└ 직업 변경권", "&7└ 안경 치장 중 택 1", "&f", "&6구매 &f가격: &e&l49,980&e캐시", "&d계정 &f제한 개수: &b%3 - {package.%uuid of player%::guild}%/3개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 14 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &d&l카지노 &f패키지" with custom model data 11 with lore "&7└ 3,000,000원", "&7└ 택시 호출권 10개", "&7└ [CASINO] $100 Chip 150개", "&7└ 직업 변경권", "&f", "&6구매 &f가격: &e&l39,980&e캐시", "&d계정 &f제한 개수: &b%5 - {package.%uuid of player%::casino}%/5개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 15 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &e&l스타트업 &f패키지" with custom model data 11 with lore "&7└ 상가 구매 지원 쿠폰 (100,000,000원)", "&7└ 직업 변경권", "&f", "&6구매 &f가격: &e&l59,980&e캐시", "&d계정 &f제한 개수: &b%2 - {package.%uuid of player%::startup}%/2개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 20 of {_inv} to {_item}
+        set {_item} to paper named "&bSHK WORLD &f| &e&l빌딩 &f패키지" with custom model data 11 with lore "&7└ 빌딩 구매 지원 쿠폰 (400,000,000원)", "&7└ 직업 변경권", "&f", "&6구매 &f가격: &e&l149,980&e캐시", "&d계정 &f제한 개수: &b%3 - {package.%uuid of player%::building}%/3개 &f남음", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 21 of {_inv} to {_item}
+        open {_inv} to player
+        set {_item} to paper named "&bSHK WORLD &f| &c&l결혼 &f패키지" with custom model data 11 with lore "&7└ 축의금 5,000,000원", "&7└ 결혼 반지 1개", "&7└ 사랑의 큐피트 5개", "&f", "&6구매 &f가격: &e&l20,000&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 22 of {_inv} to {_item}
+        open {_inv} to player
+        set {_item} to paper named "&bSHK WORLD &f| 쀂 &6&l택시 &f패키지" with custom model data 11 with lore "&7└ 택시 호출권 50개", "&f", "&6구매 &f가격: &e&l4,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 23 of {_inv} to {_item}
+        open {_inv} to player
+
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l스타터 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 29 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &6&l베이직 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l5,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 30 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &4&l크리미널 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l14,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 31 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &a&l파벌 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l14,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 32 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &d&l카지노 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l11,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 33 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l스타트업 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l11,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 38 of {_inv} to {_item}
+        set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l빌딩 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다.", "&f", "&6구매 &f가격: &e&l44,980&e캐시", "&f", "&6좌클릭&f하여 1개 &6구매"
+        set slot 39 of {_inv} to {_item}
+        open {_inv} to player
+
+on inventory click:
+    if uncolored display name of event-inventory is "[상점] 패키지상점":
+        cancel event
+        click type is left mouse button
+        if clicked slot is 11:
+            if {package.%uuid of player%::starter} >= 1:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 9980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::starter}
+            cashRemove(player, 9980, "Pakcage")
+            set {_item} to paper named "&bSHK WORLD &f| &e&l스타터 &f패키지" with custom model data 11 with lore "&7└ 1,000,000원", "&7└ SHK SmartPhone v1.0", "&7└ 철 곡괭이 (내구성 3)", "&7└ 낚싯대 (내구성 3, 미끼 3)", "&7└ 철 괭이 (내구성 3)", "&7└ 직업 변경권", "&7└ 상어 모자"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-9,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 12:
+            if {package.%uuid of player%::basic} >= 3:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 19980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::basic}
+            cashRemove(player, 19980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &6&l베이직 &f패키지" with custom model data 11 with lore "&7└ 2,000,000원", "&7└ 택시 호출권 20개", "&7└ 스테이크 64개", "&7└ 직업 변경권 3개", "&7└ 상어 모자"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-19,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 13:
+            if {package.%uuid of player%::criminal} >= 3:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 49980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::criminal}
+            cashRemove(player, 49980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &4&l크리미널 &f패키지" with custom model data 11 with lore "&7└ 3,000,000원", "&7└ 택시 호출권 20개", "&7└ M1A1 Thompson", "&7└ .45 ACP(30발) 10개 상자 10개", "&7└ 직업 변경권", "&7└ 안경 치장 중 택 1"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-49,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 14:
+            if {package.%uuid of player%::guild} >= 3:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 49980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::guild}
+            cashRemove(player, 49980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &a&l파벌 &f패키지" with custom model data 11 with lore "&7└ 5,00,000원", "&7└ 택시 호출권 20개", "&7└ 파벌 생성권", "&7└ 직업 변경권", "&7└ 안경 치장 중 택 1"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-49,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 15:
+            if {package.%uuid of player%::casino} >= 5:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 39980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::casino}
+            cashRemove(player, 39980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &d&l카지노 &f패키지" with custom model data 11 with lore "&7└ 3,000,000원", "&7└ 택시 호출권 10개", "&7└ [CASINO] $100 Chip 150개", "&7└ 직업 변경권"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-39,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 20:
+            if {package.%uuid of player%::startup} >= 2:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 59980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::startup}
+            cashRemove(player, 59980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &e&l스타트업 &f패키지" with custom model data 11 with lore "&7└ 상가 구매 지원금 (100,000,000원)", "&7└ 직업 변경권"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-59,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 21:
+            if {package.%uuid of player%::building} >= 3:
+                send "&a&l[상점]&f 계정 제한을 초과하여 구매하실 수 없습니다."
+                stop
+            if {cash::%uuid of player%} < 149980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            add 1 to {package.%uuid of player%::building}
+            cashRemove(player, 149980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &e&l빌딩 &f패키지" with custom model data 11 with lore "&7└ 빌딩 구매 지원금 (400,000,000원)", "&7└ 직업 변경권"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-149,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 22:
+            if {cash::%uuid of player%} < 20000:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 20000, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| &c&l결혼 &f패키지" with custom model data 11 with lore "&7└ 축의금 5,000,000원", "&7└ 결혼 반지 1개", "&7└ 사랑의 큐피트 5개"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-20,000캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 23:
+            if {cash::%uuid of player%} < 4980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4980, "Package")
+            set {_item} to paper named "&bSHK WORLD &f| 쀂 &6&l택시 &f패키지" with custom model data 11 with lore "&7└ 택시 호출권 50개"
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-4,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 29:
+            if {cash::%uuid of player%} < 980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l스타터 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 30:
+            if {cash::%uuid of player%} < 5980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 1998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &6&l베이직 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-5,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 31:
+            if {cash::%uuid of player%} < 14980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &4&l크리미널 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-14,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 32:
+            if {cash::%uuid of player%} < 14980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &a&l파벌 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-14,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 33:
+            if {cash::%uuid of player%} < 11980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &d&l카지노 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-11,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 38:
+            if {cash::%uuid of player%} < 11980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l스타트업 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-11,980캐시)"
+            execute player command "패키지"
+
+        else if clicked slot is 39:
+            if {cash::%uuid of player%} < 44980:
+                send "&a&l[상점]&f 잔액이 부족합니다."
+                stop
+            cashRemove(player, 4998, "Package")
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &e&l빌딩 &f&l패키지" with custom model data 11 with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "&a&l[상점]&f 성공적으로 상품을 구매했습니다. &c(-44,980캐시)"
+            execute player command "패키지"
+
+
+
+command /package_reset [<offlineplayer>] [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "all":
+            loop all offlineplayers:
+                delete {package.%uuid of loop-offlineplayer%::starter}
+                delete {package.%uuid of loop-offlineplayer%::basic}
+                delete {package.%uuid of loop-offlineplayer%::criminal}
+                delete {package.%uuid of loop-offlineplayer%::guild}
+                delete {package.%uuid of loop-offlineplayer%::casino}
+                delete {package.%uuid of loop-offlineplayer%::startup}
+                delete {package.%uuid of loop-offlineplayer%::building}
+                wait 1 tick
+            send "&a&l[상점]&f 모든 플레이어의 모든 패키지 계정 제한을 초기화했습니다."
+            stop
+        if arg-2 is "all":
+            delete {package.%uuid of arg-1%::starter}
+            delete {package.%uuid of arg-1%::basic}
+            delete {package.%uuid of arg-1%::criminal}
+            delete {package.%uuid of arg-1%::guild}
+            delete {package.%uuid of arg-1%::casino}
+            delete {package.%uuid of arg-1%::startup}
+            delete {package.%uuid of arg-1%::building}
+            send "&a&l[상점]&f %arg-1%님의 모든 패키지 계정 제한을 초기화했습니다."
+            stop
+        delete {package.%uuid of arg-1%::%arg-2%}
+        send "&a&l[상점]&f %arg-1%님의 %arg-2% 패키지 계정 제한을 초기화했습니다."
+
+command /package_check [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        send "스타터: %{package.%uuid of arg-1%::starter}%" to player
+        send "베이직: %{package.%uuid of arg-1%::basic}%" to player
+        send "크리미널: %{package.%uuid of arg-1%::criminal}%" to player
+        send "파벌: %{package.%uuid of arg-1%::guild}%" to player
+        send "카지노: %{package.%uuid of arg-1%::casino}%" to player
+        send "스타트업: %{package.%uuid of arg-1%::startup}%" to player
+        send "빌딩: %{package.%uuid of arg-1%::building}%" to player
+        stop
+
+command /패키지초기화권 [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "베이직" or "스타터" or "크리미널" or "파벌" or "카지노" or "스타트업" or "빌딩":
+            set {_item} to paper named "&f[ &e&l초기화권 &f] &b%arg-1% &f패키지" with lore "&7└ &7거래가 불가능한 아이템입니다.", "&7└ &f우클릭&7하여 사용할 수 있습니다."
+            itemGive(player, {_item}, 1, "AdminPackage")
+            send "&d&l[패키지]&f &b%arg-1% &f패키지 초기화권을 획득했습니다."
+            stop
+        else:
+            send "&f[ &6&l&o! &f] &f패키지명을 확인 해주세요."
+            send "&f[ &6&l&o! &f] &7└ 스타터, 베이직, 크리미널, 파벌, 카지노, 스타트업, 빌딩"
+
+
+on rightclick:
+    if player's tool is paper:
+        if uncolored name of player's tool is "SHK WORLD | 스타터 패키지":
+            remove 1 of player's tool from player's tool
+            balanceAdd(player, 1000000, "Package")
+            set {_item} to paper named "&7&lSHK &f&lSmartPhone &a&lv1.0" with custom model data 23
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to iron pickaxe
+            set unbreaking level of {_item} to 3
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to fishing rod
+            set unbreaking level of {_item} to 3
+            set lure level of {_item} to 3
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to iron hoe
+            set unbreaking level of {_item} to 3
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "<##2288FF>&l상어 &f&l모자" with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." with custom model data 65
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 스타터 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 베이직 패키지":
+            remove 1 of player's tool from player's tool
+            balanceAdd(player, 2000000, "Package")
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 20, "Package")
+            set {_item} to steak
+            itemGive(player, {_item}, 64, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 3, "Package")
+            set {_item} to paper named "<##2288FF>&l상어 &f&l모자" with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." with custom model data 65
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 베이직 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 크리미널 패키지":
+            remove 1 of player's tool from player's tool
+            balanceAdd(player, 3000000, "Package")
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 20, "Package")
+            make player run command "shot give %player% M1A1_Thompson" as op
+            set {_item} to paper named "&f.45 ACP(30발) &710개 상자" with lore "&7우클릭하여 획득" with custom model data 11
+            itemGive(player, {_item}, 10, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&d&l[치장] &f안경 치장 중 택 1 권" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 크리미널 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 파벌 패키지":
+            remove 1 of player's tool from player's tool
+            balanceAdd(player, 5000000, "Package")
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 20, "Package")
+            set {_item} to paper named "&a&l[파벌] &f파벌 생성권" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&d&l[치장] &f안경 치장 중 택 1 권" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 파벌 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 카지노 패키지":
+            remove 1 of player's tool from player's tool
+            balanceAdd(player, 3000000, "Package")
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 10, "Package")
+            set {_item} to book named "&e&l[CASINO]&f $100 Chip" with custom model data 58
+            itemGive(player, {_item}, 150, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 카지노 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 스타트업 패키지":
+            remove 1 of player's tool from player's tool
+            set {_item} to paper named "&e&l[상가] &f상가 구매 지원금 (100,000,000원)" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 상가 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 빌딩 패키지":
+            remove 1 of player's tool from player's tool
+            set {_item} to paper named "&6&l[빌딩] &f빌딩 구매 지원금 (400,000,000원)" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            send "[ &6&l! &f] 빌딩 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 결혼 패키지":
+            remove 1 of player's tool from player's tool
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+            itemGive(player, {_item}, 100, "Package")
+            set {_item} to stick with custom model data 10 named "&c&l결혼 &f&l반지" with lore "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 1, "Package")
+            set {_item} to stick with custom model data 11 named "&4&l사랑의 &d&l큐피트" with lore "&7우클릭하여 결혼 경험치 100 획득" and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 5, "Package")
+            send "[ &6&l! &f] 결혼 패키지 아이템을 획득하였습니다."
+
+        else if uncolored name of player's tool is "SHK WORLD | 쀂 택시 패키지":
+            remove 1 of player's tool from player's tool
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+            itemGive(player, {_item}, 50, "Package")
+            send "[ &6&l! &f] 쀂 택시 패키지 아이템을 획득하였습니다."
+

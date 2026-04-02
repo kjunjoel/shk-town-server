@@ -1,0 +1,206 @@
+options:
+    # 접두사
+    prefix: <##3AB0FF>&l[상어마켓]&f
+
+    # GUI
+    gui: &f[<##3AB0FF>&l상어마켓&f]
+
+    # 삭제될 기한(일)
+    time: 3
+
+    max: 5
+
+# 변수
+# {market.index}                 | 상점 인덱스
+# {market::*}                    | 상품 목록
+# {market::*::user}              | 상품을 올린 플레이어
+# {market::*::price}             | 상품의 가격
+# {market::*::time}              | 상품을 올린 시간
+# {market.page.%uuid of player%} | 상점 페이지
+
+on load:
+    if {market.index} isn't set:
+        set {market.index} to 0
+        stop
+    
+function marketGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@gui}"
+    set slot 45, 46, 47, 51, 52, and 53 of {_inv} to white stained glass pane named "&f"
+    set slot 48 of {_inv} to arrow named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to arrow named "&a다음" with lore "&f다음 페이지로 이동"
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%round up ((size of {market::*})/45)% 페이지"
+    set {_ind} to 0
+    loop {market::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_item} to loop-value
+            add "" to lore of {_item}
+            if {market::%loop-index%::user} is {_p}:
+                add "&e&l가격&f: %moneyDigit({market::%loop-index%::price})%원" to lore of {_item}
+                add "&c우클릭&f하여 상품 내리기" to lore of {_item}
+            else:
+                add "&e&l판매자&f: %{market::%loop-index%::user}%" to lore of {_item}
+                add "&e&l가격&f: %moneyDigit({market::%loop-index%::price})%원" to lore of {_item}
+                add "&a좌클릭&f하여 구매하기" to lore of {_item}
+            add "&6%{market::%loop-index%::time}%" to lore of {_item}
+            set {_i} to {_ind} - ({_n}-1)*45 - 1
+            set slot {_i} of {_inv} to {_item}
+    open {_inv} to {_p}
+
+on inventory click:
+    if {gui.%uuid of player%::marketGUI} is true:
+        cancel event
+        if clicked slot is 48:
+            if {market.page.%uuid of player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {market.page.%uuid of player%}
+            marketGUI(player, {market.page.%uuid of player%})
+            wait 1 tick
+            delete {gui.%uuid of player%::market}
+            set {gui.%uuid of player%::marketGUI} to true
+            stop
+
+        else if clicked slot is 50:
+            if ({market.page.%uuid of player%} * 45) >= (size of {market::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {market.page.%uuid of player%}
+            marketGUI(player, {market.page.%uuid of player%})
+            wait 1 tick
+            delete {gui.%uuid of player%::market}
+            set {gui.%uuid of player%::marketGUI} to true
+            stop
+
+        else if clicked slot is 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+        
+        else:
+            if click type is left mouse button:
+                if clicked item isn't air:
+                    if uncolored lore of clicked item contains "좌클릭하여 구매하기":
+                        set {_i} to 0
+                        loop {market::*}:
+                            add 1 to {_i}
+                            if {_i} is ({market.page.%uuid of player%}-1)*45 + index of clicked slot + 1:
+                                set {_index} to loop-index
+                                exit 1 loop
+                        if player's balance < {market::%{_index}%::price}:
+                            send "{@prefix} 잔액이 부족합니다."
+                            stop
+                        balanceRemove(player, {market::%{_index}%::price}, "UserShop")
+                        balanceAdd({market::%{_index}%::user}, {market::%{_index}%::price}, "UserShop")
+                        set {_item} to {market::%{_index}%}
+                        itemGive(player, {_item}, item amount of {_item}, "UserShop")
+                        send "{@prefix} 상품을 구매하였습니다."
+                        if name of {market::%{_index}%} is set:
+                            send "{@prefix} 상품 &e%name of {market::%{_index}%}%이 판매되어 &6%moneyDigit({market::%{_index}%::price})%원&f을 획득했습니다." to {market::%{_index}%::user}
+                        else:
+                            send "{@prefix} 상품 &e%type of {market::%{_index}%}%이 판매되어 &6%moneyDigit({market::%{_index}%::price})%원&f을 획득했습니다." to {market::%{_index}%::user}
+                        close player's inventory
+                        delete {market.page.%uuid of player%}
+                        delete {market::%{_index}%}
+                        delete {market::%{_index}%::user}
+                        delete {market::%{_index}%::price}
+                        stop
+
+            else if click type is right mouse button:
+                if clicked item isn't air:
+                    if uncolored lore of clicked item contains "우클릭하여 상품 내리기":
+                        set {_i} to 0
+                        loop {market::*}:
+                            add 1 to {_i}
+                            if {_i} is ({market.page.%uuid of player%}-1)*45 + index of clicked slot + 1:
+                                set {_index} to loop-index
+                                set {_item} to loop-value
+                                exit 1 loop
+                        itemGive(player, {_item}, item amount of {_item}, "UserShopBack")
+                        send "{@prefix} %{_item}% 상품을 내렸습니다."
+                        close player's inventory
+                        delete {market.page.%uuid of player%}
+                        delete {market::%{_index}%}
+                        delete {market::%{_index}%::user}
+                        delete {market::%{_index}%::price}
+                        stop
+
+on inventory close:
+    if {gui.%uuid of player%::marketGUI} is true:
+        delete {gui.%uuid of player%::marketGUI}
+
+command /상어마켓 [<text>] [<integer>]:
+    aliases: 마켓
+    trigger:
+        if arg 1 is "열기":
+            if groups of player contains "죄수":
+                send "{@prefix} 죄수는 상어마켓을 이용할 수 없습니다."
+                stop
+            set {market.page.%uuid of player%} to 1
+            marketGUI(player, 1)
+            wait 1 tick
+            set {gui.%uuid of player%::marketGUI} to true
+
+        else if arg 1 is "등록":
+            if player's tool is air:
+                send "{@prefix} 등록할 상품을 손에 들고 다시 입력해주시기 바랍니다."
+                stop
+            if player's tool is cooked pork:
+                send "{@prefix} 음식은 상어마켓에 등록할 수 없습니다."
+                stop
+            set {_lore::*} to uncolored lore of player's tool
+            loop {_lore::*}:
+                if loop-value contains "불가능한":
+                    send "{@prefix} 거래가 불가능한 아이템은 상어마켓에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "예금주":
+                    send "{@prefix} 통장은 상어마켓에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "[상어은행]":
+                    send "{@prefix} 화폐는 상어마켓에 등록하실 수 없습니다."
+                    stop
+                else if loop-value contains "싱크대":
+                    send "{@prefix} 그을린 불판은 상어마켓에 등록하실 수 없습니다."
+                    stop
+            if player's tool is written book:
+                send "{@prefix} 책은 서점에서 등록하실 수 있습니다."
+                stop
+            if arg 2 isn't set:
+                send "{@prefix} 올바른 가격을 입력해주세요."
+                stop
+            if arg 2 <= 0:
+                send "{@prefix} 올바른 가격을 입력해주세요."
+                stop
+            set {_count} to 0
+            loop {market::*}:
+                add 1 to {_count} if {market::%loop-index%::user} is player
+            if {_count} is {@max}:
+                send "{@prefix} 최대 {@max}개의 품목을 등록할 수 있습니다."
+                stop
+            add 1 to {market.index}
+            set {market::%{market.index}%} to player's tool
+            set {market::%{market.index}%::user} to player
+            set {market::%{market.index}%::price} to arg-2
+            set {market::%{market.index}%::time} to now
+            set player's tool to air
+            send "{@prefix} 상품을 등록했습니다."
+            dailyquestSound(player, 6)
+            stop
+        
+        else:
+            send "{@prefix} /상어마켓 열기 &8&l| &f상어마켓을 엽니다."
+            send "{@prefix} /상어마켓 등록 [가격] &8&l| &f손에 든 아이템을 상어마켓에 등록합니다."
+            stop
+
+every 1 minute:
+    loop {market::*}:
+        set {_diff} to difference between {market::%loop-index%::time} and now
+        if {_diff} > "{@time} days" parsed as timespan:
+            itemGive({market::%loop-index%::user}, {market::%loop-index%}, item amount of {market::%loop-index%}, "UserShopBackDaily")
+            send "{@prefix} {@time}일이 넘어 상어마켓의 상품이 반환되었습니다." to {market::%loop-index%::user}
+            delete {market::%loop-index%}
+            delete {market::%loop-index%::user}
+            delete {market::%loop-index%::lore::*}
+            delete {market::%loop-index%::price}
+            delete {market::%loop-index%::time}
+
+on quit:
+    delete {market.page.%uuid of player%}

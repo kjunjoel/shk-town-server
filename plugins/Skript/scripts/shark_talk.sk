@@ -1,0 +1,169 @@
+options:
+    # 접두사
+    prefix: &a&l》 &f
+
+    # GUI
+    gui: &b&lSHARK TALK
+
+# 변수
+# {sharktalk::%player%}       | 플레이어가 대화 중인 플레이어
+# {sharktalk.ban.%player%::*} | 플레이어가 차단한 플레이어 목록
+
+function sharktalk(p: player, type: text):
+    if {_type} is "left":
+        set {sharktalk.select::%{_p}%} to true
+        send "{@prefix} 상어톡을 하고 싶은 플레이어의 닉네임을 입력해주세요. 취소하려면 &c취소&f를 입력해주세요." to {_p}
+    else if {_type} is "right":
+        if {sharktalk::%{_p}%} is set:
+            send "{@prefix} &6%{sharktalk::%{_p}%}%&f님과의 대화에서 퇴장하였습니다." to {_p}
+            delete {sharktalk::%{_p}%}
+
+on chat:
+    if {sharktalk.select::%player%} is true:
+        if message is "취소":
+            send "{@prefix} 취소되었습니다."
+            wait 1 tick
+            delete {sharktalk.select::%player%}
+            stop
+        set {_message} to message
+        if {_message} contains "@":
+            replace all "@" in {_message} with ""
+        if {_message} parsed as offlineplayer is offline:
+            send "{@prefix} 해당 플레이어는 온라인이 아닙니다. 취소하려면 &c취소&f를 입력해주세요."
+            stop
+        if {sharktalk.ban.%player%::*} contains {_message} parsed as player:
+            send "{@prefix} &6%{_message}%&f님을 차단하여 메시지를 보낼 수 없습니다."
+            stop
+        set {sharktalk::%player%} to message parsed as player
+        send "{@prefix} &6%{sharktalk::%player%}%&f님과의 대화에 입장하였습니다."
+        wait 1 tick
+        delete {sharktalk.select::%player%}
+
+command /차단 [<text>] [<offlineplayer>]:
+    trigger:
+        if arg-1 is "목록":
+            if {sharktalk.ban.%player%::*} isn't set:
+                send "{@prefix} 차단한 플레이어 목록이 없습니다."
+                stop
+            send "{@prefix} 차단한 플레이어 목록은 다음과 같습니다."
+            send "{@prefix} %{sharktalk.ban.%player%::*}%"
+
+        else if arg-1 is "추가":
+            if arg-2 isn't set:
+                send "{@prefix} 차단할 플레이어를 입력해주세요."
+                stop
+            if {sharktalk.ban.%player%::*} contains arg-2:
+                send "{@prefix} &6%arg-2%&f님은 이미 차단 목록에 추가되어 있습니다."
+                stop
+            add arg-2 to {sharktalk.ban.%player%::*}
+            send "{@prefix} &6%arg-2%&f님을 차단 목록에 추가하였습니다."
+            stop
+
+        else if arg-1 is "삭제":
+            if arg-2 isn't set:
+                send "{@prefix} 차단할 플레이어를 입력해주세요."
+                stop
+            if {sharktalk.ban.%player%::*} doesn't contain arg-2:
+                send "{@prefix} &6%arg-2%&f님은 차단 목록에 없습니다."
+                stop
+            remove arg-2 from {sharktalk.ban.%player%::*}
+            send "{@prefix} &6%arg-2%&f님을 차단 목록에서 삭제하였습니다."
+            stop
+
+        else:
+            send "{@prefix} /차단 목록 &8&l| &f차단한 플레이어 목록을 확인합니다."
+            send "{@prefix} /차단 추가 [닉네임] &8&l| &f닉네임을 차단 목록에 추가합니다."
+            send "{@prefix} /차단 삭제 [닉네임] &8&l| &f닉네임을 차단 목록에서 삭제합니다."
+
+function sharktalkGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@gui}"
+    set {_ind} to 0
+    set {_index} to 0
+    loop all players:
+        if loop-player is {_p}:
+            continue
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            add 1 to {_index}
+            if {sharktalk::%{_p}%} is loop-player:
+                set {_item} to loop-player's skull named "&f%loop-player%"
+                add "&c우클릭&7하여 대화 퇴장" to lore of {_item}
+            else:
+                set {_item} to loop-player's skull named "&f%loop-player%"
+                add "&a좌클릭&7하여 대화 입장" to lore of {_item}
+            set slot ({_index}-1) of {_inv} to {_item}
+    loop 9 times:
+        set slot (loop-number)+44 of {_inv} to white stained glass pane named "&f"
+    set {_page} to round up ((number of online players - 1) / 45)
+    set slot 45 of {_inv} to arrow named "&e이전" with lore "&f이전 페이지로 이동" and "&7(%{sharktalk.page::%{_p}%}%/%{_page}%) 페이지"
+    set slot 49 of {_inv} to barrier named "&c클릭&7하여 대화 퇴장"
+    set slot 53 of {_inv} to arrow named "&e다음" with lore "&f다음 페이지로 이동" and "&7(%{sharktalk.page::%{_p}%}%/%{_page}%) 페이지"
+    open {_inv} to {_p}
+
+on inventory click:
+    if {gui.%uuid of player%::sharktalkGUI} is true:
+        cancel event
+        if clicked slot is 45:
+            if {sharktalk.page::%player%} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {sharktalk.page::%player%}
+            sharktalkGUI(player, {sharktalk.page::%player%})
+            wait 1 tick
+            set {gui.%uuid of player%::sharktalkGUI} to true
+            stop
+        
+        else if clicked slot is 53:
+            if ({sharktalk.page::%player%} * 36) >= (number of online players - 1):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {sharktalk.page::%player%}
+            sharktalkGUI(player, {sharktalk.page::%player%})
+            wait 1 tick
+            set {gui.%uuid of player%::sharktalkGUI} to true
+            stop
+    
+        else if clicked slot is 49:
+            if {sharktalk::%player%} is set:
+                send "{@prefix} &e%{sharktalk::%player%}%님&f과의 대화에서 퇴장하였습니다."
+                delete {sharktalk::%player%}
+                close player's inventory
+
+        else if index of clicked slot is between 46 and 52:
+            stop
+
+        else:
+            set {_name} to uncolored name of clicked item
+            if click type is left mouse button:
+                lore of clicked item contains "&a좌클릭&7하여 대화 입장"
+                if {sharktalk::%player%} is set:
+                    send "{@prefix} &e%{sharktalk::%player%}%님&f과의 대화에서 퇴장하였습니다."
+                send "{@prefix} &e%{_name}%님&f과의 대화에 입장하였습니다."
+                set {sharktalk::%player%} to {_name} parsed as player
+                close player's inventory
+            else if click type is right mouse button:
+                lore of clicked item contains "&c우클릭&7하여 대화 퇴장"
+                send "{@prefix} &e%{sharktalk::%player%}%님&f과의 대화에서 퇴장하였습니다."
+                delete {sharktalk::%player%}
+                close player's inventory
+
+on command "/minecraft:w":
+    cancel event
+
+on command "/minecraft:msg":
+    cancel event
+
+on command "/minecraft:tell":
+    cancel event
+
+on inventory close:
+    if {gui.%uuid of player%::sharktalkGUI} is true:
+        delete {gui.%uuid of player%::sharktalkGUI}
+    
+on quit:
+    loop all players:
+        if {sharktalk::%loop-player%} is player:
+            send "{@prefix} &e%player%님&f과의 대화에서 퇴장하였습니다."
+    delete {sharktalk.select::%player%}
+    delete {sharktalk::%player%}
+    delete {sharktalk.page::%player%}

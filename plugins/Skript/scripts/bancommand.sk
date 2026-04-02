@@ -1,0 +1,65 @@
+on command "/spin":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/gspin":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/lay":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/glay":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/minecraft:me":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+command /그림저장 [<text>]:
+    trigger:
+        if arg-1 isn't set:
+            send "[ &6&l!&f] 그림 이름을 입력해주세요."
+            stop
+        make player run command "art save %arg-1%" as op
+
+on command "/art":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/artmap":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/artmap:art":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/artmap:artmap":
+    if player has permission "op.user":
+        stop
+    cancel event
+    send "&c사용하실 수 없는 명령어입니다."
+
+on command "/bukkit:help":
+    if player isn't op:
+        cancel event
+        send "&c사용하실 수 없는 명령어입니다."

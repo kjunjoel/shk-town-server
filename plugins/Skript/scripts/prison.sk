@@ -1,0 +1,185 @@
+options:
+	prefix: &7&l[교도소]&f
+	죄수: 죄수
+	max: 24
+
+# 변수
+# {prison::*}               | 죄수 목록
+# {prison.type::%player%}   | 죄수의 형 종류
+# {prison.during::%player%} | 죄수의 형량
+# {prison.player.%number%}  | N번방에 갇혀 있는 플레이어
+# {prison.number.%player%}  | 플레이어가 갇힌 방 번호
+# {prison.offline::%player%}| 플레이어가 오프라인인지
+
+function prisonAdd(p: player):
+	loop {@max} times:
+		if {prison::*} doesn't contain {prison.player.%loop-number%}:
+			delete {prison.player.%loop-number%}
+	loop {@max} times:
+		if {prison.player.%loop-number%} isn't set:
+			set {prison.player.%loop-number%} to {_p}
+			set {prison.number.%uuid of {_p}%} to loop-number
+			make {_p} run command "warp prison-%loop-number%" as op
+			stop
+
+command /교도소 [<text>] [<offlineplayer>] [<number>]:
+	permission: prose.user
+	trigger:
+		if arg-1 is "목록":
+			if {prison::*} isn't set:
+				send "{@prefix} 교도소에 수감된 플레이어가 없습니다."
+				stop
+			set {_ind} to 1
+			loop {prison::*}:
+				send "{@prefix} %{_ind}%. %loop-value% &7(%{prison.type::%uuid of loop-value%}%형 | %round down {prison.during::%uuid of loop-value%}/60%분 %mod({prison.during::%uuid of loop-value%}, 60)%초)"
+				add 1 to {_ind}
+
+		else if arg-1 is "징역":
+			if arg-2 isn't set:
+				send "{@prefix} 형을 집행할 플레이어를 입력해주세요."
+				stop
+			if {police.prisoner::*} doesn't contain arg-2:
+				send "{@prefix} 수감자만 교도소로 송치할 수 있습니다."
+				stop
+			if arg-3 isn't set:
+				send "{@prefix} 형을 집행할 분 수를 입력해주세요."
+				stop
+			if {prison::*} contains arg-2:
+				send "{@prefix} 해당 플레이어는 이미 형을 집행 중입니다."
+				stop
+			if {police.prisoner::*} contains arg-2:
+				make player run command "경찰 석방 %arg-2%" as op
+			remove arg-2 from {police.prisoner::*}
+			delete {police.prisoner.%uuid of arg-2%.time}
+			delete {police.prisoner.%uuid of arg-2%.during}
+			add arg-2 to {prison::*}
+			set {prison.type::%uuid of arg-2%} to "징역"
+			set {prison.during::%uuid of arg-2%} to arg-3 * 60
+			send "{@prefix} &6%arg-2%님&f이 교도소로 송치되었습니다. &7(담당자 | %player%)" to all players
+			send "{@prefix} &e/징역&f을 입력해 남은 형량을 확인할 수 있습니다." to arg-2
+			execute console command "lp user %arg-2% parent remove 현상수배"
+			execute console command "lp user %arg-2% parent remove 수감자"
+			execute console command "lp user %arg-2% parent add {@죄수}"
+			if arg-2 is online:
+				prisonAdd(arg-2)
+			else:
+				set {prison.offline::%uuid of arg-2%} to true
+			
+		else if arg-1 is "금고":
+			if arg-2 isn't set:
+				send "{@prefix} 형을 집행할 플레이어를 입력해주세요."
+				stop
+			if {police.prisoner::*} doesn't contain arg-2:
+				send "{@prefix} 수감자만 교도소로 송치할 수 있습니다."
+				stop
+			if arg-3 isn't set:
+				send "{@prefix} 형을 집행할 분 수를 입력해주세요."
+				stop
+			if {prison::*} contains arg-2:
+				send "{@prefix} 해당 플레이어는 이미 형을 집행 중입니다."
+				stop
+			remove arg-2 from {police.prisoner::*}
+			delete {police.prisoner.%uuid of arg-2%}
+			delete {police.prisoner.%uuid of arg-2%.time}
+			delete {police.prisoner.%uuid of arg-2%.during}
+			add arg-2 to {prison::*}
+			set {prison.type::%uuid of arg-2%} to "금고"
+			set {prison.during::%uuid of arg-2%} to arg-3 * 60
+			send "{@prefix} &6%arg-2%님&f이 교도소로 송치되었습니다. &7(담당자 | %player%)" to all players
+			send "{@prefix} &e/금고&f를 입력해 남은 형량을 확인할 수 있습니다." to arg-2
+			execute console command "lp user %arg-2% parent remove 현상수배"
+			execute console command "lp user %arg-2% parent remove 수감자"
+			execute console command "lp user %arg-2% parent add {@죄수}"
+			if arg-2 is online:
+				prisonAdd(arg-2)
+			else:
+				set {prison.offline::%arg-2%} to true
+
+		else if arg-1 is "석방":
+			if arg-2 isn't set:
+				send "{@prefix} 석방할 플레이어를 입력해주세요."
+				stop
+			if {prison::*} doesn't contain arg-2:
+				send "{@prefix} 해당 플레이어는 수감되지 않았습니다."
+				stop
+			remove arg-2 from {prison::*}
+			delete {prison.type::%uuid of arg-2%}
+			delete {prison.during::%uuid of arg-2%}
+			delete {prison.player.%{prison.number.%uuid of arg-2%}%}
+			delete {prison.number.%uuid of arg-2%}
+			send "{@prefix} &6%arg-2%님&f이 석방되었습니다. &7(담당자 | %player%)" to all players
+			make arg-2 run command "warp prison" as op
+			execute console command "lp user %arg-2% parent remove {@죄수}"
+			
+		else:
+			send "{@prefix} /교도소 목록 &8&l| &f교도소에 수감된 플레이어를 확인합니다."
+			send "{@prefix} /교도소 징역 [닉네임] [분] &8&l| &f플레이어를 징역형에 처하게 합니다."
+			send "{@prefix} /교도소 금고 [닉네임] [분] &8&l| &f플레이어를 금고형에 처하게 합니다."
+			send "{@prefix} /교도소 석방 [닉네임] &8&l| &f플레이어를 석방합니다."
+
+command /징역:
+	trigger:
+		if {prison.type::%uuid of player%} isn't "징역":
+			stop
+		send "{@prefix} 남은 형량은 &e%round down {prison.during::%uuid of player%}/60%분 %mod({prison.during::%uuid of player%}, 60)%초&f입니다."
+		send "{@prefix} 흑요석 &a%round down {prison.during::%uuid of player%}/600%개&f를 캐면 석방됩니다."
+
+command /금고:
+	trigger:
+		if {prison.type::%uuid of player%} isn't "금고":
+			stop
+		send "{@prefix} 남은 형량은 &e%round down {prison.during::%uuid of player%}/60%분 %mod({prison.during::%uuid of player%}, 60)%초&f입니다."
+
+on join:
+	if {prison.offline::%uuid of player%} is true:
+		delete {prison.offline::%uuid of player%}
+		prisonAdd(player)
+
+command /prison_obsidian [<player>]:
+	trigger:
+		if {prison.type::%uuid of arg-1%} is "징역":
+			remove 600 from {prison.during::%uuid of arg-1%}
+			if {prison.during::%uuid of arg-1%} <= 0:
+				remove arg-1 from {prison::*}
+				execute console command "lp user %arg-1% parent remove {@죄수}"
+				make arg-1 run command "warp prison" as op
+				delete {prison.during::%uuid of arg-1%}
+				delete {prison.type::%uuid of arg-1%}
+				delete {prison.player.%{prison.number.%uuid of arg-1%}%}
+				delete {prison.number.%uuid of arg-1%}
+				send "{@prefix} &6%arg-1%님&f이 출소하였습니다." to all players
+
+every 1 second:
+	loop {prison::*}:
+		if loop-value is online:
+			if {prison.during::%uuid of loop-value%} <= 0:
+				remove loop-value from {prison::*}	
+				make loop-value run command "warp prison" as op
+				execute console command "lp user %loop-value% parent remove {@죄수}"
+				send "{@prefix} &6%loop-value%님&f이 출소하였습니다." to all players
+				delete {prison.during::%uuid of loop-value%}
+				delete {prison.type::%uuid of loop-value%}
+				delete {prison.player.%uuid of {prison.number.%loop-value%}%}
+				delete {prison.number.%uuid of loop-value%}
+			remove 1 from {prison.during::%uuid of loop-value%}
+
+on leave region:
+	if "%event-region%" contains "prison":
+		"%event-region%" doesn't contain "break"
+		if group of player is "{@죄수}":
+			send "&f" to all players
+			send "{@prefix} &6%player%님&f이 탈옥하였습니다!" to all players
+			send "&f" to all players
+			play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+
+on leftclick:
+	if player has permission "convict.user":
+		if "%player's tool%" contains "pickaxe":
+			if event-block is obsidian:
+				execute console command "warp prison-%{prison.number.%uuid of player%}% %player%"
+				
+on break:
+	if "%region at location at event-block%" contains "prison":
+		if event-block isn't obsidian:
+			if player isn't op:
+				cancel event

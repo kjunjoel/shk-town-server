@@ -1,0 +1,127 @@
+options:
+    # 접두사
+    prefix: &e&l[의회]&f
+
+    # 럭펌 그룹명
+    의장: 의장
+    의원: 의원
+    의회사무처장: 의회사무처장
+    입법사무처장: 입법사무처장
+    의회실장: 의회실장
+    의회국장: 의회국장
+    의회과장: 의회과장
+    의회담당관: 의회담당관
+    의회공무원: 의회공무원
+    
+    # 럭펌 노드명
+    congressAdmin: congress.admin
+    congressUser: congress.user
+
+# 변수
+# {congress.user::*}                           | 의회 소속 공무원 목록
+# {congress.user.%uuid of player%.class}       | 의회 소속 직급 목록
+
+command /의회 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@congressUser}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {congress.user::*} is not set:
+                send "{@prefix} 의회 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@prefix} 의회 소속 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {congress.user::*}
+            loop "{@의장}", "{@의원}", "{@의회사무처장}", "{@입법사무처장}", "{@의회실장}", "{@의회국장}", "{@의회과장}", "{@의회담당관}", "{@의회공무원}":
+                loop {_list::*}:
+                    if {congress.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@prefix} %{_ind}%. %loop-value-2% (%{congress.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {congress.user::*}:
+                if loop-value is arg-2:
+                    send "{@prefix} 해당 플레이어는 이미 의회에 소속되어 있습니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@prefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg-2 has permission "cook.user":
+                if cookShopCalculate(player) > 0:
+                    send "{@prefix} &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                    stop
+            if arg 3 is not set:
+                send "{@prefix} 직급을 입력해주세요."
+                stop
+            if arg 3 is "{@의장}" or "{@의원}" or "{@의회사무처장}" or "{@입법사무처장}" or "{@의회실장}" or "{@의회국장}" or "{@의회과장}" or "{@의회담당관}" or "{@의회공무원}":
+                if group of player is "{@의장}":
+                    if arg 3 is "{@의장}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@의원}":
+                    if arg 3 is "{@의장}" or "{@의원}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {congress.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                if arg 3 is "{@의장}" or "{@의원}":
+                    execute console command "lp user %arg-2% parent remove default"
+                send "{@prefix} &6%arg-2%&f님이 의회 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                set {congress.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else:
+                send "{@prefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {congress.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@prefix} 해당 플레이어는 의회 소속이 공무원이 아닙니다."
+                stop
+            if group of player is "{@의장}":
+                if {court.user.%uuid of arg-2%.class} is "{@의장}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            else if group of player is "{@의원}":
+                if {court.user.%uuid of arg-2%.class} is "{@의장}" or "{@의원}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {congress.user::*}
+            execute console command "lp user %arg-2% parent remove %{court.user.%uuid of arg-2%.class}%"
+            if {court.user.%uuid of arg-2%.class} is "{@의장}" or "{@의원}":
+                execute console command "lp user %arg-2% parent set default"
+            delete {court.user.%uuid of arg-2%.class}
+            send "{@prefix} &6%arg-2%&f님이 의회 소속 공무원에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@prefix} /의회 목록 &8&l| &f의회 소속 공무원 목록을 확인합니다."
+            send "{@prefix} /의회 채용 [플레이어명] [직급] &8&l| &f플레이어를 직급으로 채용합니다."
+            send "{@prefix} /의회 해임 [플레이어명] &8&l| &f플레이어를 의회에서 해임합니다."
+            send "{@prefix} /의회공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+
+command /의회공지 [<text>]:
+    permission: {@congressAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@prefix} 공지 내용을 입력해주세요."
+            stop
+        send "" to all players
+        send "{@prefix} &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop

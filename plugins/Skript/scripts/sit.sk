@@ -1,0 +1,5 @@
+on command "/앉기":
+    execute player command "sit"
+
+command /앉기:
+    trigger:

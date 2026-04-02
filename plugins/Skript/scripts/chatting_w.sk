@@ -1,0 +1,28 @@
+options:
+	@: &f[ &6&l&o! &f]
+
+command /w [<offlineplayer>] [<text>]:
+    permission: op.user
+    aliases: msg, m, t, whisper, emsg, tell, etell, ewhisper
+    trigger:
+        if arg-1 isn't set:
+            send "{@@} 메시지를 보낼 대상을 지정하세요."
+            stop
+        else if arg-2 isn't set:
+            send "{@@} 메시지를 입력하세요."
+            stop
+        else if arg-1 is player:
+            send "{@@} 자기 자신은 대상으로 지정할 수 없습니다."
+            stop
+        set {_nickname.1} to "&f%player%"
+        set {_nickname.2} to "&f%arg-1%"
+        send "&6[&c나 &6-> &f%{_nickname.2}%&6] &f%arg-2%"
+        play sound "entity.experience_orb.pickup" with volume 0.6 and pitch 1 at player for player
+        play sound "entity.experience_orb.pickup" with volume 0.6 and pitch 1 at arg-1 for arg-1
+        send "&6[&f%{_nickname.1}% &6-> &c나&6] &f%arg-2%" to arg-1
+        send "&6[&f%{_nickname.1}% &6-> &f%{_nickname.2}%&6] &f%arg-2%" to console
+        loop all players:
+            if {chatting.sharktalk::%loop-player%} is true:
+                if player isn't loop-player:
+                    if arg-1 isn't loop-player:
+                        send "&6[&f%{_nickname.1}% &6-> &f%{_nickname.2}%&6] &f%arg-2%" to loop-player

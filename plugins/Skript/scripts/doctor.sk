@@ -1,0 +1,184 @@
+options:
+    prefix: &2&l[의사]&f        # 접두사
+    pill : &6&l[알약] &f알약    # 알약 이름
+    item: &6&l[의사] &f치료도구 # 치료 도구 이름
+    suicide: &6&l[알약] &f상비약 # 끼었을 때 상비약
+
+    price: 15000  # 치료비
+    award: 15000 # 치료값
+
+    # 럭펌 그룹
+    의사: 의사
+
+    # 럭펌 노드
+    node: doctor.user
+
+# 변수
+# {doctor.pain.%uuid of player%}   | 플레이어의 질병 여부
+# {doctor.cooldown::%player%}      | 플레이어의 쿨타임
+# {doctor.cured.%uuid of player%}  | 플레이어가 치료받고 있는 플레이어
+# {doctor.played.%player%::*}      | 플레이어가 플레이한 변수 목록
+
+on rightclick:
+    if name of player's tool is "{@pill}":
+        if {doctor.pain.%uuid of player%} is set:
+            delete {doctor.pain.%uuid of player%}
+            send "{@prefix} 치료가 완료되었습니다." to player
+            remove slowness from player
+            remove mining fatigue from player
+            remove 1 of player's tool from player's inventory
+            stop
+        else:
+            send "{@prefix} 질병에 걸리지 않아 알약을 사용할 수 없습니다." to player
+            stop
+    else if name of player's tool is "{@suicide}":
+        if {jobless.cooldown::%player%} is set:
+            send "{@prefix} 소매치기 후 상비약을 먹을 수 없습니다." to player
+            stop
+        #if {bus.%player%} is set:
+        #    send "{@prefix} 버스 탑승 중에는 상비약을 먹을 수 없습니다." to player
+        #    stop
+        set {_pos.x} to x coord of location at player
+        set {_pos.y} to y coord of location at player
+        set {_pos.z} to z coord of location at player
+        if type of block at location at ({_pos.x}+1, {_pos.y}+1, {_pos.z}) in world (player's world) is air:
+            send "{@prefix} 끼지 않은 상태에서 상비약을 사용할 수 없습니다." to player
+            stop
+        if type of block at location at ({_pos.x}-1, {_pos.y}+1, {_pos.z}) in world (player's world) is air:
+            send "{@prefix} 끼지 않은 상태에서 상비약을 사용할 수 없습니다." to player
+            stop
+        if type of block at location at ({_pos.x}, {_pos.y}+1, {_pos.z}+1) in world (player's world) is air:
+            send "{@prefix} 끼지 않은 상태에서 상비약을 사용할 수 없습니다." to player
+            stop
+        if type of block at location at ({_pos.x}, {_pos.y}+1, {_pos.z}-1) in world (player's world) is air:
+            send "{@prefix} 끼지 않은 상태에서 상비약을 사용할 수 없습니다." to player
+            stop
+        make player run command "suicide" as op
+        remove 1 of player's tool from player's inventory
+        stop
+    else if uncolored name of player's tool is "[알약] 자살약":
+        if {jobless.cooldown::%player%} is set:
+            send "{@prefix} 소매치기 후 자살약을 먹을 수 없습니다." to player
+            stop
+        if {bus.%player%} is set:
+            send "{@prefix} 버스 탑승 중에는 자살약을 먹을 수 없습니다." to player
+            stop
+        execute console command "kill %player%"
+        remove 1 of player's tool from player's inventory
+        stop
+
+on rightclick on player:
+    if name of player's tool is "{@item}":
+        if player has permission "{@node}":
+            if target's money < {@price}:
+                send "{@prefix} 해당 환자가 치료비를 가지고 있지 않아 치료가 불가능합니다." to player
+                stop
+            if {doctor.pain.%uuid of target%} is set:
+                if {doctor.cooldown::%player%} is set:
+                    send "{@prefix} %{doctor.cooldown::%player%}%초 후 다시 치료를 신청할 수 있습니다." to player
+                    stop
+                set {doctor.cured.%uuid of target%} to player
+                send "{@prefix} &6%target%&f님에게 치료 신청을 했습니다." to player
+                send formatted "{@prefix} &6%player%&f님이 치료 신청을 하셨습니다. 수락하시려면 <command:/cure accept>&a여기<reset>&f, 거부하시려면 <command: /cure deny>&c여기<reset>&f를 눌러주세요." to target
+                set {doctor.cooldown::%player%} to 10
+                stop
+            else:
+                send "{@prefix} 해당 환자는 질병에 걸리지 않았습니다." to player
+                stop
+
+on rightclick on entity:
+    if name of event-entity contains "환자":
+        if player doesn't have permission "op.user":
+            stop
+        set {_name} to name of event-entity
+        if {doctor.played.%player%::*} contains {_name}:
+            send "{@prefix} 이미 대화를 완료하였습니다."
+            stop
+        set {_list::*} to {_name} split by " "
+        set {_rand} to random integer between 1 and 1
+        if {_name} contains "(하)":
+            execute player command "quest_talk start doctor_easy_%{_list::2}%_%{_rand}%"
+        else if {_name} contains "(중)":
+            execute player command "quest_talk start doctor_medium_%{_list::2}%_%{_rand}%"
+        else if {_name} contains "(상)":
+            execute player command "quest_talk start doctor_hard_%{_list::2}%_%{_rand}%"
+        add {_name} to {doctor.played.%player%::*}
+
+command /cure [<text>]:
+    trigger:
+        if {doctor.cured.%uuid of player%} is set:
+            if arg 1 is "accept":
+                set {_doctor} to {doctor.cured.%uuid of player%}
+                balanceRemove(player, {@price}, "Doctor")
+                balanceAdd({_doctor}, {@award}, "Doctor")
+                set {_price} to moneyDigit({@award})
+                send "{@prefix} 치료되었습니다. &c(-15,000원)"
+                send "{@prefix} &6%player%&f님을 치료하여 &e%{_price}%원&f을 획득했습니다." to {_doctor}
+                delete {doctor.pain.%uuid of player%}
+                delete {doctor.cured.%uuid of player%}
+                remove slowness from player
+                stop
+
+            else if arg 1 is "deny":
+                set {_doctor} to {doctor.cured.%uuid of player%}
+                send "{@prefix} 치료를 거부하였습니다."
+                send "{@prefix} &6%player%&f님이 치료를 거부하였습니다." to {_doctor}
+                delete {doctor.cured.%uuid of player%}
+                stop
+
+command /doctor [<text>]:
+    permission: op.user
+    permission message: {@prefix} 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "pill":
+            if player's tool is air:
+                send "{@prefix} 아이템을 들고 설정해주세요."
+                stop
+            set the name of player's held item to "{@pill}"
+            send "{@prefix} 손에 든 아이템이 알약으로 지정되었습니다"
+            stop
+
+        else if arg 1 is "item":
+            if player's tool is air:
+                send "{@prefix} 아이템을 들고 설정해주세요."
+                stop
+            set the name of player's held item to "{@item}"
+            send "{@prefix} 손에 든 아이템이 치료 도구로 지정되었습니다"
+            stop
+
+        else if arg 1 is "suicide":
+            if player's tool is air:
+                send "{@prefix} 아이템을 들고 설정해주세요."
+                stop
+            set the name of player's held item to "{@suicide}"
+            send "{@prefix} 손에 든 아이템이 상비약으로 지정되었습니다"
+            stop
+
+        else:
+            send "{@prefix} /doctor pill &8&l| &f손에 들고 있는 아이템을 알약으로 지정합니다."
+            send "{@prefix} /doctor item &8&l| &f손에 들고 있는 아이템을 치료 도구로 지정합니다."
+            stop
+
+command /doctor_quest [<number>]:
+    permission: op.user
+    trigger:
+        if arg-1 is 0:
+            send "{@prefix} 잘못된 치료를 하였습니다. 보상 획득에 실패하였습니다."
+        else:
+            balanceAdd(player, arg-1, "Doctor")
+            send "{@prefix} 치료에 성공하여 &6%moneyDigit(arg-1)%원&f을 보상으로 획득하였습니다."
+
+on quit:
+    delete {doctor.cured.%uuid of player%}
+
+every 1 second:
+    loop {doctor.cooldown::*}:
+        if loop-value isn't 0:
+            remove 1 from {doctor.cooldown::%loop-indeX%}
+        else if loop-value is 0:
+            delete {doctor.cooldown::%loop-index%}
+
+every 1 minute:
+    if now formatted as "HH:mm" is "00:00":
+        loop all offline players:
+            delete {doctor.played.%loop-offlineplayer%::*}

@@ -1,0 +1,160 @@
+options:
+    # 접두사
+    bank: <##F77E21>&l[은행]&f
+
+    # 휴대폰 GUI
+    gui: &7&lSHK &f&lSmartphone &a&lv1.0
+
+    # 핸드폰 txt
+    loc: plugins/Skript/data/smartphone/smartphone.txt
+
+function phoneGUI(p: player):
+    set {_inv} to chest inventory with 6 rows named "{@gui}"
+    set {_money} to balanceToWon("%{_p}'s money%")
+    set {_bank} to {bank.account::%uuid of {_p}%}
+    set {_bank} to "미개설" if {_bank} isn't set
+    set {_mail} to 0
+    loop {mail.got.%uuid of {_p}%::*}:
+        if {mail.got.%uuid of {_p}%::%loop-index%::open} isn't true:
+            add 1 to {_mail}
+    set {_m} to now formatted as "m" parsed as number
+    set {_cash} to moneyDigit({cash::%uuid of {_p}%})
+    if group of {_p} is "default":
+        set slot 4 of {_inv} to {_p}'s skull named "&6&l&n%{_p}%" with lore "&a&l직업&f: 시민" and "&6잔액&f: %{_money}%"
+    else:
+        set slot 4 of {_inv} to {_p}'s skull named "&6&l&n%{_p}%" with lore "&a&l직업&f: %jobSalaryGroup({_p})%" and "&6잔액&f: %{_money}%"
+    set slot 20 of {_inv} to sunflower named "&e&l친구" with lore "&6%Friend_Number({_p})%&f명의 친구가 온라인입니다!" with custom model data 1001
+    set slot 21 of {_inv} to sunflower named "&e&l송금" with lore "&6계좌번호&f: %{_bank}%" with custom model data 1002
+    if {sharktalk::%{_p}%} is set:
+        set {_lore::*} to "&6%{sharktalk::%{_p}%}%&f님과 대화 중입니다!" and "&c우클릭&f하여 대화 퇴장"
+    else:
+        set {_lore::*} to "&6%number of online players - 1%&f명의 플레이어와 대화할 수 있습니다!" and "&a좌클릭&f하여 대화 입장"
+    set slot 22 of {_inv} to sunflower named "&e&l상어톡" with lore {_lore::*} with custom model data 1003
+    set {_lore::*} to "&6%size of {openchatting.head::*}%&f개의 오픈채팅에 참여할 수 있습니다!" and "&a좌클릭&f하여 대화 입장"
+    set slot 23 of {_inv} to sunflower named "&e&l오픈채팅" with lore {_lore::*} with custom model data 1003
+    set slot 24 of {_inv} to sunflower named "&e&l주식" with lore "&614&f개의 주식이 있습니다!" and "&7%10 - mod({_m}, 10)%분 후에 갱신됩니다." with custom model data 1004
+    set slot 29 of {_inv} to sunflower named "&e&l가상화폐" with lore "&614&f개의 가상화폐가 있습니다!" and "&7%10 - mod({_m}+5, 10)%분 후에 갱신됩니다." with custom model data 1005
+    set slot 30 of {_inv} to sunflower named "&e&l칭호" with lore "&6%size of {prefix.%uuid of {_p}%::*}%&f개의 칭호와 &6%size of {prefixhead.%uuid of {_p}%::*}%&f개의 머리 칭호를 가지고 있습니다!" with custom model data 1006
+    set slot 31 of {_inv} to sunflower named "&e&l길찾기" with custom model data 1007
+    set slot 32 of {_inv} to sunflower named "&e&l캐시" with lore "&6잔액&f: %{_cash}%캐시" with custom model data 1008
+    set slot 33 of {_inv} to sunflower named "&e&l상어마켓" with lore "&6%size of {market::*}%&f개의 아이템이 판매되고 있습니다!" with custom model data 1009
+    set slot 38 of {_inv} to sunflower named "&e&l서점" with lore "&6/서점&f으로 책을 구매해보세요!" with custom model data 1010
+    set slot 39 of {_inv} to sunflower named "&e&l일일퀘스트" with lore "&6%dailyquestCount({_p})%&f개의 보상을 수령할 수 있습니다!" with custom model data 1011
+    set slot 40 of {_inv} to sunflower named "&e&l접속보상" with lore "&6%playtimeCount({_p})%&f개의 보상을 수령할 수 있습니다!" with custom model data 1012
+    set slot 41 of {_inv} to sunflower named "&e&l선물함" with custom model data 1013
+    set slot 42 of {_inv} to sunflower named "&e&l택시" with custom model data 1014
+    open {_inv} to {_p}
+
+on rightclick with paper:
+    if custom model data of event-item is 23:
+        phoneGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::phoneGUI} to true
+        stop
+
+on inventory click:
+    if {gui.%uuid of player%::phoneGUI} is true:
+        cancel event
+        if clicked slot is 20:
+            delete {gui.%uuid of player%::phoneGUI}
+            friendGUI(player, 1)
+            wait 1 tick
+            set {gui.%uuid of player%::friendGUI} to true
+        
+        else if clicked slot is 21:
+            delete {bank.put.%uuid of player%}
+            delete {bank.get.%uuid of player%}
+            delete {bank.guildGet.%uuid of player%}
+            set {bank.send.%uuid of player%} to true
+            delete {bank.player.%uuid of player%}
+            delete {bank.guild.%uuid of player%}
+            set {bank.money.%uuid of player%} to ""
+            close player's inventory
+            send "{@bank} 송금하시려는 계좌번호 13자리를 '-'를 제외하고 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            stop
+        
+        else if clicked slot is 22:
+            delete {gui.%uuid of player%::phoneGUI}
+            if click type is left mouse button:
+                sharktalk(player, "left")
+            else if click type is right mouse button:
+                sharktalk(player, "right")
+            close player's inventory
+
+        else if clicked slot is 23:
+            close player's inventory
+            openChattingGUI(player, 1)
+            set {openchatting.page::%player%} to 1
+
+        else if clicked slot is 24:
+            close player's inventory
+            execute player command "주식"
+
+        else if clicked slot is 29:
+            close player's inventory
+            execute player command "코인"
+
+        else if clicked slot is 30:
+            prefixSelectGUI(player)
+            delete {gui.%uuid of player%::phoneGUI}
+            stop
+
+        else if clicked slot is 31:
+            gpsGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::gpsGUI} to true
+            stop
+
+        else if clicked slot is 32:
+            close player's inventory
+            make player run command "shop open 캐시상점1" as op
+
+        else if clicked slot is 33:
+            close player's inventory
+            execute player command "상어마켓 열기"
+
+        else if clicked slot is 38:
+            close player's inventory
+            make player run command "서점 열기" as op
+    
+        else if clicked slot is 39:
+            delete {gui.%uuid of player%::phoneGUI}
+            dailyquestGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::dailyquestGUI} to true
+
+        else if clicked slot is 40:
+            delete {gui.%uuid of player%::phoneGUI}
+            playtimeGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::playtimeGUI} to true
+
+        else if clicked slot is 41:
+            delete {gui.%uuid of player%::phoneGUI}
+            execute player command "선물함"
+            wait 1 tick
+            set {gui.%uuid of player%::mailboxGUI} to true
+        
+        else if clicked slot is 42:
+            loop player's inventory:
+                if type of loop-value is piece of paper:
+                    if custom model data of loop-value is 0:
+                        if uncolored name of loop-value contains "택시 호출권":
+                            if group of player is "수감자":
+                                send "&c[SMARTPHONE] 수감자는 택시 호출권을 이용할 수 없습니다."
+                                stop
+                            if "%region at player%" contains "prison":
+                                send "&c[SMARTPHONE] 교도소 안에서 택시 호출권을 이용할 수 없습니다."
+                                stop
+                            remove 1 of loop-value from player's inventory
+                            set {_loc} to location of player
+                            taxiGUI(player, {_loc}, "호출권")
+                            wait 1 tick
+                            set {gui.%uuid of player%::taxiGUI} to true
+                            stop
+            send "&c[SMARTPHONE] &6택시 &f호출권이 없습니다!"
+            stop
+            
+on inventory close:
+    if {gui.%uuid of player%::phoneGUI} is true:
+        delete {gui.%uuid of player%::phoneGUI}

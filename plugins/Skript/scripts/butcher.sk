@@ -1,0 +1,113 @@
+import:
+    org.bukkit.event.player.PlayerEggThrowEvent
+
+options:
+    prefix: <##754C00>&l[도축업자]&f
+    도축업자: 도축업자
+    node: hunter.user
+
+function butcherGUI(p: player, type: text):
+    {_p} is player
+    if {_p} has permission "{@node}":
+        set {_inv} to chest inventory with 2 rows named "&e%{_type}%&f의 시체"
+        set {_meat} to porkchop if {_type} is "돼지"
+        set {_meat} to beef if {_type} is "소"
+        set {_meat} to chicken if {_type} is "닭"
+        set {_meat} to rabbit if {_type} is "토끼"
+        set {_meat} to mutton if {_type} is "양"
+        set {butcher.item::%{_p}%} to {_meat}
+        loop 18 times:
+            set {_rand} to random integer between 1 and 5
+            if {_rand} is 1:
+                set slot (loop-number)-1 of {_inv} to {_meat} with lore "&7클릭 시 실패"
+                add 1 to {butcher.clicked::%{_p}%}
+            else if {_rand} is 2:
+                set slot (loop-number)-1 of {_inv} to bone named "&f뼈" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+            else if {_rand} is 3:
+                set slot (loop-number)-1 of {_inv} to red stained glass pane named "&f피" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+            else if {_rand} is 4:
+                set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f지방" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+    else:
+        set {_inv} to chest inventory with 4 rows named "&e%{_type}%&f의 시체"
+        set {_meat} to porkchop if {_type} is "돼지"
+        set {_meat} to beef if {_type} is "소"
+        set {_meat} to chicken if {_type} is "닭"
+        set {_meat} to rabbit if {_type} is "토끼"
+        set {_meat} to mutton if {_type} is "양"
+        set {butcher.item::%{_p}%} to {_meat}
+        loop 36 times:
+            set {_rand} to random integer between 1 and 5
+            if {_rand} is 1:
+                set slot (loop-number)-1 of {_inv} to {_meat} with lore "&7클릭 시 실패"
+                add 1 to {butcher.clicked::%{_p}%}
+            else if {_rand} is 2:
+                set slot (loop-number)-1 of {_inv} to bone named "&f뼈" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+            else if {_rand} is 3:
+                set slot (loop-number)-1 of {_inv} to red stained glass pane named "&f피" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+            else if {_rand} is 4:
+                set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f지방" with lore "&7클릭하여 제거"
+                add loop-number - 1 to {butcher.%{_p}%::*}
+    open {_inv} to {_p}
+
+function butcherAward(p: player, item: item, n: number):
+    if {_p} has permission "{@node}":
+        itemGive({_p}, {_item}, round up {_n}/2.5, "Butcher")
+        send "{@prefix} 고기 &e%round up {_n}/2.5%개 &f획득에 &a성공&f하였습니다." to {_p}
+        if "%{_item}%" is "rabbit":
+            if {hottime.day} is "수":
+                hottimeButcher({_p}, round up {_n}/2.5)
+            execute {_p} command "event_system_count %{_p}% 3"
+        else if "%{_item}%" is "pork":
+            make {_p} run command "iaget ham %round up {_n}/7.5%" as op
+            send "{@prefix} 햄 &e%round up {_n}/7.5%개 &f획득에 &a성공&f하였습니다." to {_p}
+    else:
+        itemGive({_p}, {_item}, round up {_n}/5, "Butcher")
+        send "{@prefix} 고기 &e%round up {_n}/5%개 &f획득에 &a성공&f하였습니다." to {_p}
+        if "%{_item}%" is "rabbit":
+            if {hottime.day} is "수":
+                hottimeButcher({_p}, round up {_n}/5)
+            execute {_p} command "event_system_count %{_p}% 3"
+        else if "%{_item}%" is "pork":
+            make {_p} run command "iaget ham %round up {_n}/15%" as op
+            send "{@prefix} 햄 &e%round up {_n}/15%개 &f획득에 &a성공&f하였습니다." to {_p}
+    
+command /butcher [<player>] [<text>]:
+    trigger:
+        butcherGUI(arg-1, arg-2)
+        wait 1 tick
+        set {gui.%arg-1%::butcherGUI} to true
+
+on inventory click:
+    if {gui.%player%::butcherGUI} is true:
+        cancel event
+        if clicked slot is air:
+            stop
+        else if clicked slot is bone or red stained glass pane or white stained glass pane:
+            set clicked slot to air
+            remove index of clicked slot from {butcher.%player%::*}
+            if size of {butcher.%player%::*} is 0:
+                set {_n} to {butcher.clicked::%player%}
+                set {_item} to {butcher.item::%player%}
+                close player's inventory
+                butcherAward(player, {_item}, {_n})
+                stop
+        else:
+            send "{@prefix} 고기 획득에 &c실패&f하였습니다."
+            close player's inventory
+            stop
+
+on inventory close:
+    if {gui.%player%::butcherGUI} is true:
+        delete {gui.%player%::butcherGUI}
+        delete {butcher.%player%::*}
+        delete {butcher.item::%player%}
+        delete {butcher.clicked::%player%}
+
+on death:
+    victim isn't player
+    clear drops

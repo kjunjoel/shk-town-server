@@ -1,0 +1,209 @@
+import:
+    org.apache.commons.lang.StringEscapeUtils
+    org.bukkit.event.entity.EntityDamageEvent
+
+options:
+    prefix: [&6&l소매치기&f]
+    name: &f[ &7&l소매치기 &f도구 ]
+
+    percent: 0.015
+    max: 300000
+    cooldown: 30
+    catch_time: 30
+
+# 변수
+# {jobless.money::%player%}     | 플레이어가 소매치기 당한 금액
+# {jobless.cooldown::%player%}  | 플레이어의 소매치기 카운트다운 (가해자)
+# {jobless.boolean::%player%}   | 플레이어가 소매치기를 했는지
+
+# {jobless.attacker::%player%}  | 플레이어를 공격한 사람
+# {jobless.catchcool::%player%} | 소매치기범을 잡을 수 있는 시간
+
+on unload:
+    delete {jobless.boolean::*}
+    delete {jobless.cooldown::*}
+    delete {jobless.catchcool::*}
+
+on damage of a player:
+    if {newbie::%uuid of attacker%} is set:
+        attacker isn't op
+        send "{@prefix} &c뉴비는 다른 플레이어를 공격할 수 없습니다. 해제하려면 /뉴비보호해제를 입력하세요." to attacker
+        cancel event
+        stop
+    if {newbie::%uuid of victim%} is set:
+        if group of attacker is "강도":
+            if attacker isn't op:
+                send "{@prefix} &c뉴비를 공격할 수 없습니다." to attacker
+                cancel event
+                stop
+    if {jobless.attacker::%attacker%} is set:
+        if "%victim%" is {jobless.attacker::%attacker%}:
+            if "%damage cause%" is "projectile":
+                stop
+            if {doctor.pain.%uuid of victim%} isn't set:
+                execute console command "effect clear %{jobless.attacker::%attacker%}% slowness"
+            # balanceRemove(victim, {jobless.money::%attacker%}, "PickpocketReturn")
+            balanceAdd(attacker, {jobless.money::%attacker%}, "PickpocketReturn")
+            send title "&6소매치기범 &b붙잡기 &a성공!" with subtitle "&e소매치기범&f을 붙잡았습니다!" to attacker for 3 seconds
+            send "{@prefix} &c소매치기범&f을 붙잡아 &e%moneyDigit({jobless.money::%attacker%})%원&f을 돌려받았습니다." to attacker
+            send title "&6소매치기 &c실패!" with subtitle "붙잡혔습니다. &e%moneyDigit({jobless.money::%attacker%})%원&f을 획득에 실패하였습니다." to victim for 3 seconds
+            send "{@prefix} 붙잡혀서 소매치기에 &c실패&f하였습니다. &e%moneyDigit({jobless.money::%attacker%})%원&f을 획득에 실패하였습니다." to victim
+            wait 1 tick
+            delete {jobless.attacker::%attacker%}
+            delete {jobless.money::%attacker%}
+            delete {jobless.boolean::%victim%}
+            set {jobless.done::%victim%} to true
+    if attacker has permission "thief.user":
+        if uncolored name of attacker's tool contains "소매치기 도구":
+            if "%damage cause%" is "projectile":
+                stop
+            loop {police.banarea::*}:
+                if region at attacker contains "%loop-value%" parsed as region:
+                    send "{@prefix} PVP 금지구역에서는 소매치기할 수 없습니다." to attacker
+                    stop
+            if {taxi::%attacker%} is set:
+                send "{@prefix} 택시를 타는 중에는 소매치기할 수 없습니다." to attacker
+                stop
+            if "%region at victim%" contains "spawn":
+                stop
+            if {taxi::%victim%} is set:
+                send "{@prefix} 택시 타고 있는 사람은 소매치기할 수 없습니다." to attacker
+                stop
+            if {jobless.cooldown::%attacker%} is set:
+                send title "&6소매치기 &c실패!" with subtitle "쿨타임 해제까지 &b%{jobless.cooldown::%attacker%}%초 &f남았습니다." to attacker for 3 seconds
+                send "{@prefix} 소매치기 쿨타임입니다. 해제까지 &b%{jobless.cooldown::%attacker%}%초 &f남았습니다." to attacker
+                stop
+            if {jobless.catchcool::%victim%} > 0:
+                send title "&6소매치기 &c실패!" with subtitle "&b%{jobless.catchcool::%victim%}%초 &f후 다시 시도하세요." to attacker for 3 seconds
+                send "{@prefix} 해당 플레이어는 &b%{jobless.catchcool::%victim%}%초 &f후 다시 소매치기할 수 있습니다." to attacker
+                stop
+            if group of victim is "학생":
+                stop
+            set {jobless.money::%victim%} to round down ((victim's balance) * {@percent})
+            set {jobless.money::%victim%} to {@max} if {jobless.money::%victim%} > {@max}
+            balanceRemove(victim, {jobless.money::%victim%}, "Pickpocket")
+            # balanceAdd(attacker, {jobless.money::%victim%}, "Pickpocket")
+            send title "&6소매치기 &a성공!" with subtitle "&e%moneyDigit({jobless.money::%victim%})%원&f을 획득하였습니다." to attacker for 3 seconds
+            send "{@prefix} 소매치기에 &a성공&f하였습니다. &e%moneyDigit({jobless.money::%victim%})%원&f을 획득하였습니다." to attacker
+            send title "&6소매치기&f!" with subtitle "&e%moneyDigit({jobless.money::%victim%})%원&f을 소매치기 당했습니다. &c소매치기범&f을 쫒아가 잡으세요!" to victim for 3 seconds
+            send "{@prefix} &e%moneyDigit({jobless.money::%victim%})%원&f을 소매치기를 당했습니다. &c소매치기범&f을 쫒아가 잡으세요!" to victim
+            set {_lock} to StringEscapeUtils.unescapeJava("\uc001")
+            execute console command "tab player %victim% tagsuffix %{_lock}%"
+            loop {police.banarea::*}:
+                if region at attacker contains "%loop-value%" parsed as region:
+                    set {_name::*} to file contents of "plugins/Skript/data/police/ban_area_name.txt"
+                    set {_areaname} to {_name::%loop-index%}
+                    send "{@prefix} &6%attacker%&f님이 금지구역 &e%{_areaname}%&f에 들어갔습니다." to all players
+            if durability of attacker's tool is 0:
+                add 228 to durability of attacker's tool
+            add 1 to durability of attacker's tool
+            if durability of attacker's tool >= 238:
+                set attacker's tool to air
+                play sound "ITEM_SHIELD_BREAK" with volume 1 to attacker
+            set {jobless.cooldown::%attacker%} to {@cooldown}
+            set {jobless.boolean::%attacker%} to "%victim%"
+            set {jobless.attacker::%victim%} to "%attacker%"
+            set {jobless.catchcool::%victim%} to {@catch_time}
+
+on death:
+    if {jobless.attacker::%attacker%} is set:
+        if "%victim%" is {jobless.attacker::%attacker%}:
+            if {doctor.pain.%uuid of victim%} isn't set:
+                execute console command "effect clear %{jobless.attacker::%attacker%}% slowness"
+            # balanceRemove(victim, {jobless.money::%attacker%}, "PickpocketReturn")
+            balanceAdd(attacker, {jobless.money::%attacker%}, "PickpocketReturn")
+            send title "&6소매치기범 &b붙잡기 &a성공!" with subtitle "&e소매치기범&f을 붙잡았습니다!" to attacker for 3 seconds
+            send "{@prefix} &c소매치기범&f을 붙잡아 &e%moneyDigit({jobless.money::%attacker%})%원&f을 돌려받았습니다." to attacker
+            send title "&6소매치기 &c실패!" with subtitle "붙잡혔습니다. &e%moneyDigit({jobless.money::%attacker%})%원&f을 획득에 실패하였습니다." to victim for 3 seconds
+            send "{@prefix} 붙잡혀서 소매치기에 &c실패&f하였습니다. &e%moneyDigit({jobless.money::%attacker%})%원&f을 획득에 실패하였습니다." to victim
+            wait 1 tick
+            delete {jobless.money::%attacker%}
+            delete {jobless.attacker::%attacker%}
+            delete {jobless.boolean::%victim%}
+            set {jobless.done::%victim%} to true
+
+on rightclick:
+    if name of player's tool is "{@name}":
+        cancel event
+
+on quit:
+    if {jobless.boolean::%player%} is set:
+        set {_p} to {jobless.boolean::%player%} parsed as player
+        # balanceRemove(player, {jobless.money::%{_p}%}, "PickpocketReturn")
+        balanceAdd({_p}, {jobless.money::%{_p}%}, "PickpocketReturn")
+        send title "&6소매치기범 &b붙잡기 &a성공!" with subtitle "&e소매치기범&f이 서버에서 나갔습니다!" to {_p} for 3 seconds
+        send "{@prefix} &c소매치기범&f이 서버에서 나가서 &e%moneyDigit({jobless.money::%{_p}%})%원&f을 돌려받았습니다." to {_p}
+        delete {jobless.boolean::%player%}
+        delete {jobless.money::%{_p}%}
+        delete {jobless.attacker::%{_p}%}
+
+every 1 second:
+    loop {jobless.cooldown::*}:
+        if loop-index parsed as offlineplayer is online:
+            remove 1 from {jobless.cooldown::%loop-index%}
+            if {jobless.boolean::%loop-index%} is set:
+                if {jobless.done::%loop-index%} isn't set:
+                    if {jobless.cooldown::%loop-index%} is 10:
+                        send "{@prefix} 10초 후 소매치기에 성공합니다!" to loop-index parsed as offlineplayer
+                    if {jobless.cooldown::%loop-index%} is 5:
+                        send "{@prefix} 5초 후 소매치기에 성공합니다!" to loop-index parsed as offlineplayer
+                    if {jobless.cooldown::%loop-index%} is 3:
+                        send "{@prefix} 3초 후 소매치기에 성공합니다!" to loop-index parsed as offlineplayer
+                    if {jobless.cooldown::%loop-index%} is 2:
+                        send "{@prefix} 2초 후 소매치기에 성공합니다!" to loop-index parsed as offlineplayer
+                    if {jobless.cooldown::%loop-index%} is 1:
+                        send "{@prefix} 1초 후 소매치기에 성공합니다!" to loop-index parsed as offlineplayer
+            if {jobless.cooldown::%loop-index%} is 0:
+                delete {jobless.boolean::%loop-index%}
+                delete {jobless.cooldown::%loop-index%}
+                delete {jobless.done::%loop-index%}
+    loop {jobless.catchcool::*}:
+        remove 1 from {jobless.catchcool::%loop-index%}
+        if {jobless.catchcool::%loop-index%} is 20:
+            execute console command "effect give %{jobless.attacker::%loop-index%}% slowness 20 0 true"
+        if {jobless.boolean::%{jobless.attacker::%loop-index%}%} is set:
+            if {jobless.catchcool::%loop-index%} is 10:
+                send "{@prefix} 10초 후 소매치기범을 놓칩니다!" to loop-index parsed as offlineplayer
+            if {jobless.catchcool::%loop-index%} is 5:
+                send "{@prefix} 5초 후 소매치기범을 놓칩니다!" to loop-index parsed as offlineplayer
+            if {jobless.catchcool::%loop-index%} is 3:
+                send "{@prefix} 3초 후 소매치기범을 놓칩니다!" to loop-index parsed as offlineplayer
+            if {jobless.catchcool::%loop-index%} is 2:
+                send "{@prefix} 2초 후 소매치기범을 놓칩니다!" to loop-index parsed as offlineplayer
+            if {jobless.catchcool::%loop-index%} is 1:
+                send "{@prefix} 1초 후 소매치기범을 놓칩니다!" to loop-index parsed as offlineplayer
+        if {jobless.catchcool::%loop-index%} is 0:
+            if {jobless.attacker::%loop-index%} is set:
+                set {_player} to {jobless.attacker::%loop-index%} parsed as offlineplayer
+                if {doctor.pain.%uuid of {_player}%} isn't set:
+                    execute console command "effect clear %{jobless.attacker::%loop-index%}% slowness"
+                send title "&6소매치기 &a성공!" with subtitle "&e소매치기&f에 성공했습니다!" to {jobless.attacker::%loop-index%} parsed as player for 3 seconds
+                send "{@prefix} 소매치기에 &a성공&f하였습니다." to {jobless.attacker::%loop-index%} parsed as player
+                balanceAdd({jobless.attacker::%loop-index%} parsed as player, {jobless.money::%loop-index%}, "Pickpocket")
+                delete {jobless.attacker::%loop-index%}
+                delete {jobless.catchcool::%loop-index%}
+                set {_p} to loop-index parsed as player
+                send title "&6소매치기범 &b붙잡기 &c실패!" with subtitle "소매치기범을 붙잡지 &c못했습니다&f!" to {_p} for 3 seconds
+                send "{@prefix} 소매치기범을 붙잡는 것에 &c실패&f하였습니다." to {_p}
+            execute console command "tab player %loop-index% tagsuffix"
+            delete {jobless.catchcool::%loop-index%}
+
+command /jobless:
+    permission: op.user
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        set {_item} to shears named "{@name}"
+        set durability of {_item} to 228
+        give {_item} to player
+
+on enter region:
+    loop {police.banarea::*}:
+        if event-region contains "%loop-value%" parsed as region:
+            if {jobless.attacker::%{jobless.boolean::%player%}%} is set:
+                set {_name::*} to file contents of "plugins/Skript/data/police/ban_area_name.txt"
+                set {_areaname} to {_name::%loop-index%}
+                if group of player is "수감자":
+                    if {_areaname} contains "경찰청":
+                        stop
+                cancel event
+                send "{@prefix} 금지구역 &e%{_areaname}%&f에 들어갈 수 없습니다."

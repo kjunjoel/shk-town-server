@@ -1,0 +1,119 @@
+options:
+    # 접두사
+    prefix: <##284e9e>&l[검찰청]&f
+
+    # 럭펌 그룹명
+    검찰총장: 검찰총장
+    검사장: 검사장
+    차장검사: 차장검사
+    부장검사: 부장검사
+    부부장검사: 부부장검사
+    검사: 검사
+
+    # 럭펌 노드명
+    proAdmin: prose.admin # 검찰총장 ~ 검사장
+    proUser: prose.user # 검찰총장 ~ 검사
+
+# 변수
+# {prosecutor.user::*}                           | 검사 목록
+# {prosecutor.user.%uuid of player%.class}       | 검사 직급 목록
+
+command /검찰청 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@proAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {prosecutor.user::*} is not set:
+                send "{@prefix} 검찰청 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@prefix} 검찰청 소속 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {prosecutor.user::*}
+            loop "{@검찰총장}", "{@검사장}", "{@차장검사}", "{@부장검사}", "{@부부장검사}", "{@검사}", "검사시보":
+                loop {_list::*}:
+                    if {prosecutor.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@prefix} %{_ind}%. %loop-value-2% (%{prosecutor.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {prosecutor.user::*}:
+                if loop-value is arg-2:
+                    send "{@prefix} 해당 플레이어는 이미 검찰청에 소속되어 있습니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@prefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg-2 has permission "cook.user":
+                if cookShopCalculate(player) > 0:
+                    send "{@prefix} &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                    stop
+            if arg 3 is not set:
+                send "{@prefix} 직급을 입력해주세요."
+                stop
+            if arg 3 is "{@검찰총장}" or "{@검사장}" or "{@차장검사}" or "{@부장검사}" or "{@부부장검사}" or "{@검사}" or "검사시보":
+                if group of player is "{@검찰총장}":
+                    if arg 3 is "{@검찰총장}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@검사장}":
+                    if arg 3 is "{@검찰총장}" or "{@검사장}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {prosecutor.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                send "{@prefix} &6%arg-2%&f님이 검찰청 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                set {prosecutor.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else:
+                send "{@prefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {prosecutor.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@prefix} 해당 플레이어는 검찰청 소속이 공무원이 아닙니다."
+                stop
+            if group of player is "{@검찰총장}":
+                if {prosecutor.user.%uuid of arg-2%.class} is "{@검찰총장}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            else if group of player is "{@검찰총장}":
+                if {prosecutor.user.%uuid of arg-2%.class} is "{@검찰총장}" or "{@검사장}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {prosecutor.user::*}
+            execute console command "lp user %arg-2% parent remove %{prosecutor.user.%uuid of arg-2%.class}%"
+            delete {prosecutor.user.%uuid of arg-2%.class}
+            send "{@prefix} &6%arg-2%&f님이 검찰청 소속 공무원에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@prefix} /검찰청 목록 &8&l| &f검사 목록을 확인합니다."
+            send "{@prefix} /검찰청 채용 [플레이어명] [직급] &8&l| &f플레이어를 직급으로 채용합니다."
+            send "{@prefix} /검찰청 해임 [플레이어명] &8&l| &f플레이어를 검찰에서 해임합니다."
+            send "{@prefix} /검찰공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+command /검찰공지 [<text>]:
+    permission: {@proAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@prefix} 공지 내용을 입력해주세요."
+            stop
+        send "" to all players
+        send "{@prefix} &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop

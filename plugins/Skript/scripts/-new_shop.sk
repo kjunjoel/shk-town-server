@@ -1,0 +1,413 @@
+options:
+    prefix: &a&l[상점]&f
+    @: &a&l[상점설정]&f
+    dir: plugins/Skript/data/shop
+
+on load:
+    if file path "{@dir}/shop.txt" isn't available:
+        create file path "{@dir}/shop.txt"
+
+function shopGUI(p: player, name: text):
+    load yaml "{@dir}/%{_name}%.txt" as "shop.%{_name}%"
+    set {_inv} to chest inventory with 6 rows named "{@prefix} %{_name}%"
+    loop 54 times:
+        set {_item} to yaml value "%loop-number%.item" from "shop.%{_name}%"
+        if type of {_item} isn't air:
+            add "&f" to lore of {_item}
+            set {_buy} to yaml value "%loop-number%.buy.price" from "shop.%{_name}%"
+            if {_buy} is 0:
+                add "&6구매 &f가격: &7해당 아이템은 구매할 수 없습니다." to lore of {_item}
+            else:
+                set {_buytype} to yaml value "%loop-number%.buy.type" from "shop.%{_name}%"
+                if {_buytype} is "money":
+                    add "&6구매 &f가격: &e&l%moneyDigit({_buy})%&e원" to lore of {_item}
+                else if {_buytype} is "cash":
+                    add "&6구매 &f가격: &e&l%moneyDigit({_cash})%&e캐시" to lore of {_item}
+            set {_sell} to yaml value "%loop-number%.sell.price" from "shop.%{_name}%"
+            if {_sell} is 0:
+                add "&a판매 &f가격: &7해당 아이템은 판매할 수 없습니다." to lore of {_item}
+            else:
+                set {_selltype} to yaml value "%loop-number%.sell.type" from "shop.%{_name}%"
+                if {_selltype} is "money":
+                    add "&a판매 &f가격: &e&l%moneyDigit({_sell})%&e원" to lore of {_item}
+                else if {_selltype} is "cash":
+                    add "&a판매 &f가격: &e&l%moneyDigit({_sell})%&e캐시" to lore of {_item}
+            set {_daily} to yaml value "%loop-number%.daily" from "shop.%{_name}%"
+            if {_daily} isn't 0:
+                if yaml path "%loop-number%.daily_list.%uuid of {_p}%" in "shop.%{_name}%" has value:
+                    set {_dailyp} to yaml value "%loop-number%.daily_list.%uuid of {_p}%" from "shop.%{_name}%"
+                else:
+                    set {_dailyp} to 0
+                set {_dailyp} to {_daily} - {_dailyp}
+                add "&d일일 &f제한 개수: &b%moneyDigit({_dailyp})%/%moneyDigit({_daily})%개 &f남음" to lore of {_item}
+            set {_account} to yaml value "%loop-number%.account" from "shop.%{_name}%"
+            if yaml path "%loop-number%.account_list.%uuid of {_p}%" in "shop.%{_name}%" has value:
+                set {_accountp} to yaml value "%loop-number%.account_list.%uuid of {_p}%" from "shop.%{_name}%"
+            else:
+                set {_acountp} to 0
+                set {_accountp} to {_account} - {_accountp}
+                add "&d개인 &f제한 개수: &b%moneyDigit({_accountp})%/%moneyDigit({_daily})%개 &f남음" to lore of {_item}
+            add "&f" to lore of {_item}
+            add "&6좌클릭&f하여 1개 &6구매" to lore of {_item}
+            add "&6SHIFT + 좌클릭&f하여 64개 &6구매" to lore of {_item}
+            add "&a우클릭&f하여 1개 &a판매" to lore of {_item}
+            add "&aSHIFT + 우클릭&f하여 모두 &a판매" to lore of {_item}
+        set slot (loop-number)-1 of {_inv} to {_item}
+    open {_inv} to {_p}
+    unload yaml "shop.%{_name}%"
+
+function shopEdit(p: player, name: text):
+    load yaml "{@dir}/%{_name}%.txt" as "shop.%{_name}%"
+    set {_inv} to chest inventory with 6 rows named "{@@} %{_name}%"
+    loop 54 times:
+        set {_item} to yaml value "%loop-number%.item" from "shop.%{_name}%"
+        set slot (loop-number)-1 of {_inv} to {_item}
+    unload yaml "shop.%{_name}%"
+
+function shopSave(name: text, new: objects):
+    load yaml "{@dir}/%{_name}%.txt" as "shop.%{_name}%"
+    loop 54 times:
+        set {_item} to yaml value "%loop-number%.item" from "shop.%{_name}%"
+        if type of {_item} isn't air:
+            set {_old::%loop-number%} to {_item}
+            set {_buytype::%loop-number%} to yaml value "%loop-number%.buy.type" from "shop.%{_name}%"
+            set {_buy::%loop-number%} to yaml value "%loop-number%.buy.price" from "shop.%{_name}%"
+            set {_selltype::%loop-number%} to yaml value "%loop-number%.sell.type" from "shop.%{_name}%"
+            set {_sell::%loop-number%} to yaml value "%loop-number%.sell.price" from "shop.%{_name}%"
+            set {_daily::%loop-number%} to yaml value "%loop-number%.daily" from "shop.%{_name}%"
+            if {_daily::%loop-number%} isn't 0:
+                loop yaml node keys "%loop-number%.daily_list" from "shop.%{_name}%":
+                    set {_dailylist::%loop-number%::%loop-node%} to yaml value "%loop-number%.daily_list.%loop-node%" from "shop.%{_name}%"
+            set {_account::%loop-number%} to yaml value "%loop-number%.account" from "shop.%{_name}%"
+            if {_account::%loop-number%} isn't 0:
+                loop yaml node keys "%loop-number%.account_list" from "shop.%{_name}%":
+                    set {_accountlist::%loop-number%::%loop-node%} to yaml value "%loop-number%.account_list.%loop-node%" from "shop.%{_name}%"
+            add {_item} to {_old::*}
+    loop {_new::*}:
+        delete {_temp}
+        loop {_old::*}:
+            if {_item} is loop-value-2:
+                set yaml value "%loop-index-1%.item" from "shop.%{_name}%" to {_old::%loop-index-2%}
+                set yaml value "%loop-index-1%.buy.type" from "shop.%{_name}%" to {_buytype::%loop-index-2%}
+                set yaml value "%loop-index-1%.buy.price" from "shop.%{_name}%" to {_buy::%loop-index-2%}
+                set yaml value "%loop-index-1%.sell.type" from "shop.%{_name}%" to {_selltype::%loop-index-2%}
+                set yaml value "%loop-index-1%.sell.price" from "shop.%{_name}%" to {_sell::%loop-index-2%}
+                set yaml value "%loop-index-1%.daily" from "shop.%{_name}%" to {_daily::%loop-index-2%}
+                set yaml value "%loop-index-1%.account" from "shop.%{_name}%" to {_account::%loop-index-2%}
+                if {_daily::%loop-index-2%} isn't 0:
+                    loop {_dailylist::%loop-index-2%::*}:
+                        set yaml value "%loop-index-1%.daily_list.%loop-index-3%" from "shop.%{_name}%" to loop-value-3
+                if {_acount::%loop-index-2%} isn't 0:
+                    loop {_account::%loop-index-2%::*}:
+                        set yaml value "%loop-index-1%.daily_list.%loop-index-3%" from "shop.%{_name}%" to loop-value-3
+                set {_temp} to true
+                exit 1 loop
+        if {_temp} isn't set:
+            set yaml value "%loop-index%.item" from "shop.%{_name}%" to loop-value
+            set yaml value "%loop-index%.buy.type" from "shop.%{_name}%" to "money"
+            set yaml value "%loop-index%.buy.price" from "shop.%{_name}%" to 0
+            set yaml value "%loop-index%.sell.type" from "shop.%{_name}%" to "money"
+            set yaml value "%loop-index%.sell.price" from "shop.%{_name}%" to 0
+            set yaml value "%loop-index%.daily" from "shop.%{_name}%" to 0
+            set yaml value "%loop-index%.account" from "shop.%{_name}%" to 0
+
+function shopBuy(p: player, name: text, ind: number, amount: number):
+    set {_item} to yaml value "%{_ind}%.item" from "shop.%{_name}%"
+    set {_buy} to yaml value "%{_ind}%.buy.price" from "shop.%{_name}%"
+    if {_buy} is 0:
+        stop
+    set {_daily} to yaml value "%{_ind}%.daily" from "shop.%{_name}%"
+    set {_dailyp} to yaml value "%{_ind}%.daily_list.%uuid of {_p}%" from "shop.%{_name}%"
+    if {_dailyp} >= {_daily}:
+        send "{@prefix} 일일 제한 개수를 초과하여 구매할 수 없습니다." to {_p}
+        stop
+    set {_account} to yaml value "%{_ind}%.account" from "shop.%{_name}%"
+    set {_accountp} to yaml value "%{_ind}%.account_list.%uuid of {_p}%" from "shop.%{_name}%"
+    if {_accountp} >= {_account}:
+        send "{@prefix} 계정 제한 개수를 초과하여 구매할 수 없습니다." to {_p}
+        stop
+    set {_type} to yaml value "%{_ind}%.buy.type" from "shop.%{_name}%"
+    if {_type} is "money":
+        if {_buy} * {_n} > {_p}'s balance:
+            set {_remind} to {_p}'s balance - ({_buy}*{_n})
+            send "{@prefix} 잔액이 부족합니다. &7(%moneyDigit({_remind})%원 부족)" to {_p}
+            stop
+        balanceRemove({_p}, {_buy}*{_n}, "Shop")
+        send "{@prefix} 성공적으로 상품을 구매했습니다. &c(-%moneyDigit({_buy}*{_n})%원)" to {_p}
+    else if {_type} is "cash":
+        if {_buy} * {_n} > {cash::%uuid of {_p}%}:
+            set {_remind} to {cash::%uuid of {_p}%}- ({_buy}*{_n})
+            send "{@prefix} 잔액이 부족합니다. &7(%moneyDigit({_remind})%캐시 부족)" to {_p}
+            stop
+        cashRemove({_p}, {_buy}*{_n}, "Shop")
+        send "{@prefix} 성공적으로 상품을 구매했습니다. &c(-%moneyDigit({_buy}*{_n})%캐시)" to {_p}
+    else:
+        stop
+    set {_amount} to item amount of {_item}
+    itemGive({_p}, {_item}, {_n}*{_amount}, "ShopBuy")
+    add {_n} to {_dailyp}
+    add {_n} to {_accountp}
+    if {_daily} isn't 0:
+        set yaml value "%{_ind}%.daily_list.%uuid of {_p}%" from "shop.%{_name}%" to {_dailyp}
+    if {_account} isn't 0:
+        set yaml value "%{_ind}%.account_list.%uuid of {_p}%" from "shop.%{_name}%" to {_accountp}
+    save yaml "shop.%{_name}%"
+    unload yaml "shop.%{_name}%"
+    shopGUI({_p}, {_name})
+        
+function shopSell(p: player, name: text, ind: number, amount: text):
+    set {_item} to yaml value "%{_ind}%.item" from "shop.%{_name}%"
+    set {_sell} to yaml value "%{_ind}%.sell.price" from "shop.%{_name}%"
+    if {_sell} is 0:
+        stop
+    set {_amount} to 0
+    loop all items in {_p}'s inventory:
+        if 1 of loop-item is 1 of {_item}:
+            add item amount of loop-item to {_amount}
+    if {_amount} is 0:
+        send "{@prefix} 판매할 상품이 없습니다." to {_p}
+        stop
+    if {_amount} < item amount of {_item}:
+        send "{@prefix} 판매할 상품이 부족합니다." to {_p}
+        stop
+    if {_amount} is "1":
+        set {_remind} to item amount of {_item}
+        remove {_remind} of {_item} from {_p}'s inventory
+    else if {_amount} is "all":
+        set {_remind} to {_amount} - mod({_amount}, item amount of {_item})
+        remove {_remind} of {_item} from {_p}'s inventory
+    set {_n} to {_remind} / (item amount of {_item})
+    set {_type} to yaml value "%{_ind}%.sell.type" from "shop.%{_name}%"
+    if {_type} is "money":
+        balanceAdd({_p}, {_sell}*{_n}, "Shop")
+        send "{@prefix} 성공적으로 상품을 판매했습니다. &a(+%moneyDigit({_sell}*{_n)})%원)" to {_p}
+    else if {_type} is "cash":
+        cashAdd({_p}, {_buy}*{_n}, "Shop")
+        send "{@prefix} 성공적으로 상품을 구매했습니다. &a(+%moneyDigit({_sell}*{_n})%캐시)" to {_p}
+
+on rightclick on barrier:
+    set {_file::*} to content of file path "{@dir}/shop.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%" is "%{_data::2}%, %{_data::3}%, %{_data::4}%":
+            set {_name} to {_data::1}
+            exit 1 loop
+    shopGUI(player, {_name})
+
+on inventory click:
+    set {_name::*} to uncolored display name of event-inventory split by " "
+    if {_name::1} contains uncolored "{@prefix}":
+        cancel event
+        clicked item is set
+        event-inventory isn't player's inventory
+        if click type is left mouse button with shift:
+            shopBuy(player, {_name::2}, index of clicked slot, 64)
+
+        else if click type is right mouse button with shift:
+            shopSell(player, {_name::2}, index of clicked slot, "all")
+
+        else if click type is left mouse button:
+            shopBuy(player, {_name::2}, index of clicked slot, 1)
+
+        else if click type is right mouse button:
+            shopSell(player, {_name::2}, index of clicked slot, "1")
+
+
+command /new_shop [<text>] [<text>] [<offlineplayer>]:
+    permission: op.user
+    permission message: {@prefix} 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "list":
+            if arg-2 parsed as number isn't set:
+                set {_n} to 1
+            else:
+                set {_n} to arg-2 parsed as number
+            if {shop::*} isn't set:
+                send "{@prefix} 상점이 존재하지 않습니다."
+                stop
+            send "{@prefix} 상점 목록은 아래와 같습니다."
+            set {_ind} to 1
+            loop all files in dir path "{@dir}":
+                set {_name} to file name of loop-value
+                replace all ".yml" in {_name} with ""
+                if {_ind} is between ({_n}-1)*10+1 and {_n}*10:
+                    send formatted "{@prefix} &e[&b%{_ind}%&e] &f%{_name}% <command:/shop set %{_name}%>&a[GUI 설정]<reset>"
+                add 1 to {_ind}
+            set {_maxpage} to round up ({_ind}/10)
+            send "&f/shop list %{_n}+1%&f을(를) 입력하여 다음 페이지를 읽으세요." if {_n} < {_maxpage}
+            
+        else if arg 1 is "create":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            if file path "{@dir}/%arg-2%.yml" is available:
+                send "{@prefix} 이미 존재하는 상점입니다."
+                stop
+            set {_name} to arg-2
+            replace all " " in {_name} with "_"
+            send "{@prefix} 상점 &e%{_name}%&f을(를) 생성하였습니다. 다음 GUI에서 아이템을 설정해주세요."
+            create file path "{@dir}/%{_name}%.yml"
+            load yaml "{@dir}/%{_name}%.yml" as "shop.%{_name}%"
+            loop 54 times:
+                set yaml value "%loop-number%.item" from "shop.%{_name}%" to air
+                set yaml value "%loop-number%.buy.type" from "shop.%{_name}%" to "money"
+                set yaml value "%loop-number%.buy.price" from "shop.%{_name}%" to 0
+                set yaml value "%loop-number%.sell.type" from "shop.%{_name}%" to "money"
+                set yaml value "%loop-number%.sell.price" from "shop.%{_name}%" to 0
+                set yaml value "%loop-number%.daily" from "shop.%{_name}%" to 0
+                set yaml value "%loop-number%.account" from "shop.%{_name}%" to 0
+            save yaml "shop.%{_name}%"
+            unload yaml "shop.%{_name}%"
+            wait 5 ticks
+            shopEdit(player, {_name})
+
+        else if arg 1 is "delete":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            set {_name} to arg-2
+            replace all " " in {_name} with "_"
+            if file path "{@dir}/%{_name}%.yml" isn't available:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            send "{@prefix} 상점 &e%arg-2%&f을(를) 삭제하였습니다."
+            delete file path "{@dir}/%{_name}%.yml"
+            
+        else if arg 1 is "open":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            set {_name} to arg-2
+            replace all " " in {_name} with "_"
+            if file path "{@dir}/%{_name}%.yml" isn't available:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            shopGUI(player, {_name})
+            
+        else if arg 1 is "set":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            set {_name} to arg-2
+            replace all " " in {_name} with "_"
+            if file path "{@dir}/%{_name}%.yml" isn't available:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            shopEdit(player, {_name})
+
+        else if arg 1 is "barrier":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            set {_name} to arg-2
+            replace all " " in {_name} with "_"
+            if file path "{@dir}/%{_name}%.yml" isn't available:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            if type of target block isn't barrier:
+                send "{@prefix} 방벽을 보고 다시 입력해주세요."
+                stop
+            sync append "%{_name}% %x coord of target block% %y coord of target block% %z coord of target block%" to file path "{@dir}/shop.txt"
+            send "{@prefix} &e%{_name}% %x coord of target block% %y coord of target block% %z coord of target block%&f을(를) shop.txt에 추가했습니다."
+            
+        else if arg 1 is "reset":
+            if arg 2 is "daily":
+                if arg 3 is "all":
+                    loop all files in dir path "{@dir}":
+                        set {_name} to file name of loop-value
+                        replace all ".yml" in {_name} with ""
+                        load yaml "%loop-value%" as "shop.%{_name}%"
+                        loop 54 times:
+                            set yaml value "%loop-value-2%.daily_list" from "shop.%{_name}%" to {_none}
+                        save yaml "shop.%{_name}%"
+                        unload yaml "shop.%{_name}%"
+                    stop
+                if arg 3 isn't set:
+                    send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                    stop
+                loop all files in dir path "{@dir}":
+                    set {_name} to file name of loop-value
+                    replace all ".yml" in {_name} with ""
+                    load yaml "%loop-value%" as "shop.%{_name}%"
+                    loop 54 times:
+                        set yaml value "%loop-value-2%.daily_list.%uuid of arg-3%" from "shop.%{_name}%" to {_none}
+                    save yaml "shop.%{_name}%"
+                    unload yaml "shop.%{_name}%"
+                send "{@prefix} &e%arg-3%&f님의 일일 제한을 초기화했습니다."
+            else if arg 2 is "count":
+                if arg 3 is "all":
+                    loop all files in dir path "{@dir}":
+                        set {_name} to file name of loop-value
+                        replace all ".yml" in {_name} with ""
+                        load yaml "%loop-value%" as "shop.%{_name}%"
+                        loop 54 times:
+                            set yaml value "%loop-value-2%.account_list" from "shop.%{_name}%" to {_none}
+                        save yaml "shop.%{_name}%"
+                        unload yaml "shop.%{_name}%"
+                    stop
+                if arg 3 isn't set:
+                    send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                    stop
+                loop all files in dir path "{@dir}":
+                    set {_name} to file name of loop-value
+                    replace all ".yml" in {_name} with ""
+                    load yaml "%loop-value%" as "shop.%{_name}%"
+                    loop 54 times:
+                        set yaml value "%loop-value-2%.account_list.%uuid of arg-3%" from "shop.%{_name}%" to {_none}
+                    save yaml "shop.%{_name}%"
+                    unload yaml "shop.%{_name}%"
+            else:
+                send "{@prefix} /shop reset <daily/count> [플레이어] &8&l| &f플레이어의 상점 제한을 삭제합니다."
+                stop
+
+        else:
+            send "{@prefix} /shop list &8&l| &f상점 목록을 띄웁니다."
+            send "{@prefix} /shop create [이름] &8&l| &f상점을 생성합니다."
+            send "{@prefix} /shop delete [이름] &8&l| &f상점을 삭제합니다."
+            send "{@prefix} /shop open [이름] &8&l| &f상점의 GUI를 엽니다."
+            send "{@prefix} /shop set [이름] &8&l| &f상점의 GUI를 설정합니다."
+            send "{@prefix} /shop npc [이름] &8&l| &f상점 NPC를 설정합니다."
+            send "{@prefix} /shop reset <daily/count> [플레이어] &8&l| &f플레이어의 상점 제한을 삭제합니다."
+            stop
+
+on inventory close:
+    set {_name} to uncolored display name of event-inventory
+    if {_name} contains uncolored "{@prefix}":
+        set {_name::*} to {_name} split by " "
+        unload yaml "shop.%{_name::2}%"
+    else if {_name} contains uncolored "{@@}":
+        set {_name::*} to {_name} split by " "
+        loop 54 times:
+            set {_temp::%loop-number%} to slot (loop-number)-1 of event-inventory
+        shopSave({_name::2}, {_temp::*})
+        send "{@prefix} 상점 &e%{_name::2}%&f이(가) 저장되었습니다."
+        send "{@prefix} &e%{_name::2}%.yml&f의 값을 수정하려면 꼭 닫은 후 다시 열어주시기 바랍니다."
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player
+
+command /reset_shop:
+    permission: op.user
+    trigger:
+        loop all files in dir path "{@dir}":
+            set {_name} to file name of loop-value
+            replace all ".yml" in {_name} with ""
+            load yaml "%loop-value%" as "shop.%{_name}%"
+            loop 54 times:
+                set yaml value "%loop-value-2%.daily_list" from "shop.%{_name}%" to {_none}
+            save yaml "shop.%{_name}%"
+            unload yaml "shop.%{_name}%"
+        send "{@prefix} 하루가 지나서 일일 제한이 해제되었습니다." to all players
+
+every 1 minute:
+    if now formatted as "HH:mm" contains "00:02":
+        loop all files in dir path "{@dir}":
+            set {_name} to file name of loop-value
+            replace all ".yml" in {_name} with ""
+            load yaml "%loop-value%" as "shop.%{_name}%"
+            loop 54 times:
+                set yaml value "%loop-value-2%.daily_list" from "shop.%{_name}%" to {_none}
+            save yaml "shop.%{_name}%"
+            unload yaml "shop.%{_name}%"
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@prefix} 하루가 지나서 일일 제한이 해제되었습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop

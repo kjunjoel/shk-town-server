@@ -1,0 +1,240 @@
+# 서점 스크립트
+# 노이님과 이든님 제작
+# 무단 판매 및 무단 배포 불가능
+# Copyright 2021. 노이 & 이든 All rights reserved.
+# 소설가 노드 : book.writer
+
+options:
+	접두사: &a&l[ &6&l서점 &a&l]
+	
+function getPage(p: player) :: number:
+	set {_page} to uncolored line 1 of lore of slot 49 of {_p}'s current inventory
+	replace all "페이지:" and " " with "" in {_page}
+	set {_page} to {_page} parsed as number
+	return {_page}
+	
+function openLibrary(page: number) :: inventory:
+	set {_inv} to chest with 6 rows named "&0&l서점"
+	loop 54 times:
+		set slot (loop-number)-1 of {_inv} to bookshelf named "&b"
+	loop 5 times:
+		set slot (loop-number)+10 of {_inv} to air
+	loop 7 times:
+		set slot (loop-number)+27 of {_inv} to air
+		set slot (loop-number)+36 of {_inv} to air
+	loop 9 times:
+		set slot (loop-number)+17 of {_inv} to structure void named "&o "
+	set slot 4 of {_inv} to item frame named "&f&l[ &6&l베스트 셀러 &f&l]"
+	set slot 22 of {_inv} to item frame named "&f&l[ &6&l가판대 &f&l]"
+	set {_item} to barrier named "&f&l[ &c&l닫기 &f&l]"
+	set line 1 of lore of {_item} to "&7페이지: %{_page}%"
+	set slot 49 of {_inv} to {_item}
+	delete {_item}
+	set slot 45 of {_inv} to redstone block named "&f&l[ &e&l이전 페이지 &f&l]"
+	set slot 53 of {_inv} to lapis lazuli block named "&f&l[ &e&l다음 페이지 &f&l]"
+	set {_index} to ({_page}-1)*14
+	loop 14 times:
+		add 1 to {_index}
+		if {서점.목록::%{_index}%} is set:
+			set {_id} to {서점.목록::%{_index}%}
+			set {_item} to 1 of {서점.아이템::%{_id}%}
+			set line 1 of lore of {_item} to "&f"
+			set line 2 of lore of {_item} to "&f판매자: &b%{서점.판매자::%{_id}%}%"
+			set line 3 of lore of {_item} to "&f가격: &e%{서점.가격::%{_id}%}%원"
+			set line 4 of lore of {_item} to "&7판매 부수: &6%{서점.판매부수::%{_id}%}%권"
+			set line 5 of lore of {_item} to ""
+			set line 6 of lore of {_item} to "&7Book ID %{_id}%"
+			if loop-number is between 1 and 7:
+				set slot (loop-number)+27 of {_inv} to {_item}
+			else:
+				set slot (loop-number)+29 of {_inv} to {_item}
+			delete {_item}
+			delete {_id}
+	loop 5 times:
+		if {서점.베스트셀러::%loop-number%} is set:
+			set {_id} to {서점.베스트셀러::%loop-number%}
+			set {_item} to 1 of {서점.아이템::%{_id}%}
+			set line 1 of lore of {_item} to "&f"
+			set line 2 of lore of {_item} to "&f판매자: &b%{서점.판매자::%{_id}%}%"
+			set line 3 of lore of {_item} to "&f가격: &e%{서점.가격::%{_id}%}%원"
+			set line 4 of lore of {_item} to "&7판매 부수: &6%{서점.판매부수::%{_id}%}%권"
+			set line 5 of lore of {_item} to ""
+			set line 6 of lore of {_item} to "&7Book ID %{_id}%"
+			set slot (loop-number)+10 of {_inv} to {_item}
+	return {_inv}
+	
+command /서점 [<string>] [<string>]:
+	trigger:
+		if arg 1 is not set:
+			message ""
+			message "{@접두사} &f/서점 열기"
+			if player has permission "book.writer":
+				message "{@접두사} &f/서점 올리기 [가격]"
+				message "{@접두사} &f/서점 내리기 [책ID]"
+			message ""
+		else if arg 1 is "올리기":
+			if player doesn't have permission "book.writer":
+				message "{@접두사} &f당신은 책을 올릴 권한이 없습니다."
+				stop
+			if arg 2 is not set:
+				message "{@접두사} &f가격을 입력해주세요."
+				stop
+			if arg 2 parsed as integer is not seT:
+				message "{@접두사} &f가격은 정수만 입력이 가능합니다."
+				stop
+			if arg 2 parsed as integer <= 0:
+				message "{@접두사} &f가격은 1 이상만 입력이 가능합니다."
+				stop
+			if player's tool is not written book:
+				message "{@접두사} &f서점에는 쓰여진 책만 올릴 수 있습니다."
+				stop
+			set {_id} to {서점.ID}+0
+			add 1 to {서점.ID}
+			add {_id} to {서점.목록::*}
+			set {서점.아이템::%{_id}%} to 1 of player's tool
+			set {서점.가격::%{_id}%} to arg 2 parsed as integer
+			set {서점.판매자::%{_id}%} to player
+			set {서점.판매부수::%{_id}%} to 0
+			message "{@접두사} &f책을 올렸습니다."
+		else if arg 1 is "내리기":
+			if player doesn't have permission "book.writer":
+				message "{@접두사} &f당신은 책을 내릴 권한이 없습니다."
+				stop
+			if arg 2 is not seT:
+				message "{@접두사} &f삭제할 책 ID를 입력해주세요."
+				stop
+			if arg 2 parsed as integer is not seT:
+				message "{@접두사} &fID는 숫자만 입력이 가능합니다."
+				stop
+			if {서점.판매자::%arg 2%} is not set:
+				message "{@접두사} &f해당 ID의 책은 존재하지 않습니다."
+				stop
+			if player is not op:
+				if {서점.판매자::%arg 2%} is not player:
+					message "{@접두사} &f해당 ID의 책은 당신의 책이 아닙니다."
+					stop
+			remove all arg 2 parsed as number from {서점.목록::*}
+			remove all arg 2 parsed as number from {서점.베스트셀러::*}
+			remove 1 from {서점.ID}
+			set {서점.목록::*} to {서점.목록::*}
+			set {서점.베스트셀러::*} to {서점.베스트셀러::*}
+			delete {서점.가격::%arg 2%}
+			delete {서점.판매자::%arg 2%}
+			delete {서점.판매부수::%arg 2%}
+			delete {서점.아이템::%arg 2%}
+			message "{@접두사} &f올린 책을 내렸습니다."
+		else if arg 1 is "열기":
+			open openLibrary(1) to player
+			wait 1 tick
+			set {gui.%uuid of player%::libraryGUI} to true
+			
+on inventory click:
+	if {gui.%uuid of player%::libraryGUI} is true:
+		cancel event
+		if clicked item is air:
+			stop
+		set {_p} to getPage(player)
+		if clicked raw slot is 49:
+			close player's inventory
+		if clicked raw slot is between 11 and 15:
+			set {_index} to (clicked raw slot)-10
+			if {서점.베스트셀러::%{_index}%} is not set:
+				stop
+			set {_id} to {서점.베스트셀러::%{_index}%}
+			if player's money < {서점.가격::%{_id}%}:
+				message "{@접두사} &f잔액이 부족합니다."
+				stop
+			if player doesn't have space for 1 cake:
+				message "{@접두사} &f인벤토리 공간이 부족합니다."
+				stop
+			if player is {서점.판매자::%{_id}%}:
+				message "{@접두사} &f자신이 올린 책은 구매할 수 없습니다."
+				stop
+			balanceRemove(player, {서점.가격::%{_id}%}, "Bookstore")
+			balanceAdd({서점.판매자::%{_id}%}, {서점.가격::%{_id}%}, "Bookstore")
+			itemGive(player, {서점.아이템::%{_id}%}, 1, "Bookstore")
+			add 1 to {서점.판매부수::%{_id}%}
+			message "{@접두사} &f책을 구매했습니다."
+			dailyquestSound(player, 8)
+			open openLibrary({_p}) to player
+			wait 1 tick
+			set {gui.%uuid of player%::libraryGUI} to true
+		if clicked raw slot is between 28 and 43:
+			if clicked raw slot is between 28 and 34:
+				set {_index} to ({_p}-1)*14+((clicked raw slot)-27)
+			if clicked raw slot is between 37 and 43:
+				set {_index} to ({_p}-1)*14+((clicked raw slot)-36)+7
+			if {서점.목록::%{_index}%} is not set:
+				stop
+			set {_id} to {서점.목록::%{_index}%}
+			if player's money < {서점.가격::%{_id}%}:
+				message "{@접두사} &f잔액이 부족합니다."
+				stop
+			if player doesn't have space for 1 cake:
+				message "{@접두사} &f인벤토리 공간이 부족합니다."
+				stop
+			if player is {서점.판매자::%{_id}%}:
+				message "{@접두사} &f자신이 올린 책은 구매할 수 없습니다."
+				stop
+			balanceRemove(player, {서점.가격::%{_id}%}, "Bookstore")
+			balanceAdd({서점.판매자::%{_id}%}, {서점.가격::%{_id}%}, "Bookstore")
+			itemGive(player, {서점.아이템::%{_id}%}, 1, "Bookstore")
+			add 1 to {서점.판매부수::%{_id}%}
+			dailyquestSound(player, 8)
+			message "{@접두사} &f책을 구매했습니다."
+			open openLibrary({_p}) to player
+			wait 1 tick
+			set {gui.%uuid of player%::libraryGUI} to true
+		if clicked raw slot is 45 or 53:
+			if clicked raw slot is 45:
+				remove 1 from {_p}
+			else:
+				add 1 to {_p}
+			if {_p} <= 0:
+				message "{@접두사} &f없는 페이지"
+				stop
+			if size of {서점.목록::*} <= ({_p}-1)*14:
+				if {_p} is not 0:
+					message "{@접두사} &f없는 페이지"
+					stop
+			open openLibrary({_p}) to player
+			wait 1 tick
+			set {gui.%uuid of player%::libraryGUI} to true
+
+on inventory close:
+	if {gui.%uuid of player%::libraryGUI} is true:
+		delete {gui.%uuid of player%::libraryGUI}
+
+every 1 minutes:
+	delete {서점.베스트셀러::*}
+	loop {서점.판매부수::*}:
+		add loop-value to {_value.%loop-value%::*}
+		add loop-index to {_index.%loop-value%::*}
+		set {_rank::%loop-value%} to loop-value
+		set {_low::*} to {_rank::*}
+	loop number of {_low::*} times:
+		set {_n} to (number of {_low::*})-loop-number+1
+		add {_low::%{_n}%} to {_high::*}
+	loop {_high::*}:
+		add 1 to {_rank}
+		loop number of {_index.%loop-value-1%::*} times:
+			add 1 to {_count}
+			if {_count} is between 1 and 5:
+				set {서점.베스트셀러::%{_count}%} to {_index.%loop-value-1%::%loop-number%}
+			else:
+				stop
+				
+on join:
+	if player doesn't have permission "book.writer":
+		loop {서점.목록::*}:
+			if {서점.판매자::%loop-value%} is player:
+				remove all loop-value from {서점.목록::*}
+				remove all loop-value from {서점.베스트셀러::*}
+				delete {서점.가격::%loop-value%}
+				delete {서점.판매자::%loop-value%}
+				delete {서점.판매부수::%loop-value%}
+				delete {서점.아이템::%loop-value%}
+		set {서점.목록::*} to {서점.목록::*}
+		set {서점.베스트셀러::*} to {서점.베스트셀러::*}
+		
+		

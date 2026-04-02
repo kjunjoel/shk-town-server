@@ -1,0 +1,248 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    npc: 주사위
+    max: 10000000
+
+    SOUND_LOOTING: BLOCK_NOTE_BLOCK_HAT
+    SOUND_LOOTEND: ENTITY_PLAYER_LEVELUP
+    WIN_SOUND: UI_TOAST_CHALLENGE_COMPLETE
+    LOSE_SOUND: ITEM_SHIELD_BREAK
+
+# 변수
+# {casino.dice.%player%.chips::*} | 플레이어가 배팅한 칩
+# {casino.dice.%player%.state}    | 플레이어가 게임 중인지
+
+function casinoDiceRand(n: number) :: number:
+    if {_n} is 1 or 6:
+        add 1 to {_temp::*} if {_n} is 6
+        add 2 to {_temp::*}
+        add 3 to {_temp::*}
+        add 4 to {_temp::*}
+        add 5 to {_temp::*}
+        add 6 to {_temp::*} if {_n} is 1
+    else if {_n} is 2 or 5:
+        add 1 to {_temp::*}
+        add 2 to {_temp::*} if {_n} is 5
+        add 3 to {_temp::*}
+        add 4 to {_temp::*}
+        add 5 to {_temp::*} if {_n} is 2
+        add 6 to {_temp::*}
+    else if {_n} is 3 or 4:
+        add 1 to {_temp::*}
+        add 2 to {_temp::*}
+        add 3 to {_temp::*} if {_n} is 4
+        add 4 to {_temp::*} if {_n} is 3
+        add 5 to {_temp::*}
+        add 6 to {_temp::*}
+    set {_rand} to random integer between 1 and 4
+    set {_result} to {_temp::%{_rand}%}
+    return {_result}
+
+function casinoDiceItem(n: number) :: item:
+    if {_n} is 1:
+        set {_item} to book with custom model data 59 named "&f&l1"
+    else if {_n} is 2:
+        set {_item} to book with custom model data 60 named "&f&l2"
+    else if {_n} is 3:
+        set {_item} to book with custom model data 61 named "&f&l3"
+    else if {_n} is 4:
+        set {_item} to book with custom model data 62 named "&f&l4"
+    else if {_n} is 5:
+        set {_item} to book with custom model data 63 named "&f&l5"
+    else if {_n} is 6:
+        set {_item} to book with custom model data 64 named "&f&l6"
+    return {_item}
+
+function casinoDiceGUI(p: player, state: text, n.1: number, n.2: number):
+    set {_inv} to chest inventory with 4 rows named "&0&l[ CASINO DICE ]"
+    loop 36 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    loop 2 times:
+        set {_rand.%loop-number%} to casinoDiceRand({_n.%loop-number%})
+        set {_item.%loop-number%} to casinoDiceItem({_rand.%loop-number%})
+    set slot 12 of {_inv} to {_item.1}
+    set slot 14 of {_inv} to {_item.2}
+    if {_state} is "playing":
+        set slot 29 of {_inv} to blue stained glass pane named "&b&l홀" with lore "&7배당률 1.5배"
+        set slot 31 of {_inv} to red stained glass pane named "&c&l짝" with lore "&7배당률 1.5배"
+        set slot 33 of {_inv} to green stained glass pane named "&a&l같은 수" with lore "&7배당률 4배"
+    open {_inv} to {_p}
+
+function casinoDicePlay(p: player, select: text):
+    delete {gui.%uuid of {_p}%::casinoDiceGUI}
+    set {gui.%uuid of {_p}%::casinoDicePlayGUI} to true
+    loop 40 times:
+        if {casino.dice.%{_p}%.state} is "playing":
+            if {gui.%uuid of {_p}%::casinoDicePlayGUI} is true:
+                set {_n.1} to uncolored name of slot 12 of {_p}'s current inventory parsed as number
+                set {_n.2} to uncolored name of slot 14 of {_p}'s current inventory parsed as number
+                if {_n.1} isn't set:
+                    close {_p}'s inventory
+                    stop
+                else if {_n.2} isn't set:
+                    close {_p}'s inventory
+                    stop
+                casinoDiceGUI({_p}, "end", {_n.1}, {_n.2})
+                play sound "{@SOUND_LOOTING}" with volume 0.4 to {_p}
+                wait 1 tick
+                set {gui.%uuid of {_p}%::casinoDicePlayGUI} to true
+                set {casino.dice.%{_p}%.select} to {_select}
+                set {casino.dice.%{_p}%.state} to "playing"
+                wait 1 tick
+            else:
+                stop
+        else:
+            stop
+    loop 11 times:
+        if {casino.dice.%{_p}%.state} is "playing":
+            if {gui.%uuid of {_p}%::casinoDicePlayGUI} is true:
+                set {_n.1} to uncolored name of slot 12 of {_p}'s current inventory parsed as number
+                set {_n.2} to uncolored name of slot 14 of {_p}'s current inventory parsed as number
+                if {_n.1} isn't set:
+                    close {_p}'s inventory
+                    stop
+                else if {_n.2} isn't set:
+                    close {_p}'s inventory
+                    stop
+                casinoDiceGUI({_p}, "end", {_n.1}, {_n.2})
+                if loop-value isn't 11:
+                    play sound "{@SOUND_LOOTING}" with volume 0.4 to {_p}
+                else:
+                    play sound "{@SOUND_LOOTEND}" with volume 0.4 to {_p}
+                wait 1 tick
+                set {gui.%uuid of {_p}%::casinoDicePlayGUI} to true
+                set {casino.dice.%{_p}%.select} to {_select}
+                set {casino.dice.%{_p}%.state} to "playing"
+                set {_tick} to 2*loop-number - 1
+                wait "%{_tick}% ticks" parsed as timespan
+            else:
+                stop
+        else:
+            stop
+    if {casino.dice.%{_p}%.state} is "playing":
+        if {gui.%uuid of {_p}%::casinoDicePlayGUI} is true:
+            wait 1 second
+            set {_1} to uncolored name of slot 12 of {_p}'s current inventory parsed as number
+            set {_2} to uncolored name of slot 14 of {_p}'s current inventory parsed as number
+            casinoDiceAward({_p}, {_1}, {_2}, {_select})
+    delete {casino.dice.%{_p}%.state}
+    delete {casino.dice.%{_p}%.select}
+    delete {gui.%uuid of {_p}%::casinoDicePlayGUI}
+
+function casinoDiceAward(p: player, n.1: number, n.2: number, select: text):
+    if {_select} is "같은 수":
+        if {_n.1} is {_n.2}:
+            set {_state} to true
+        close {_p}'s inventory
+        send "{@prefix} 두 주사위의 수는 &a%{_n.1}%, %{_n.2}%&f입니다." to {_p}
+        if {_state} is true:
+            loop {casino.dice.%{_p}%.chips::*}:
+                set {casino.dice.%{_p}%.chips::%loop-index%} to 4*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.dice.%{_p}%.chips::*}, "Dice")
+            play sound "{@WIN_SOUND}" with volume 0.4 to {_p}
+            send title "&a&l성공!" with subtitle "배팅액의 4배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            send "{@prefix} 같은 수 예측에 성공하여 배팅액의 4배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            send title "&c&l실패!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 같은 수 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    else:
+        set {_n} to {_n.1} + {_n.2}
+        if mod({_n}, 2) is 0:
+            set {_answer} to "짝"
+        else:
+            set {_answer} to "홀"
+        if {_select} is {_answer}:
+            set {_state} to true
+        close {_p}'s inventory
+        send "{@prefix} 주사위의 합은 &a%{_n}%&f입니다." to {_p}
+        if {_state} is true:
+            loop {casino.dice.%{_p}%.chips::*}:
+                set {casino.dice.%{_p}%.chips::%loop-index%} to 1.5*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.dice.%{_p}%.chips::*}, "Dice")
+            play sound "{@WIN_SOUND}" with volume 0.4 to {_p}
+            if {_answer} is "홀":
+                send title "&b&l홀" with subtitle "배팅액의 1.5배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            else:
+                send title "&c&l짝" with subtitle "배팅액의 1.5배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            send "{@prefix} 홀짝 예측에 성공하여 배팅액의 1.5배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            if {_answer} is "홀":
+                send title "&b&l홀" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            else:
+                send title "&c&l짝" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 홀짝 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    delete {casino.dice.%{_p}%.chips::*}
+
+on rightclick on entity:
+    if entity's name is "{@npc}":
+        delete {casino.dice.%player%.chips::*}
+        send "{@prefix} 다음 창에 배팅할 칩을 넣어주세요." to player
+        wait 10 ticks
+        casinoChipGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::casinoDiceChipGUI} to true
+        stop
+    
+on inventory click:
+    if event-inventory is player's inventory:
+        stop
+
+    else if {gui.%uuid of player%::casinoDiceChipGUI} is true:
+        if clicked slot is 22:
+            cancel event
+            set {_chips::*} to casinoChipCount(player, event-inventory, "Dice")
+            if {_chips::*} is false:
+                send "{@prefix} 배팅할 칩을 넣어주시기 바랍니다."
+                stop
+            else if {_chips::*} is true:
+                send "{@prefix} &6%moneyDigit({@max})%원&f 이상은 배팅하실 수 없습니다."
+                stop
+            set {casino.dice.%player%.chips::*} to {_chips::*}
+            delete {gui.%uuid of player%::casinoDiceChipGUI}
+            close player's inventory
+            set {casino.dice.%player%.state} to "playing"
+            wait 1 tick
+            set {_n.1} to random integer between 1 and 6
+            set {_n.2} to random integer between 1 and 6
+            casinoDiceGUI(player, "playing", {_n.1}, {_n.2})
+            wait 1 tick
+            set {gui.%uuid of player%::casinoDiceGUI} to true
+        else if clicked slot is between 0 and 10:
+            cancel event
+        else if clicked slot is between 16 and 26:
+            cancel event
+        stop
+
+    else if {gui.%uuid of player%::casinoDiceGUI} is true:
+        cancel event
+        if clicked slot is 29:
+            casinoDicePlay(player, "홀")
+            stop
+        else if clicked slot is 31:
+            casinoDicePlay(player, "짝")
+            stop
+        else if clicked slot is 33:
+            casinoDicePlay(player, "같은 수")
+            stop
+    
+    else if {gui.%uuid of player%::casinoDicePlayGUI} is true:
+        cancel event
+        stop
+
+on inventory close:
+    if {gui.%uuid of player%::casinoDiceChipGUI} is true:
+        loop 5 times:
+            set {_item} to slot (loop-number)+10 of player's current inventory
+            give {_item} to player
+        delete {gui.%uuid of player%::casinoDiceChipGUI}
+    if {gui.%uuid of player%::casinoDiceGUI} is true:
+        delete {gui.%uuid of player%::casinoDiceGUI}
+        casinoChipGive(player, {casino.dice.%player%.chips::*}, "DiceSurrender")
+    if {gui.%uuid of player%::casinoDicePlayGUI} is true:
+        delete {gui.%uuid of player%::casinoDiceGUI}
+        delete {casino.dice.%player%.state}
+
+on quit:
+    delete {casino.dice.%player%.chips::*}

@@ -1,0 +1,503 @@
+options:
+    prefix: &a&l[상점]&f
+
+    loc: plugins/Skript/data/shop/
+    dir: plugins/Skript/data/logs/shop/shop_%now formatted as "yyyy-MM-dd"%_%round down (now formatted as "H" parsed as number)/3%.txt
+
+# 변수
+# {shop::%name%}                                         | 상점 목록
+# {shop::%name%::npc}                                    | 상점 NPC 이름
+# {shop::%name%::item::%number%}                         | 상점 아이템 목록
+# {shop::%name%::lore::%number%::*}                      | 상점 아이템 목록
+# {shop::%name%::item::%number%::%uuid of player%.daily} | 상점 아이템 일일 제한 목록
+# {shop::%name%::item::%number%::%uuid of player%.count} | 상점 아이템 개인 제한 목록
+
+function shopFileName(t: text) :: text:
+    set {_result} to {_t}
+    replace all " " in {_result} with "_"
+    return {_result}
+
+function shopLimit(t: text, ind: number, option: text, p: player, n.1: number, n.2: number) :: boolean:
+    if {_n.1} < {_n.2}:
+        return false
+    if {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.%{_option}%} isn't set:
+        return true
+    else:
+        if {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.%{_option}%} + {_n.2} > {_n.1}:
+            return false
+        else:
+            return true
+
+function shopBuy(data: objects, lore: objects, t: text, ind: number, p: player, n: number):
+    if {_data::3} contains "X":
+        stop
+    loop {_lore::*}:
+        if uncolored loop-value contains "일일 제한 개수":
+            set {_temp} to shopLimit({_t}, {_ind}, "daily", {_p}, {_data::5} parsed as number, {_n})
+            if {_temp} is false:
+                send "{@prefix} 일일 제한 개수를 초과하여 구매할 수 없습니다." to {_p}
+                stop
+        else if uncolored loop-value contains "개인 제한 개수":
+            set {_temp} to shopLimit({_t}, {_ind}, "count", {_p}, {_data::6} parsed as number, {_n})
+            if {_temp} is false:
+                send "{@prefix} 개인 제한 개수를 초과하여 구매할 수 없습니다." to {_p}
+                stop
+    if {_data::3} contains "M":
+        replace all "M" in {_data::3} with ""
+        set {_price} to {_data::3} parsed as number
+        if {_price} * {_n} > {_p}'s balance:
+            send "{@prefix} 잔액이 부족합니다." to {_p}
+            stop
+        set {_amount} to item amount of {shop::%{_t}%::item::%{_ind}%}
+        balanceRemove({_p}, {_price}*{_n}, "Shop")
+        itemGive({_p}, {shop::%{_t}%::item::%{_ind}%} with lore {shop::%{_t}%::lore::%{_ind}%::*}, {_n}*{_amount}, "ShopBuy")
+        send "{@prefix} 성공적으로 상품을 구매했습니다. &c(-%moneyDigit({_price}*{_n})%원)" to {_p}
+        add {_n} to {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.daily}
+        add {_n} to {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.count}
+        shopOpen({_p}, {_t})
+        wait 1 tick
+        set {gui.%uuid of {_p}%::shopOpen} to true
+        set {gui.%uuid of {_p}%::shopOpening} to {_t}
+    else if {_data::3} contains "C":
+        replace all "C" in {_data::3} with ""
+        set {_price} to {_data::3} parsed as number
+        if {_price} * {_n} > {cash::%uuid of {_p}%}:
+            send "{@prefix} 캐시가 부족합니다." to {_p}
+            stop
+        set {_amount} to item amount of {shop::%{_t}%::item::%{_ind}%}
+        cashRemove({_p}, {_price}*{_n}, "Shop")
+        itemGive({_p}, {shop::%{_t}%::item::%{_ind}%} with lore {shop::%{_t}%::lore::%{_ind}%::*}, {_n}*{_amount}, "ShopBuy")
+        send "{@prefix} 성공적으로 상품을 구매했습니다. &c(-%moneyDigit({_price}*{_n})%캐시)" to {_p}
+        add {_n} to {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.daily}
+        add {_n} to {shop::%{_t}%::item::%{_ind}%::%uuid of {_p}%.count}
+        shopOpen({_p}, {_t})
+        wait 1 tick
+        set {gui.%uuid of {_p}%::shopOpen} to true
+        set {gui.%uuid of {_p}%::shopOpening} to {_t}
+
+function shopSell(data: objects, t: text, ind: number, p: player, option: text):
+    if {_data::4} contains "X":
+        stop
+    set {_amount} to 0
+    loop 36 times:
+        if 1 of slot (loop-number)-1 of {_p}'s inventory is 1 of {shop::%{_t}%::item::%{_ind}%} with lore {shop::%{_t}%::lore::%{_ind}%::*}:
+            if custom model data of slot (loop-number)-1 of {_p}'s inventory is custom model data of {shop::%{_t}%::item::%{_ind}%}:
+                if name of slot (loop-number)-1 of {_p}'s inventory is set:
+                    if name of {shop::%{_t}%::item::%{_ind}%} is name of slot (loop-number)-1 of {_p}'s inventory:
+                        set {_temp} to true
+                else if name of {shop::%{_t}%::item::%{_ind}%} is set:
+                    if name of {shop::%{_t}%::item::%{_ind}%} is name of slot (loop-number)-1 of {_p}'s inventory:
+                        set {_temp} to true
+                else:
+                    set {_temp} to true
+                add item amount of slot (loop-number)-1 of {_p}'s inventory to {_amount}
+    if {_temp} isn't set:
+        send "{@prefix} 판매할 상품이 없습니다." to {_p}
+        stop
+    if {_amount} < item amount of {shop::%{_t}%::item::%{_ind}%}:
+        send "{@prefix} 판매할 상품이 부족합니다." to {_p}
+        stop
+    if {_option} is "1":
+        loop 36 times:
+            if 1 of slot (loop-number)-1 of {_p}'s inventory is 1 of {shop::%{_t}%::item::%{_ind}%} with lore {shop::%{_t}%::lore::%{_ind}%::*}:
+                if custom model data of slot (loop-number)-1 of {_p}'s inventory is custom model data of {shop::%{_t}%::item::%{_ind}%}:
+                    set {_amount} to (item amount of slot (loop-number)-1 of {_p}'s inventory) - (item amount of {shop::%{_t}%::item::%{_ind}%})
+                    set slot (loop-number)-1 of {_p}'s inventory to {_amount} of slot (loop-number)-1 of {_p}'s inventory
+                    exit 1 loop
+        if {_data::4} contains "M":
+            replace all "M" in {_data::4} with ""
+            set {_price} to {_data::4} parsed as number
+            balanceAdd({_p}, {_price}, "Shop")
+            send "{@prefix} 성공적으로 상품을 판매했습니다. +&a(%moneyDigit({_price})%원)" to {_p}
+            stop
+        else if {_data::4} contains "C":
+            replace all "M" in {_data::4} with ""
+            set {_price} to {_data::4} parsed as number
+            cashAdd({_p}, {_price}, "Shop")
+            send "{@prefix} 성공적으로 상품을 판매했습니다. +&a(%moneyDigit({_price})%캐시)" to {_p}
+            stop
+    else if {_option} is "all":
+        set {_amount} to 0
+        loop 36 times:
+            if 1 of slot (loop-number)-1 of {_p}'s inventory is 1 of {shop::%{_t}%::item::%{_ind}%} with lore {shop::%{_t}%::lore::%{_ind}%::*}:
+                if custom model data of slot (loop-number)-1 of {_p}'s inventory is custom model data of {shop::%{_t}%::item::%{_ind}%}:
+                    if name of slot (loop-number)-1 of {_p}'s inventory is set:
+                        if name of {shop::%{_t}%::item::%{_ind}%} is name of slot (loop-number)-1 of {_p}'s inventory:
+                            add item amount of slot (loop-number)-1 of {_p}'s inventory to {_amount}
+                            set slot (loop-number)-1 of {_p}'s inventory to air
+                    else if name of {shop::%{_t}%::item::%{_ind}%} is set:
+                        if name of {shop::%{_t}%::item::%{_ind}%} is name of slot (loop-number)-1 of {_p}'s inventory:
+                            add item amount of slot (loop-number)-1 of {_p}'s inventory to {_amount}
+                            set slot (loop-number)-1 of {_p}'s inventory to air
+                    else:
+                        add item amount of slot (loop-number)-1 of {_p}'s inventory to {_amount}
+                        set slot (loop-number)-1 of {_p}'s inventory to air
+        set {_amount} to {_amount} / item amount of {shop::%{_t}%::item::%{_ind}%}
+        if {_data::4} contains "M":
+            replace all "M" in {_data::4} with ""
+            set {_price} to {_data::4} parsed as number
+            balanceAdd({_p}, {_price}*{_amount}, "Shop")
+            send "{@prefix} 성공적으로 상품을 판매하여 &e%moneyDigit({_price}*{_amount})%원&f을 획득했습니다." to {_p}
+            stop
+        else if {_data::4} contains "C":
+            replace all "M" in {_data::4} with ""
+            set {_price} to {_data::4} parsed as number
+            cashAdd({_p}, {_price}*{_amount}, "Shop")
+            send "{@prefix} 성공적으로 상품을 판매하여 &e%moneyDigit({_price}*{_amount})%캐시&f를 획득했습니다." to {_p}
+            stop
+
+
+function shopOpen(p: player, t: text):
+    set {_filename} to shopFileName({_t})
+    set {_file::*} to file contents of "{@loc}%{_filename}%.txt"
+    set {_inv} to chest inventory with 6 rows named "{@prefix} %{_t}%"
+    loop 54 times:
+        if "%{shop::%{_t}%::item::%loop-number%}%" isn't set:
+            set {_item} to air
+        else:
+            set {_item} to {shop::%{_t}%::item::%loop-number%} with lore {shop::%{_t}%::lore::%loop-number%::*}
+            set {_data::*} to {_file::%loop-number%} split by " "
+            add " " to lore of {_item}
+            if {_data::3} is "X":
+                add "&6구매 &f가격: &7해당 아이템은 구매할 수 없습니다." to lore of {_item}
+            else if {_data::3} contains "M":
+                replace all "M" in {_data::3} with ""
+                set {_price} to moneyDigit({_data::3} parsed as number)
+                add "&6구매 &f가격: &e&l%{_price}%&e원" to lore of {_item}
+            else if {_data::3} contains "C":
+                replace all "C" in {_data::3} with ""
+                set {_price} to moneyDigit({_data::3} parsed as number)
+                add "&6구매 &f가격: &e&l%{_price}%&e캐시" to lore of {_item}
+            if {_data::4} is "X":
+                add "&a판매 &f가격: &7해당 아이템은 판매할 수 없습니다." to lore of {_item}
+            else if {_data::4} contains "M":
+                replace all "M" in {_data::4} with ""
+                set {_price} to moneyDigit({_data::4} parsed as number)
+                add "&a판매 &f가격: &e&l%{_price}%&e원" to lore of {_item}
+            else if {_data::4} contains "C":
+                replace all "C" in {_data::4} with ""
+                set {_price} to moneyDigit({_data::4} parsed as number)
+                add "&a판매 &f가격: &e&l%{_price}%&e캐시" to lore of {_item}
+            if {_data::5} isn't "X":
+                if {shop::%{_t}%::item::%loop-number%::%uuid of {_p}%.daily} isn't set:
+                    add "&d일일 &f제한 개수: &b%{_data::5}%/%{_data::5}%개 &f남음" to lore of {_item}
+                else:
+                    set {_remain} to ({_data::5} parsed as number) - {shop::%{_t}%::item::%loop-number%::%uuid of {_p}%.daily}
+                    add "&d일일 &f제한 개수: &b%{_remain}%/%{_data::5}%개 &f남음" to lore of {_item}
+            if {_data::6} isn't "X":
+                if {shop::%{_t}%::item::%loop-number%::%uuid of {_p}%.count} isn't set:
+                    add "&d개인 &f제한 개수: &b%{_data::6}%/%{_data::6}%개 &f남음" to lore of {_item}
+                else:
+                    set {_remain} to ({_data::6} parsed as number) - {shop::%{_t}%::item::%loop-number%::%uuid of {_p}%.count}
+                    add "&d개인 &f제한 개수: &b%{_remain}%/%{_data::6}%개 &f남음" to lore of {_item}
+        add "" to lore of {_item}
+        add "&6좌클릭&f하여 1개 &6구매" to lore of {_item}
+        add "&a우클릭&f하여 1개 &a판매" to lore of {_item}
+        add "&6SHIFT + 좌클릭&f하여 64개 &6구매" to lore of {_item}
+        add "&aSHIFT + 우클릭&f하여 모두 &a판매" to lore of {_item}
+        set slot (loop-number)-1 of {_inv} to {_item}
+    open {_inv} to {_p}
+
+function shopSave(items: objects, t: text):
+    set {_filename} to shopFileName({_t})
+    delete {shop::%{_t}%::item::*}
+    loop 54 times:
+        delete {_temp.buy}
+        delete {_temp.sell}
+        delete {_temp.daily}
+        delete {_temp.count}
+        set {_item} to {_items::%loop-number%}
+        set {_name} to shopFileName("%{_item}%")
+        set {_line::%loop-number%} to "%loop-number% %{_name}%"
+        set {_lore::*} to lore of {_item}
+        loop {_lore::*}:
+            set {_temp.buy} to true if uncolored loop-value-2 contains "구매 가격"
+            set {_temp.sell} to true if uncolored loop-value-2 contains "판매 가격"
+            set {_temp.daily} to true if uncolored loop-value-2 contains "일일 제한 개수"
+            set {_temp.count} to true if uncolored loop-value-2 contains "개인 제한 개수"
+        set {_size} to 0
+        loop {_lore::*}:
+            if uncolored loop-value-2 contains "구매 가격:":
+                set {_temp::*} to loop-value-2 split by ": "
+                if uncolored {_temp::2} contains "해당 아이템은 구매할 수 없습니다.":
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+                else if uncolored {_temp::2} contains "원":
+                    replace all "," in {_temp::2} with ""
+                    replace all "원" in {_temp::2} with ""
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% M%uncolored {_temp::2}%"
+                else if uncolored {_temp::2} contains "캐시":
+                    replace all "," in {_temp::2} with ""
+                    replace all "캐시" in {_temp::2} with ""
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% C%uncolored {_temp::2}%"
+                add 1 to {_size}
+            else if uncolored loop-value-2 contains "판매 가격:":
+                set {_temp::*} to loop-value-2 split by ": "
+                if uncolored {_temp::2} contains "해당 아이템은 판매할 수 없습니다.":
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+                else if uncolored {_temp::2} contains "원":
+                    replace all "," in {_temp::2} with ""
+                    replace all "원" in {_temp::2} with ""
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% M%uncolored {_temp::2}%"
+                else if uncolored {_temp::2} contains "캐시":
+                    replace all "," in {_temp::2} with ""
+                    replace all "캐시" in {_temp::2} with ""
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% C%uncolored {_temp::2}%"
+                add 1 to {_size}
+            else if uncolored loop-value-2 contains "일일 제한 개수:":
+                set {_temp::*} to loop-value-2 split by "/"
+                replace all "개 &f남음" in {_temp::2} with ""
+                set {_line::%loop-number%} to "%{_line::%loop-number%}% %uncolored {_temp::2}%"
+                add 1 to {_size}
+            else if uncolored loop-value-2 contains "개인 제한 개수:":
+                if {_temp.daily} isn't set:
+                    set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+                set {_temp::*} to loop-value-2 split by "/"
+                replace all "개 &f남음" in {_temp::2} with ""
+                set {_line::%loop-number%} to "%{_line::%loop-number%}% %uncolored {_temp::2}%"
+                add 1 to {_size}
+        if {_temp.buy} isn't set:
+            set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+        if {_temp.sell} isn't set:
+            set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+        if {_temp.count} isn't set:
+            if {_temp.daily} isn't set:
+                set {_line::%loop-number%} to "%{_line::%loop-number%}% X X"
+            else:
+                set {_line::%loop-number%} to "%{_line::%loop-number%}% X"
+        delete lore of {_item}
+        if {_size} is 0:
+            loop (size of {_lore::*}) times:
+                add {_lore::%loop-value-2%} to lore of {_item}
+        else:
+            loop (size of {_lore::*} - {_size} - 6) times:
+                add {_lore::%loop-value-2%} to lore of {_item}
+        if {_item} is air:
+            delete {shop::%{_t}%::item::%loop-number%}
+            delete {shop::%{_t}%::lore::%loop-number%::*}
+        set {shop::%{_t}%::item::%loop-number%} to {_item} if {_item} isn't air
+        set {shop::%{_t}%::lore::%loop-number%::*} to lore of {_item} if lore of {_item} is set
+    set file contents of "{@loc}%{_filename}%.txt" to {_line::*}
+
+on rightclick on entity:
+    loop {shop::*}:
+        if entity's name is {shop::%loop-index%::npc}:
+            shopOpen(player, loop-value)
+            wait 1 tick
+            set {gui.%uuid of player%::shopOpen} to true
+            set {gui.%uuid of player%::shopOpening} to loop-value
+            stop
+
+on inventory click:
+    if {gui.%uuid of player%::shopOpen} is true:
+        cancel event
+        set {_t} to {gui.%uuid of player%::shopOpening}
+        set {_filename} to shopFileName({_t})
+        set {_file::*} to file contents of "{@loc}%{_filename}%.txt"
+        set {_ind} to index of clicked slot + 1
+        set {_data::*} to {_file::%{_ind}%} split by " "
+        set {_lore::*} to lore of clicked item
+
+        if click type is left mouse button with shift:
+            shopBuy({_data::*}, {_lore::*}, {_t}, {_ind}, player, 64)
+            # create file path "{@dir}" if file path "{@dir}" isn't available
+            # sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %player% %{_filename}% 구매 64 | %type of clicked item% | %uncolored name of clicked item%" to file path "{@dir}"
+
+        else if click type is right mouse button with shift:
+            shopSell({_data::*}, {_t}, {_ind}, player, "all")
+            # create file path "{@dir}" if file path "{@dir}" isn't available
+            # sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %player% %{_filename}% 판매 all | %type of clicked item% | %uncolored name of clicked item%" to file path "{@dir}"
+
+        else if click type is left mouse button:
+            shopBuy({_data::*}, {_lore::*}, {_t}, {_ind}, player, 1)
+            # create file path "{@dir}" if file path "{@dir}" isn't available
+            # sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %player% %{_filename}% 구매 1 | %type of clicked item% | %uncolored name of clicked item%" to file path "{@dir}"
+
+        else if click type is right mouse button:
+            shopSell({_data::*}, {_t}, {_ind}, player, "1")
+            # create file path "{@dir}" if file path "{@dir}" isn't available
+            # sync append "%now formatted as "yyyy-MM-dd HH:mm:ss"% %player% %{_filename}% 판매 1 | %type of clicked item% | %uncolored name of clicked item%" to file path "{@dir}"
+
+
+command /shop [<text>] [<text>] [<offlineplayer>]:
+    permission: op.user
+    permission message: {@prefix} 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "list":
+            if {shop::*} isn't set:
+                send "{@prefix} 상점이 존재하지 않습니다."
+                stop
+            send "{@prefix} 상점 목록은 아래와 같습니다."
+            set {_ind} to 1
+            loop {shop::*}:
+                send formatted "{@prefix} &e[&b%{_ind}%&e] &f%loop-value% <command:/shop set %loop-value%>&a[GUI 설정]<reset>"
+                add 1 to {_ind}
+            stop
+
+        else if arg 1 is "create":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            set {shop::%arg-2%} to arg-2
+            send "{@prefix} 상점 &e%arg-2%&f을(를) 생성하였습니다. 다음 GUI에서 아이템을 설정해주세요."
+            set {_filename} to shopFileName(arg-2)
+            create file "{@loc}%{_filename}%.txt"
+            loop 54 times:
+                write "%loop-number%" at line loop-number to file "{@loc}%{_filename}%.txt"
+            wait 5 ticks
+            shopOpen(player, arg-2)
+            wait 1 tick
+            set {gui.%uuid of player%::shopSet} to true
+            set {gui.%uuid of player%::shopSetting} to arg-2
+            stop
+
+        else if arg 1 is "delete":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            loop {shop::*}:
+                if loop-value is arg-2:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            delete {shop::%arg-2%}
+            delete {shop::%arg-2%::npc}
+            delete {shop::%arg-2%::item::*}
+            send "{@prefix} 상점 &e%arg-2%&f을(를) 삭제하였습니다."
+            set {_filename} to shopFileName(arg-2)
+            delete file "{@loc}%{_filename}%.txt"
+            stop
+
+        else if arg 1 is "open":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            loop {shop::*}:
+                if loop-value is arg-2:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            shopOpen(player, arg-2)
+            wait 1 tick
+            set {gui.%uuid of player%::shopOpen} to true
+            set {gui.%uuid of player%::shopOpening} to arg-2
+            stop
+
+        else if arg 1 is "set":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            loop {shop::*}:
+                if loop-value is arg-2:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            shopOpen(player, arg-2)
+            wait 1 tick
+            set {gui.%uuid of player%::shopSet} to true
+            set {gui.%uuid of player%::shopSetting} to arg-2
+            stop
+
+        else if arg 1 is "npc":
+            if arg 2 isn't set:
+                send "{@prefix} 상점 이름을 입력해주세요."
+                stop
+            loop {shop::*}:
+                if loop-value is arg-2:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@prefix} 입력하신 상점을 찾을 수 없습니다."
+                stop
+            if target entity isn't set:
+                send "{@prefix} 해당 NPC는 설정할 수 없습니다."
+                stop
+            set {shop::%arg-2%::npc} to name of target entity
+            send "{@prefix} &e%arg-2%&f의 NPC가 &a%name of target entity%&f(으)로 설정되었습니다."
+            stop
+
+        else if arg 1 is "reset":
+            if arg 2 is "daily":
+                if arg 3 is "all":
+                    loop {shop::*}:
+                        loop {shop::%loop-index%::item::*}:
+                            loop all offline players:
+                                delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of loop-offlineplayer%.daily}
+                    send "{@prefix} 모든 플레이어의 일일 제한을 초기화했습니다."
+                    stop
+                if arg 3 isn't set:
+                    send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                    stop
+                loop {shop::*}:
+                    loop {shop::%loop-index%::item::*}:
+                        delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of arg-3%.daily}
+                send "{@prefix} &e%arg-3%&f님의 일일 제한을 초기화했습니다."
+                stop
+            else if arg 2 is "count":
+                if arg 3 is "all":
+                    loop {shop::*}:
+                        loop {shop::%loop-index%::item::*}:
+                            loop all offline players:
+                                delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of loop-offlineplayer%.count}
+                    send "{@prefix} 모든 플레이어의 개인 제한을 초기화했습니다."
+                    stop
+                if arg 3 isn't set:
+                    send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                    stop
+                loop {shop::*}:
+                    loop {shop::%loop-index%::item::*}:
+                        delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of arg-3%.count}
+                send "{@prefix} &e%arg-3%&f님의 개인 제한을 초기화했습니다."
+                stop
+            else:
+                send "{@prefix} /shop reset <daily/count> [플레이어] &8&l| &f플레이어의 상점 제한을 삭제합니다."
+                stop
+
+        else:
+            send "{@prefix} /shop list &8&l| &f상점 목록을 띄웁니다."
+            send "{@prefix} /shop create [이름] &8&l| &f상점을 생성합니다."
+            send "{@prefix} /shop delete [이름] &8&l| &f상점을 삭제합니다."
+            send "{@prefix} /shop open [이름] &8&l| &f상점의 GUI를 엽니다."
+            send "{@prefix} /shop set [이름] &8&l| &f상점의 GUI를 설정합니다."
+            send "{@prefix} /shop npc [이름] &8&l| &f상점 NPC를 설정합니다."
+            send "{@prefix} /shop reset <daily/count> [플레이어] &8&l| &f플레이어의 상점 제한을 삭제합니다."
+            stop
+
+on inventory close:
+    if {gui.%uuid of player%::shopOpen} is true:
+        delete {gui.%uuid of player%::shopOpen}
+    if {gui.%uuid of player%::shopOpening} is set:
+        delete {gui.%uuid of player%::shopOpening}
+    if {gui.%uuid of player%::shopSet} is true:
+        delete {gui.%uuid of player%::shopSet}
+        loop 54 times:
+            set {_temp::%loop-number%} to slot (loop-number)-1 of event-inventory
+        shopSave({_temp::*}, {gui.%uuid of player%::shopSetting})
+        send "{@prefix} 상점 &e%{gui.%uuid of player%::shopSetting}%&f이(가) 저장되었습니다."
+        send "{@prefix} &e%{gui.%uuid of player%::shopSetting}%.txt&f의 값을 수정하려면 꼭 닫은 후 다시 열어주시기 바랍니다."
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player
+    if {gui.%uuid of player%::shopSetting} is set:
+        delete {gui.%uuid of player%::shopSetting}
+
+command /reset_shop:
+    permission: op.user
+    trigger:
+        loop {shop::*}:
+            loop {shop::%loop-index%::item::*}:
+                loop all offline players:
+                    delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of loop-offlineplayer%.daily}
+            wait 1 second
+        send "{@prefix} 하루가 지나서 일일 제한이 해제되었습니다." to all players
+
+every 1 minute:
+    if now formatted as "HH:mm" contains "00:02":
+        loop {shop::*}:
+            loop {shop::%loop-index%::item::*}:
+                loop all offline players:
+                    delete {shop::%loop-index-1%::item::%loop-index-2%::%uuid of loop-offlineplayer%.daily}
+            wait 1 second
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@prefix} 하루가 지나서 일일 제한이 해제되었습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop

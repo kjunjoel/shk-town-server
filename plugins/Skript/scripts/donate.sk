@@ -1,0 +1,14 @@
+options:
+    # 접두사
+    prefix: <##fffbb4>&l[후원]&f
+
+command /후원:
+    trigger:
+        send "&f" to player
+        send "{@prefix} 후원은 다음의 2가지 방식으로 가능합니다." to player
+        send "&f" to player
+        send "{@prefix} [1] &bToss(토스)&f로 계좌이체 후 &d디스코드 .areum &f에게 DM" to player
+        send "&7           └ 토스로 후원하고 싶나요? <url:http://toss.me/fosxja>&e&l&n[여기]<reset> &7를 클릭하세요." to player
+        send "&f" to player
+        send "{@prefix} [2] &e문화상품권 핀번호&f를 &d디스코드 .areum &f에게 DM" to player
+        send "&f" to player

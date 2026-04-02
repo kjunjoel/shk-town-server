@@ -1,0 +1,820 @@
+options:
+    npc: [&6직업&f] 변경
+    price: 3000000
+    dir: plugins/Skript/data/logs/tax/%now formatted as "yyyy-MM-dd"%.txt
+    prefix: &f[ &6&l&o! &f]
+
+
+function WeddingNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&2&l주례사 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&2&l주례사&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7/주례 신청 &f[닉네임]", "&7/주례 종료"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7주례사는 주례를 통해서 돈을 법니다.", "&7주례 비용은 &f결혼 당사자에게 직접 &7받으셔야 합니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7주례사 일급(세전): &f₩ &e400,000", "&7주례사 일급(세후): &f₩ &a360,000", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7평균적인 주례 비용: &f₩ 1,000,000", " "
+    open {_inv} to {_p}
+
+function CookNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&e&l요리사 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&e&l요리사&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7/요리사상가"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7요리사는 음식을 만들어 유저들에게 판매합니다.", "&7모든 요리는 요리사만 제작이 가능하며 요리를 위해서는 요리 도구가 필요합니다.", " ", "&7요리 도구가 없는 요리사는 공용주방에서 별도로 준비된 요리 도구들로 요리하며", "&7요리사와 관련된 것은 서촌식자재마트에서 구매 가능합니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7요리사 일급(세전): &f₩ &e400,000", "&7요리사 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function RobNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&6&l강도 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&6&l강도&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 29 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 33 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7강도는 소매치기로 다른 유저의 돈을 뺏는 직업입니다.", "&7전용 도구를 사용해서 유저를 때리면 특정 조건에 따라 돈을 뺏습니다.", " ", "&730초 내에 강도당한 유저가 반격을 하면 돈을 돌려받습니다.", "&7소매치기 도구는 코스트코에서 구매 가능합니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7강도 일급(세전): &f₩ &e0", "&7강도 일급(세후): &f₩ &a0", " "
+    set slot 31 of {_inv} to {job.icon::!} named "&c&l주의 사항" with lore "&7이 직업은 &f돈을 벌기 위한 직업이 아닙니다&7.", "&7각종 &c&l&n비난과 멸시&7를 받을 수 있으며, &c&l&n감옥에 수감&7될 수 있습니다."
+    open {_inv} to {_p}
+
+function DefaultNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&a&l시민 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&a&l시민&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7나만의 SHK WORLD 라이프. - 아름", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7시민 일급(세전): &f₩ &e400,000", "&7시민 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function ArtistNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&e&l화가 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&e&l화가&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7화가는 문화방송원이 제공하는 화실에서 그림을 그리거나", "&7외부 프로그램을 이용해서 그림을 그리는 직업입니다.", " ", "&7인게임에서 그린 그림은 문화방송원이 전시할 수 있습니다.", "&7외부프로그램을 이용해 그린 그림은 카페에 올려 정산 받을 수 있습니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7화가 일급(세전): &f₩ &e350,000", "&7화가 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+function PhotoNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&6&l사진작가 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&6&l사진작가&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7사진작가는 편의점에서 판매하는 Camera나 스크린샷", "&7외부 프로그램을 이용해서 사진을 찍는 직업입니다.", " ", "&7찍은 사진은 유저에게 판매할 수 있습니다.", "&7스크린샷, 외부프로그램을 이용해 찍은 사진은 카페에 올려 정산 받을 수 있습니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7사진작가 일급(세전): &f₩ &e350,000", "&7사진작가 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+function FarmerNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&6&l농부 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&6&l농부&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7/농장"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7농부는 서촌읍 용임리에서 근무합니다.", "&7용임리는 공용농장과 개인농장으로 이루어져 있습니다.", " ", "&7농부는 공용농장에서 작물을 심고 파는 것을 반복하여 개인 농장을 구매합니다.", "&7개인농장은 최대 1개이며, 자세한 사항은 「농지법」을 읽어주세요.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7농부 일급(세전): &f₩ &e400,000", "&7농부 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function FisherNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&3&l어부 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&3&l어부&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7어부는 서촌읍 낚시터나 봉암소에서 근무합니다.", "&7낚시터에서 낚싯대를 구매할 수 있고, 물고기를 판매할 수 있습니다.", " ", "&7낚시를 성공하면 움직이는 파란색 유리를 클릭하세요.", "&7파란색 유리가 움직이는 속도는 물고기의 등급에 따라 달라집니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7어부 일급(세전): &f₩ &e400,000", "&7어부 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function MinerNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&b&l광부 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&b&l광부&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7/광부"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7광부는 서촌읍 봉암리 광산에서 근무합니다.", "&7지하로 내려가면 A광구와 B광구가 존재합니다.", " ", "&7각 광구는 20개의 소광구로 이루어져 있습니다.", "&7광산 입구에 있는 상점을 통해서 곡괭이를 구매할 수 있습니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7광부 일급(세전): &f₩ &e400,000", "&7광부 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function KillingNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&c&l도축업자 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&c&l도축업자&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7도축업자는 서촌읍 용임리에서 도축하여 돈을 법니다.", "&7동물을 사냥 후 GUI에서 뼈와 지방을 분해하면 고기를 얻습니다.", " ", "&7도축을 통해 얻은 고기를 오두막에서 판매하면 됩니다.", "&7동물은 자연적으로 스폰되니 주변에 있으세요!", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7도축업자 일급(세전): &f₩ &e400,000", "&7도축업자 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function DoctorNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&5&l의사 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&5&l의사&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7유저는 죽으면 병원으로 이송됩니다.", "&7모든 유저는 죽으면 85%% 확률로 병에 걸립니다.", "&7의사는 병원에서 근무하며 돈을 법니다.", " ", "&7치료도구로 환자를 우클릭하여 병에 걸린 유저를 치료합니다.", "&7알약으로 치료 할 수 있지만 의사에게 치료받는게 경제적 이득입니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7의사 일급(세전): &f₩ &e400,000", "&7의사 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function LawyerNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&6&l변호사 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&6&l변호사&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7변호사는 각종 소송에서 변호를 담당합니다.", "&7몇몇 재판에 관해서는 변호자격증 소지자만이 변호할 수 있습니다.", " ", "&7변호사 직업을 선택했더라도 변호사 자격을 얻기 위해서는", "&7국가에서 진행하는 변호사 시험에 합격해야 합니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7변호사 일급(세전): &f₩ &e400,000", "&7변호사 일급(세후): &f₩ &a360,000", " "
+    open {_inv} to {_p}
+
+function HomeBNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&4&l공인중개사 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&4&l공인중개사&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7/공인중개사"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7공인중개사는 유저에게 부동산을 중개해주고, 중개비를 받는 직업입니다.", "&7모든 부동산은 공인중개사가 없으면 원가에 구매해야 합니다.", " ", "&7공인중개사를 통해 집을 구매하는 경우", "&7최대 20%%까지 저렴한 가격에 구매할 수 있습니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7공인중개사 일급(세전): &f₩ &e350,000", "&7공인중개사 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+function WriterNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&e&l작가 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&e&l작가&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7작가는 편의점에서 판매하는 책과 깃펜에 소설을 쓰는 직업입니다.", "&7작성한 소설은 /서점 명령어를 통해 판매 가능합니다.", " ", "&7카페에 올린 소설 또한 문화방송원에서 정산해드립니다.", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7영화감독 일급(세전): &f₩ &e350,000", "&7영화감독 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+function DirectorNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&a&l영화감독 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&a&l영화감독&f으로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7파일이 존재하지 않음", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7영화감독 일급(세전): &f₩ &e350,000", "&7영화감독 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+function NewsNPC(p: player):
+    set {_inv} to chest inventory with 5 rows named "&e&l기자 &f직업 변경"
+    set slot 11 of {_inv} to {vote.icon::O} named "&e&l기자&f로 직업 변경" with lore "&a좌클릭&7하여 직업을 변경합니다."
+    if {job.change::%uuid of {_p}%} is true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &a✔" with lore "&7내일 오전 0시에 변경이 가능합니다."
+    else if {job.change::%uuid of {_p}%} is not true:
+        set slot 13 of {_inv} to clock named "&a직업 변경 &f쿨타임 여부: &c✖" with lore "&7지금 직업 변경이 가능합니다."
+    set slot 15 of {_inv} to {vote.icon::X} named "&c&l닫기" with lore "&a좌클릭&7하여 직업 변경창을 닫습니다."
+    set slot 30 of {_inv} to {job.icon::1} named "&6&l명령어" with lore "&7파일이 존재하지 않음"
+    set slot 32 of {_inv} to {job.icon::2} named "&6&l직업 설명" with lore "&7파일이 존재하지 않음", "&f&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "&7기자 일급(세전): &f₩ &e350,000", "&7기자 일급(세후): &f₩ &a315,000", " "
+    open {_inv} to {_p}
+
+on inventory click:
+    if {gui.%uuid of player%::WeddingNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 주례사" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::CookNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 요리사" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::RobNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 강도" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::DefaultNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum Default" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::ArtistNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 화가" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::PhotoNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 사진작가" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::FarmerNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 농부" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::FisherNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 어부" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::MinerNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 광부" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::KillingNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 도축업자" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::DoctorNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 의사" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::LawyerNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 변호사" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::HomeBNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 공인중개사" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::WriterNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 작가" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::DirectorNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 영화감독" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+    else if {gui.%uuid of player%::NewsNPC} is true:
+        cancel event
+        if clicked slot is 11:
+            close player's inventory
+            make player run command "job_change_with_permission_Lantum 기자" as op
+            stop
+        if clicked slot is 15:
+            close player's inventory
+            send "{@prefix} 다른 직업을 선택해볼까요?"
+            stop
+
+
+on rightclick on entity:
+    if uncolored name of event-entity is "주례사":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        WeddingNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::WeddingNPC} to true
+
+    else if uncolored name of event-entity is "요리사":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        CookNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::CookNPC} to true
+
+    else if uncolored name of event-entity is "강도":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        RobNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::RobNPC} to true
+
+    else if uncolored name of event-entity is "시민":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        DefaultNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::DefaultNPC} to true
+
+    else if uncolored name of event-entity is "화가":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        ArtistNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::ArtistNPC} to true
+
+    else if uncolored name of event-entity is "사진작가":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        PhotoNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::PhotoNPC} to true
+
+    else if uncolored name of event-entity is "농부":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        FarmerNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::FarmerNPC} to true
+
+    else if uncolored name of event-entity is "어부":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        FisherNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::FisherNPC} to true
+
+    else if uncolored name of event-entity is "광부":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        MinerNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::MinerNPC} to true
+
+    else if uncolored name of event-entity is "도축업자":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        KillingNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::KillingNPC} to true
+
+    else if uncolored name of event-entity is "의사":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        DoctorNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::DoctorNPC} to true
+
+    else if uncolored name of event-entity is "변호사":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        LawyerNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::LawyerNPC} to true
+
+    else if uncolored name of event-entity is "공인중개사":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        HomeBNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::HomeBNPC} to true
+
+    else if uncolored name of event-entity is "작가":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        WriterNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::WriterNPC} to true
+
+    else if uncolored name of event-entity is "영화감독":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        DirectorNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::DirectorNPC} to true
+
+    else if uncolored name of event-entity is "기자":
+        if player has permission "farmer.user":
+            if farmPrice(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f농부는 농지 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if player has permission "cook.user":
+            if cookShopCalculate(player) > 0:
+                send " &6&l[&6&l&o!&6&l] &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                stop
+        if {job.change::%uuid of {_p}%} is true:
+            send " &6&l[&6&l&o!&6&l] &f직업 변경 쿨타임입니다." to player
+            stop
+        if group of player contains "학생":
+            send " &6&l[&6&l&o!&6&l] &f학생은 직업을 변경하실 수 없습니다." to player
+            stop
+        if group of player contains "현상수배" or "수감자" or "죄수":
+            send " &6&l[&6&l&o!&6&l] &f현상수배이거나 수감자는 직업을 변경하실 수 없습니다." to player
+            stop
+        if {_something} is set: # 이거 나중에 수정
+            send " &6&l[&6&l&o!&6&l] &f직업을 변경하실 수 없습니다." to player
+            stop
+        NewsNPC(player)
+        wait 1 tick
+        set {gui.%uuid of player%::NewsNPC} to true
+
+on inventory close:
+    if {gui.%uuid of player%::WeddingNPC} is true:
+        delete {gui.%uuid of player%::WeddingNPC}
+    else if {gui.%uuid of player%::CookNPC} is true:
+        delete {gui.%uuid of player%::CookNPC}
+    else if {gui.%uuid of player%::RobNPC} is true:
+        delete {gui.%uuid of player%::RobNPC}
+    else if {gui.%uuid of player%::DefaultNPC} is true:
+        delete {gui.%uuid of player%::DefaultNPC}
+    else if {gui.%uuid of player%::ArtistNPC} is true:
+        delete {gui.%uuid of player%::ArtistNPC}
+    else if {gui.%uuid of player%::PhotoNPC} is true:
+        delete {gui.%uuid of player%::PhotoNPC}
+    else if {gui.%uuid of player%::FarmerNPC} is true:
+        delete {gui.%uuid of player%::FarmerNPC}
+    else if {gui.%uuid of player%::FisherNPC} is true:
+        delete {gui.%uuid of player%::FisherNPC}
+    else if {gui.%uuid of player%::MinerNPC} is true:
+        delete {gui.%uuid of player%::MinerNPC}
+    else if {gui.%uuid of player%::KillingNPC} is true:
+        delete {gui.%uuid of player%::KillingNPC}
+    else if {gui.%uuid of player%::DoctorNPC} is true:
+        delete {gui.%uuid of player%::DoctorNPC}
+    else if {gui.%uuid of player%::LawyerNPC} is true:
+        delete {gui.%uuid of player%::LawyerNPC}
+    else if {gui.%uuid of player%::HomeBNPC} is true:
+        delete {gui.%uuid of player%::HomeBNPC}
+    else if {gui.%uuid of player%::WriterNPC} is true:
+        delete {gui.%uuid of player%::WriterNPC}
+    else if {gui.%uuid of player%::DirectorNPC} is true:
+        delete {gui.%uuid of player%::DirectorNPC}
+    else if {gui.%uuid of player%::NewsNPC} is true:
+        delete {gui.%uuid of player%::NewsNPC}
+
+command /jobchangeicon [<text>]:
+    permission: op.user
+    trigger:
+        arg-1 is set
+        set {job.icon::%arg-1%} to player's tool
+        send "{@prefix} 아이템 %arg-1% 설정 완료"
+        stop

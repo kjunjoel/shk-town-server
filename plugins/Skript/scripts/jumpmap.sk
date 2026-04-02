@@ -1,0 +1,13 @@
+options:
+    npc1: 점프맵
+    prefix: &f[ &e&l점프맵 &f]
+
+on rightclick on entity:
+	if name of event-entity is "점프맵":
+		execute console command "give %player% steakcooked 16"
+		execute console command "spawn %player%"
+		send "{@prefix} 점프맵을 클리어하여 스테이크 16개, 50,000원 6개를 획득하였습니다!" to player
+		set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+		itemGive(player, {_item}, item amount of {_item}, "Jump")
+	else:
+		stop

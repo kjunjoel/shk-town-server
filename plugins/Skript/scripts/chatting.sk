@@ -1,0 +1,322 @@
+import:
+    org.apache.commons.lang.StringEscapeUtils
+
+options:
+    dir: plugins/Skript/data/logs/chatting/sharktalk_%now formatted as "yyyy-MM-dd"%.txt
+    prefix: &7[&a&l✔&7]&f
+    @prefix: &7[&c&l✖&7]&f
+    permission: &7[ &b&lStaff &7]
+
+function canChat(p: player) :: number:
+    if {bank.chat.%uuid of {_p}%} is true:
+        return 0
+    if {bank.send.%uuid of {_p}%} is true:
+        return 0
+    if {city.complaint.%{_p}%.chat} is true:
+        return 0
+    if {city.complaint.%{_p}%.anschat} is true:
+        return 0
+    if {estate.agent.%uuid of {_p}%::chat.1} is true:
+        return 0
+    if {estate.agent.%uuid of {_p}%::chat.2} is true:
+        return 0
+    if {cash_shop::%{_p}%} is set:
+        return 0
+    if {price_shop::%{_p}%} is set:
+        return 0
+    if {item_shop::%{_p}%} is set:
+        return 0
+    if {auction.chat.%{_p}%} is true:
+        return 0
+    if {cookshop::%{_p}%} is set:
+        return 0
+    if {mute.user.%uuid of {_p}%} is true:
+        return 0
+    if {sharktalk.select::%{_p}%} is true:
+        return 0
+    if {openchatting.enterid::%{_p}%} is set:
+        return 0
+    if {openchatting.enterpassword::%{_p}%} is set:
+        return 0
+    if {openchatting.settitle::%{_p}%} is set:
+        return 0
+    if {openchatting.setmax::%{_p}%} is set:
+        return 0
+    if {openchatting.setpassword::%{_p}%} is set:
+        return 0
+    if {sharktalk::%{_p}%} is set:
+        return 2
+    if {guild.chatting::%{_p}%} is set:
+        return 2
+    if {openchatting::%{_p}%} is set:
+        return 2
+    return 1
+
+# 변수
+# {chatting.%area%::*}        | 해당 구역에 들어 있는 플레이어 목록
+# {chatting.%uuid of player%} | 플레이어가 들어 있는 구역
+
+on load:
+    set {_file::*} to file contents of "plugins/Skript/data/chatting/region.txt"
+    set {chatting.region::<none>} to "전체채팅"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        set {chatting.region::%{_data::1}%} to {_data::2}
+
+command /chat_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {chatting.%uuid of arg-1%}
+        delete {openchatting::%arg-1%}
+        delete {guild.chatting::%arg-1%}
+
+on chat:
+    cancel event
+    if {chatting.%uuid of player%} isn't set:
+        set {_file::*} to file contents of "plugins/Skript/data/chatting/region.txt"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            if {_data::2} contains "_":
+                replace all "_" in {_data::2} with " "
+            if region at player contains {_data::1} parsed as region:
+                set {chatting.%uuid of player%} to {_data::1}
+                stop
+    if canChat(player) is 1:
+        set {_prefix} to "&f%colored player's prefix%"
+        set {_prefix} to "&f[%{guild.name::%{guild.%uuid of player%}%}%&f]%{_prefix}%" if {guild.%uuid of player%} is set
+        set {_prefix} to "%{prefix.prefix.%uuid of player%}%%{_prefix}%" if {prefix.prefix.%uuid of player%} is set
+        # set {_tier} to tierName({tier.%uuid of player%})
+        set {_prefix} to "&f[%{_tier}%&f]%{_prefix}%" if {_tier} is set
+        if player has permission "guide.chatting":
+            if player isn't op:
+                if {guide.attend::%uuid of player%} is set:
+                    set {_message} to "&e%message%"
+                else:
+                    set {_message} to "&f%message%"
+            else:
+                set {_message} to "&f%message%"
+        else if uuid of player is "253902dc-2287-4697-8472-6fa905916797" or "91b5d16d-86f0-4344-8e28-b9e3c14f190f":
+            set {_message} to "&b%message%"
+        else:
+            set {_message} to "&f%message%"
+        loop {filterchat::*}:
+            if message contains loop-value:
+                set {_message} to "&f고운 말은 우리 사회를 행복하게 만듭니다."
+                send "{@@prefix} &f이 메시지는 보낼 수 없습니다!"
+                send "&7[&c&l✖&7]&f &e%player% &f> &c%message%" to all players where [input has permission "{@permission}"]
+        send "%{_prefix}% &f%player% &f: %{_message}%" to console
+        if {nick::new::%player's uuid%} is set:
+            set {_nickname} to "&f%{nick::new::%player's uuid%}%&f"
+        else:
+            set {_nickname} to "&f%player%"
+        set {_result} to "%{_prefix}% %{_nickname}% &f: %{_message}%"
+        if {chatting.%uuid of player%} is set:
+            loop all players:
+                if {chatting.%uuid of loop-player%} is {chatting.%uuid of player%}:
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "&7[지역채팅]&f%{_result}%" to loop-player
+                    else:
+                        send formatted "&8[차단한 플레이어의 메시지입니다. <tooltip:&7[지역채팅]&f%{_result}%>[메시지 확인하기]<reset>" to loop-player
+                else if {chatting.areachat::%loop-player%} is true:
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "%{_result}% &7[%{chatting.region::%{chatting.%uuid of player%}%}%]" to loop-player
+                    else:
+                        send formatted "&8차단한 플레이어의 메시지입니다. <tooltip:&7[지역채팅]&f%{_result}%>&8[메시지 확인하기]<reset>" to loop-player
+                else if loop-player has permission "guide.chatting":
+                    {chatting.%uuid of player%} is "school"
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "%{_result}% &7(%{chatting.region::%{chatting.%uuid of player%}%}%)" to loop-player
+                    else:
+                        send formatted "&차단한 플레이어의 메시지입니다. <tooltip:%{_result}% &7(%{chatting.region::%{chatting.%uuid of player%}%}%)>[메시지 확인하기]<reset>" to loop-player
+        else:
+            loop all players:
+                if {chatting.%uuid of loop-player%} isn't set:
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send {_result} to loop-player
+                    else:
+                        send formatted "&8차단한 플레이어의 메시지입니다. <tooltip:%{_result}%>[메시지 확인하기]<reset>" to loop-player
+                else if {chatting.areachat::%loop-player%} is true:
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "%{_result}% &7[%{chatting.region::%{chatting.%uuid of player%}%}%]" to loop-player
+                    else:
+                        send formatted "&8차단한 플레이어의 메시지입니다. <tooltip:%{_result}% &7(%{chatting.region::%{chatting.%uuid of player%}%}%)>[메시지 확인하기]<reset>" to loop-player
+                else if loop-player has permission "guide.chatting":
+                    {chatting.%uuid of loop-player%} is "school"
+                    {chatting.%uuid of player%} isn't set
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "%{_result}% &7(%{chatting.region::%{chatting.%uuid of player%}%}%)" to loop-player
+                    else:
+                        send formatted "&8차단한 플레이어의 메시지입니다. <tooltip:%{_result}% &7(%{chatting.region::%{chatting.%uuid of player%}%}%)>[메시지 확인하기]<reset>" to loop-player
+
+    else if {sharktalk::%player%} is set:
+        canChat(player) isn't 0
+        if {sharktalk.ban.%player%::*} contains {sharktalk::%player%}:
+            send "&a&l》 &6%{sharktalk::%player%}%&f님을 차단하여 메시지를 보낼 수 없습니다."
+            stop
+        else if {sharktalk::%player%} is offline:
+            send "&a&l》 &6%{sharktalk::%player%}%&f님은 현재 오프라인입니다."
+            stop
+        set {_nickname.1} to "&f%player%"
+        set {_nickname.2} to "&f%{sharktalk::%player%}%"
+        send "&6[&c나 &6-> &f%{_nickname.2}%&6] &f%message%"
+        if {sharktalk.ban.%{sharktalk::%player%}%::*} doesn't contain player:
+            send "&6[&f%{_nickname.1}% &6-> &c나&6] &f%message%" to {sharktalk::%player%}
+            play sound "entity.experience_orb.pickup" with volume 0.6 and pitch 1 at {sharktalk::%player%} for {sharktalk::%player%}
+        play sound "entity.experience_orb.pickup" with volume 0.6 and pitch 1 at player for player
+        send "&6[&f%{_nickname.1}% &6-> &f%{_nickname.2}%&6] &f%message%" to console
+        loop all players:
+            if {chatting.sharktalk::%loop-player%} is true:
+                if player isn't loop-player:
+                    if {sharktalk::%player%} isn't loop-player:
+                        send "&6[&f%{_nickname.1}% &6-> &f%{_nickname.2}%&6] &f%message%" to loop-player
+
+    else if {openchatting::%player%} is set:
+        canChat(player) isn't 0
+        set {_id} to {openchatting::%player%}
+        loop {openchatting.user::%{_id}%::*}:
+            if {sharktalk.ban.%loop-value%::*} doesn't contain player:
+                if {openchatting.title::%{_id}%} is set:
+                    send "&e[&e&l오픈채팅 &8| &f%{openchatting.title::%{_id}%}%&e] &f%player% &7> &a%message%" to loop-value
+                else:
+                    send "&e[&e&l오픈채팅 &8| &f##%{openchatting::%player%}%&e] &f%player% &7> &a%message%" to loop-value
+            else:
+                if {openchatting.title::%{_id}%} is set:
+                    send formatted "&7차단한 플레이어의 메시지입니다. <tooltip:&7[%{openchatting.title::%{_id}%}%] %player% > %message%>[메시지 확인하기]<reset>" to loop-value
+                else:
+                    send formatted "&7차단한 플레이어의 메시지입니다. <tooltip:&7[오픈채팅 ##%{openchatting::%player%}%] %player% > %message%>[메시지 확인하기]<reset>" to loop-value
+                set {openchatting.recent::%{_id}%} to now
+        send "&7[오픈채팅 ##%{openchatting::%player%}%] %player% > %message%" to console
+        loop all players:
+            if {chatting.openchatting::%loop-player%} is true:
+                if player isn't loop-player:
+                    if {openchatting.user::%{openchatting::%player%}%::*} doesn't contain loop-player:
+                        if {openchatting.title::%{_id}%} is set:
+                            send "&e[&lCHAT &8| &f%{openchatting.title::%{_id}%}%&e] &f%player% &7> &f%message%" to loop-player
+                        else:
+                            send "&e[&lCHAT &8| &f##%{openchatting::%player%}%&e] &f%player% &7> &f%message%" to loop-player
+        set {openchatting.recent::%{_id}%} to now
+
+    else if {guild.chatting::%player%} is set:
+        canChat(player) isn't 0
+        loop all players:
+            if {guild.%uuid of player%} is {guild.%uuid of loop-player%}:
+                if {guild.%uuid of loop-player%} is set:
+                    if {sharktalk.ban.%loop-player%::*} doesn't contain player:
+                        send "&7[%{guild.name::%{guild.%uuid of player%}%}%&f &a&l파벌채팅&7] &f%player% : %message%" to loop-player
+                    else:
+                        send formatted "&8차단한 플레이어의 메시지입니다. <tooltip:&7[%{guild.name::%{guild.%uuid of player%}%}%&7 파벌채팅] %player% : %message%>[메시지 확인하기]<reset>" to loop-player
+        send "&7[%{guild.name::%{guild.%uuid of player%}%}%&f &a&l파벌채팅&7] &f%player% : %message%" to console
+        loop all players:
+            if {chatting.guildchatting::%loop-player%} is true:
+                if player isn't loop-player:
+                    if {guild.%uuid of player%} isn't {guild.%uuid of loop-player%}:
+                        send "&7[%{guild.name::%{guild.%uuid of player%}%}%&f &a&l파벌채팅&7] &f%player% : %message%" to loop-player
+            
+command /채팅 [<text>] [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "all":
+            if arg-2 is "on":
+                set {chatting.areachat::%player%} to true
+                set {chatting.sharktalk::%player%} to true
+                set {chatting.guildchatting::%player%} to true
+                set {chatting.openchatting::%player%} to true
+                send "모든 채팅을 이제 볼 수 있습니다"
+            else if arg-2 is "off":
+                delete {chatting.areachat::%player%}
+                delete {chatting.sharktalk::%player%}
+                delete {chatting.guildchatting::%player%}
+                delete {chatting.openchatting::%player%}
+                send "모든 채팅을 이제 볼 수 없습니다"
+        else if arg-1 is "지역채팅":
+            if arg-2 is "on":
+                set {chatting.areachat::%player%} to true
+                send "지역채팅을 이제 볼 수 있습니다"
+            else if arg-2 is "off":
+                delete {chatting.areachat::%player%}
+                send "지역채팅을 이제 볼 수 없습니다"
+        else if arg-1 is "상어톡":
+            if arg-2 is "on":
+                set {chatting.sharktalk::%player%} to true
+                send "상어톡을 이제 볼 수 있습니다"
+            else if arg-2 is "off":
+                delete {chatting.sharktalk::%player%}
+                send "상어톡을 이제 볼 수 없습니다"
+        else if arg-1 is "파벌채팅":
+            if arg-2 is "on":
+                set {chatting.guildchatting::%player%} to true
+                send "파벌채팅을 이제 볼 수 있습니다"
+            else if arg-2 is "off":
+                delete {chatting.guildchatting::%player%}
+                send "파벌채팅을 이제 볼 수 없습니다"
+        else if arg-1 is "오픈채팅":
+            if arg-2 is "on":
+                set {chatting.openchatting::%player%} to true
+                send "오픈채팅을 이제 볼 수 있습니다"
+            else if arg-2 is "off":
+                delete {chatting.openchatting::%player%}
+                send "오픈채팅을 이제 볼 수 없습니다"
+        else:
+            send "/채팅 all [on/off]"
+            send "/채팅 지역채팅 [on/off]"
+            send "/채팅 상어톡 [on/off]"
+            send "/채팅 파벌채팅 [on/off]"
+            send "/채팅 오픈채팅 [on/off]"
+
+on enter region:
+    if "%event-region%" contains "island-3":
+        send title "&e&l분평면 입장" with subtitle "&a분평면에서 일어나는 특정 행위는 처벌받지 않습니다 (특히 사기 주의)" to player for 3 seconds
+        stop
+    set {_file::*} to file contents of "plugins/Skript/data/chatting/region.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if {_data::2} contains "_":
+            replace all "_" in {_data::2} with " "
+        if event-region contains {_data::1} parsed as region:
+            send title "&e&l지역채팅 입장" with subtitle "&a%{_data::2}%&7에 입장하였습니다" to player for 3 seconds
+            set {chatting.%uuid of player%} to {_data::1}
+            stop
+
+on leave region:
+    if "%event-region%" contains "island-3":
+        send title "&e&l분평면 퇴장" with subtitle "&a이제부터는 범법 행위가 처벌됩니다" to player for 3 seconds
+        stop
+    set {_file::*} to file contents of "plugins/Skript/data/chatting/region.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if {_data::2} contains "_":
+            replace all "_" in {_data::2} with " "
+        if event-region contains {_data::1} parsed as region:
+            send title "&e&l지역채팅 퇴장" with subtitle "&a%{_data::2}%&7에서 퇴장하였습니다" to player for 3 seconds
+            delete {chatting.%uuid of player%}
+            delete {chatting::%uuid of player%}
+            stop
+
+on death:
+    set {_file::*} to file contents of "plugins/Skript/data/chatting/region.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if {_data::2} contains "_":
+            replace all "_" in {_data::2} with " "
+        if region at victim contains {_data::1} parsed as region:
+            send title "&e&l지역채팅 퇴장" with subtitle "&a%{_data::2}%&7에서 퇴장하였습니다" to victim for 3 seconds
+            delete {chatting.%uuid of victim%}
+            stop
+
+# 탭 리스트 설정
+on join:
+    set join message to ""
+    loop all players:
+        if {friend.%uuid of loop-player%::*} contains player:
+            send "&a[+] &f&l%player%" to loop-player
+        else if loop-player has permission "op.user":
+            send "&a[+] &f&l%player%" to loop-player
+    
+on quit:
+    set quit message to ""
+    loop all players:
+        if {friend.%uuid of loop-player%::*} contains player:
+            send "&c[-] &f&l%player%" to loop-player
+        else if loop-player has permission "op.user":
+            send "&c[-] &f&l%player%" to loop-player
+    delete {gui.%uuid of player%::*}

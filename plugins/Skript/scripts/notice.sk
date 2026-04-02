@@ -1,0 +1,78 @@
+every 14 minutes:
+	send "" to all players
+	send "  쀅 &fATM기&7는 &f스폰(중앙광장)&7, &f각 편의점&7과 &f카지노&7에 위치해 있습니다." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "  쀅 &7서버 플레이 도중 발견한 &f버그/오류 등&7은 디스코드에 제보 해주세요." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "  쀅 &7커뮤니티 가입을 통해 &bSHK WORLD &7유저분들과 &f소통&7이 가능합니다." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "  쀅 &7서버 규칙 · 법률 등은 &f필독&7해주세요." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "  쀅 &7서버 내에서 개인적인 연락수단은 &f상어톡&7이 있습니다." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "  쀅 &7본 서버의 접속 주소는 &fSHKWORLD.KR | 1.18.2&7입니다." to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/추천>  쀅 &f/추천&7을 입력하여 &a마인리스트&7, &b마인페이지&7에서 추천 해주세요.<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/일퀘>  쀅 &f/일퀘&7를 입력하여 일일퀘스트를 클리어 해보세요!<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	message "<cmd:/접속보상>  쀅 &f/접속보상&7을 입력하여 플레이타임에 따른 보상을 받아보세요!<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/상어마켓>  쀅 &f/상어마켓&7을 입력하여 유저와 상품을 거래할 수 있습니다.<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/경매>  쀅 &f/경매&7를 입력하여 경매를 진행할 수 있습니다.<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/앉기>  쀅 &f/앉기&7를 입력하여 블럭에 앉을 수 있습니다.<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/연결>  쀅 &f/연결&7을 입력하여 &b디스코드&7와 계정을 연동할 수 있습니다.<reset>" to all players
+	send "" to all players
+	wait 1 minute
+	send "" to all players
+	send "<cmd:/도움말>  쀅 &f/도움말&7을 입력하여 서버 내 존재하는 &f명령어들을 확인&7할 수 있습니다.<reset>" to all players
+	send "" to all players
+
+command /공지 [<text>]:
+	permission: op.user
+	trigger:
+		if arg-1 isn't set:
+			send "&f[ 쀄 ] 공지에 쓸 할 말을 작성하세요."
+			stop
+		send "" to all players
+		send "[ 쀅 &f] &l%arg-1%&7 (작성자 | %player%)" to all players
+		send "" to all players
+		play sound "entity.experience_orb.pickup" with volume 2 and pitch 1 at all players for all players
+
+command /선관위공지 [<text>]:
+	permission: op.user
+	trigger:
+		if arg-1 isn't set:
+			send "&f[ 쀄 ] 선관위공지에 쓸 할 말을 작성하세요."
+			stop
+		send "" to all players
+		send "&e&l[선거관리위원회]&r &f&l%arg-1% &7(작성자 | %player%)" to all players
+		send "" to all players
+		play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players

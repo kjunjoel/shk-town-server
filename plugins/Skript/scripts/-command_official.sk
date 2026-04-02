@@ -1,0 +1,101 @@
+options:
+	# 접두사
+	prefix: &f쀄 &d|&f
+	gui: &d[&f&l명령어&d]&f
+
+
+function commandGUI(p: player):
+
+
+function commandOutput(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/user/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f유저 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+function commandOutput2(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/op/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f관리자 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+function commandOutput3(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/guide/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f가이드 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+
+on inventory click:
+	if uncolored display name of event-inventory is "쀄 | 명령어 목록 선택":
+		cancel event
+		click type is left mouse button
+		if clicked slot is 11:
+			commandUserGui(player)
+
+		else if clicked slot is 13:
+			if player doesn't have permission "guide.user":
+				send "{@prefix} 해당 목록을 열람할 &c권한&f이 없습니다."
+				close player's inventory
+				stop
+			commandGuideGui(player)
+
+		else if clicked slot is 15:
+			if player isn't op:
+				send "{@prefix} 해당 목록을 열람할 &c권한&f이 없습니다."
+				close player's inventory
+				stop
+			commandOpGui(player)
+
+	else if uncolored display name of event-inventory is "쀄 | 유저 세부 명령어" or "쀄 | 관리자 세부 명령어" or "쀄 | 가이드 세부 명령어":
+		cancel event
+		click type is left mouse button
+		set {_name} to uncolored name of clicked item
+		if uncolored display name of event-inventory contains "유저":
+			set {_file::*} to content of file path "plugins/Skript/data/command/user/user_index.txt"
+
+		else if uncolored display name of event-inventory contains "관리자":
+			set {_file::*} to content of file path "plugins/Skript/data/command/op/op_index.txt"
+
+		else if uncolored display name of event-inventory contains "가이드":
+			set {_file::*} to content of file path "plugins/Skript/data/command/guide/guide_index.txt"
+
+		loop {_file::*}:
+			set {_data::*} to loop-value split by " "
+			replace all "_" in {_data::1} with " "
+			if {_data::1} is {_name}:
+				if uncolored display name of event-inventory contains "유저":
+					commandOutput(player, {_data::2})
+				else if uncolored display name of event-inventory contains "관리자":
+					commandOutput2(player, {_data::2})
+				else if uncolored display name of event-inventory contains "가이드":
+					commandOutput3(player, {_data::2})
+				close player's inventory
+				stop

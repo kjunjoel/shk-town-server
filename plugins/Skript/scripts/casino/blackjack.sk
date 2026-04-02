@@ -1,0 +1,425 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    npc: 블랙잭
+
+    CARD_SOUND: ENTITY_PLAYER_ATTACK_WEAK
+    BUST_SOUND: ITEM_SHIELD_BREAK
+    WIN_SOUND: UI_TOAST_CHALLENGE_COMPLETE
+    DRAW_SOUND: ENTITY_PLAYER_LEVELUP
+    LOSE_SOUND: ITEM_SHIELD_BREAK
+
+    max: 10000000
+
+
+# 변수
+# {casino.blackjack.%player%.deck::*}    | 전체 패
+# {casino.blackjack.%player%.player::*}  | 플레이어의 패
+# {casino.blackjack.%player%.dealer::*}  | 딜러의 패
+# {casino.blackjack.%player%.state}      | 플레이어의 게임 상황
+# {casino.blackjack.%player%.chips::*}   | 플레이어의 게임 배팅 코인
+# {casino.blackjack.%player%.doubledown} | 플레이어가 더블다운을 했는지
+
+function casinoBlackjackRand(p: player) :: number:
+    loop 52 times:
+        set {_rand} to random integer between 0 and 51
+        if {casino.blackjack.%{_p}%.deck::*} contains {_rand}:
+            remove {_rand} from {casino.blackjack.%{_p}%.deck::*}
+            return {_rand}
+
+function casinoBlackjackName(n: number) :: text:
+    set {_suit} to round down {_n}/13
+    set {_number} to mod({_n}, 13)
+    if {_suit} is 0:
+        set {_result} to "&f&l♠"
+    else if {_suit} is 1:
+        set {_result} to "&f&l♣"
+    else if {_suit} is 2:
+        set {_result} to "&c&l♥"
+    else if {_suit} is 3:
+        set {_result} to "&c&l♦"
+    if {_number} is 0:
+        return "%{_result}% A"
+    else if {_number} is 1:
+        return "%{_result}% 2"
+    else if {_number} is 2:
+        return "%{_result}% 3"
+    else if {_number} is 3:
+        return "%{_result}% 4"
+    else if {_number} is 4:
+        return "%{_result}% 5"
+    else if {_number} is 5:
+        return "%{_result}% 6"
+    else if {_number} is 6:
+        return "%{_result}% 7"
+    else if {_number} is 7:
+        return "%{_result}% 8"
+    else if {_number} is 8:
+        return "%{_result}% 9"
+    else if {_number} is 9:
+        return "%{_result}% 10"
+    else if {_number} is 10:
+        return "%{_result}% J"
+    else if {_number} is 11:
+        return "%{_result}% Q"
+    else if {_number} is 12:
+        return "%{_result}% K"
+
+function casinoBlackjackItem(t: text) :: item:
+    if {_t} is "hidden":
+        set {_item} to book with custom model data 53 named "&f"
+        return {_item}
+    set {_list::*} to uncolored {_t} split by " "
+    if {_list::1} is "♠":
+        set {_result.1} to 0
+    else if {_list::1} is "♣":
+        set {_result.1} to 1
+    else if {_list::1} is "♥":
+        set {_result.1} to 2
+    else if {_list::1} is "♦":
+        set {_result.1} to 3
+    if {_list::2} is "A":
+        set {_result.2} to 1
+    else if {_list::2} is "2":
+        set {_result.2} to 2
+    else if {_list::2} is "3":
+        set {_result.2} to 3
+    else if {_list::2} is "4":
+        set {_result.2} to 4
+    else if {_list::2} is "5":
+        set {_result.2} to 5
+    else if {_list::2} is "6":
+        set {_result.2} to 6
+    else if {_list::2} is "7":
+        set {_result.2} to 7
+    else if {_list::2} is "8":
+        set {_result.2} to 8
+    else if {_list::2} is "9":
+        set {_result.2} to 9
+    else if {_list::2} is "10":
+        set {_result.2} to 10
+    else if {_list::2} is "J":
+        set {_result.2} to 11
+    else if {_list::2} is "Q":
+        set {_result.2} to 12
+    else if {_list::2} is "K":
+        set {_result.2} to 13
+    set {_custom} to 13*{_result.1} + {_result.2}
+    set {_item} to book with custom model data {_custom} named "%{_t}%"
+    return {_item}
+
+function casinoBlackjackCalculate(items: objects) :: number:
+    set {_result} to 0
+    set {_a} to 0
+    loop {_items::*}:
+        set {_list::*} to uncolored loop-value split by " "
+        if {_list::2} is "A":
+            add 1 to {_a}
+            add 11 to {_result}
+        else if {_list::2} is "2":
+            add 2 to {_result}
+        else if {_list::2} is "3":
+            add 3 to {_result}
+        else if {_list::2} is "4":
+            add 4 to {_result}
+        else if {_list::2} is "5":
+            add 5 to {_result}
+        else if {_list::2} is "6":
+            add 6 to {_result}
+        else if {_list::2} is "7":
+            add 7 to {_result}
+        else if {_list::2} is "8":
+            add 8 to {_result}
+        else if {_list::2} is "9":
+            add 9 to {_result}
+        else if {_list::2} is "10":
+            add 10 to {_result}
+        else if {_list::2} is "J":
+            add 10 to {_result}
+        else if {_list::2} is "Q":
+            add 10 to {_result}
+        else if {_list::2} is "K":
+            add 10 to {_result}
+    if {_a} is 0:
+        return {_result}
+    while true:
+        if {_result} <= 21:
+            return {_result}
+        if {_a} is 0:
+            return {_result}
+        remove 1 from {_a}
+        remove 10 from {_result}
+
+function casinoBlackjackGUI(p: player, state: text, player: objects, dealer: objects):
+    set {_inv} to chest inventory with 6 rows named "&0&l[ CASINO BLACKJACK ]"
+    loop 54 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    loop 7 times:
+        set slot (loop-number)+9 of {_inv} to air
+        set slot (loop-number)+27 of {_inv} to air
+    set {_ind} to 10
+    loop {_dealer::*}:
+        if {_state} isn't "dealer" or "end":
+            if {_ind} is 10:
+                set {_item} to casinoBlackjackItem("hidden")
+            else:
+                set {_item} to casinoBlackjackItem(loop-value)
+        else:
+            set {_item} to casinoBlackjackItem(loop-value)
+        set slot {_ind} of {_inv} to {_item}
+        add 1 to {_ind}
+    set {_ind} to 28
+    loop {_player::*}:
+        set {_item} to casinoBlackjackItem(loop-value)
+        set slot {_ind} of {_inv} to {_item}
+        add 1 to {_ind}
+    if {_state} is "player":
+        set slot 47 of {_inv} to red stained glass pane named "&c&l서렌더" with lore "&f배팅액의 0.5배를 받고 게임을 포기합니다."
+        set slot 49 of {_inv} to orange stained glass pane named "&6&l스탠드" with lore "&f카드를 더 받지 않고 차례를 마칩니다."
+        set slot 51 of {_inv} to green stained glass pane named "&a&l힛" with lore "&f카드 한 장을 더 받습니다."
+        set slot 99 of {_inv} to blue stained glass pane named "&b&l더블다운" with lore "&f한 장의 카드를 받고 차례를 마칩니다." and "&f승리 시 2배의 금액을 획득할 수 있습니다."
+    open {_inv} to {_p}
+
+function casinoBlackjackSetting(p: player):
+    loop 52 times:
+        add (loop-number)-1 to {casino.blackjack.%{_p}%.deck::*}
+    loop 4 times:
+        set {_rand} to casinoBlackjackRand({_p})
+        set {_name} to casinoBlackjackName({_rand})
+        if loop-number is between 1 and 2:
+            add {_name} to {casino.blackjack.%{_p}%.dealer::*}
+        else:
+            add {_name} to {casino.blackjack.%{_p}%.player::*}
+        set {_deck::*} to {casino.blackjack.%{_p}%.deck::*}
+        set {_player::*} to {casino.blackjack.%{_p}%.player::*}
+        set {_dealer::*} to {casino.blackjack.%{_p}%.dealer::*}
+        wait 9 ticks
+        if loop-number isn't 4:
+            casinoBlackjackGUI({_p}, "setting", {_player::*}, {_dealer::*})
+        else:
+            casinoBlackjackGUI({_p}, "player", {_player::*}, {_dealer::*})
+            set {casino.blackjack.%{_p}%.state} to "player"
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        set {gui.%uuid of {_p}%::casinoBlackjackGUI} to true
+        set {casino.blackjack.%{_p}%.deck::*} to {_deck::*}
+        set {casino.blackjack.%{_p}%.player::*} to {_player::*}
+        set {casino.blackjack.%{_p}%.dealer::*} to {_dealer::*}
+
+function casinoBlackjackDealer(p: player, deck: objects, player: objects, dealer: objects, doubledown: boolean, surrender: boolean):
+    while true:
+        if {_deck::*} isn't set:
+            stop
+        set {_deck::*} to {casino.blackjack.%{_p}%.deck::*}
+        set {_player::*} to {casino.blackjack.%{_p}%.player::*}
+        set {_dealer::*} to {casino.blackjack.%{_p}%.dealer::*}
+        wait 19 ticks
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        casinoBlackjackGUI({_p}, "dealer", {_player::*}, {_dealer::*})
+        wait 1 tick
+        set {gui.%uuid of {_p}%::casinoBlackjackGUI} to true
+        set {casino.blackjack.%{_p}%.deck::*} to {_deck::*}
+        set {casino.blackjack.%{_p}%.player::*} to {_player::*}
+        set {casino.blackjack.%{_p}%.dealer::*} to {_dealer::*}
+        set {_count} to casinoBlackjackCalculate({casino.blackjack.%{_p}%.dealer::*})
+        if {_count} >= 17:
+            casinoBlackjackEnd({_p}, {_player::*}, {_dealer::*}, {_doubledown}, {_surrender})
+            stop
+        set {_rand} to casinoBlackjackRand({_p})
+        set {_name} to casinoBlackjackName({_rand})
+        add {_name} to {casino.blackjack.%{_p}%.dealer::*}        
+
+function casinoBlackjackEnd(p: player, play: objects, deal: objects, doubledown: boolean, surrender: boolean):
+    wait 2 seconds
+    set {_player} to casinoBlackjackCalculate({_play::*})
+    set {_dealer} to casinoBlackjackCalculate({_deal::*})
+    delete {casino.blackjack.%{_p}%.player::*}
+    delete {casino.blackjack.%{_p}%.dealer::*}
+    casinoBlackjackAward({_p}, {_player}, {_dealer}, {_doubledown}, {_surrender})
+
+function casinoBlackjackAward(p: player, player: number, dealer: number, doubledown: boolean, surrender: boolean):
+    close {_p}'s inventory
+    send "{@prefix} 당신의 카드의 합은 &a%{_player}%&f, 딜러의 카드의 합은 &a%{_dealer}%&f입니다." to {_p}
+    if {_surrender} is true:
+        if {_dealer} is 21:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            send title "&c&l패배!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 패배하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+        else:
+            loop {casino.blackjack.%{_p}%.chips::*}:
+                set {casino.blackjack.%{_p}%.chips::%loop-index%} to 0.5*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+            close {_p}'s inventory
+            send title "&c&l서렌더!" with subtitle "배팅액의 0.5배인 &6%moneyDigit({_price})%원&f을 돌려받았습니다." to {_p} for 3 seconds
+            send "{@prefix} 서렌더하여 배팅액의 0.5배인 &6%moneyDigit({_price})%원&f을 돌려받았습니다." to {_p}
+    else:
+        if ({_dealer} > 21) or ({_player} > {_dealer}):
+            play sound "{@WIN_SOUND}" with volume 0.4 to {_p}
+            if {_doubledown} is true:
+                if {_player} is 21:
+                    loop {casino.blackjack.%{_p}%.chips::*}:
+                        set {casino.blackjack.%{_p}%.chips::%loop-index%} to 4*loop-value
+                    set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+                    send title "&e&l블랙잭&f &b&l더블다운!" with subtitle "배팅액의 4배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+                    send "{@prefix} 블랙잭, 더블다운으로 승리하여 배팅액의 4배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+                else:
+                    loop {casino.blackjack.%{_p}%.chips::*}:
+                        set {casino.blackjack.%{_p}%.chips::%loop-index%} to 3*loop-value
+                    set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+                    send title "&b&l더블다운!" with subtitle "배팅액의 3배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+                    send "{@prefix} 더블다운으로 승리하여 배팅액의 3배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+            else:
+                if {_player} is 21:
+                    loop {casino.blackjack.%{_p}%.chips::*}:
+                        set {casino.blackjack.%{_p}%.chips::%loop-index%} to 2.5*loop-value
+                    set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+                    send title "&e&l블랙잭!" with subtitle "배팅액의 2.5배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+                    send "{@prefix} 블랙잭으로 승리하여 배팅액의 2.5배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+                else:
+                    loop {casino.blackjack.%{_p}%.chips::*}:
+                        set {casino.blackjack.%{_p}%.chips::%loop-index%} to 2*loop-value
+                    set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+                    send title "&a&l승리!" with subtitle "배팅액의 2배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+                    send "{@prefix} 승리하여 배팅액의 2배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else if {_player} = {_dealer}:
+            play sound "{@DRAW_SOUND}" with volume 0.4 to {_p}
+            loop {casino.blackjack.%{_p}%.chips::*}:
+                set {casino.blackjack.%{_p}%.chips::%loop-index%} to loop-value
+            set {_price} to casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+            send title "&f&l푸시!" with subtitle "배팅액을 돌려받았습니다." to {_p} for 3 seconds
+            send "{@prefix} 푸시이므로 배팅액을 돌려받았습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            loop {casino.blackjack.%{_p}%.chips::*}:
+                set {casino.blackjack.%{_p}%.chips::%loop-index%} to 0
+            casinoChipGive({_p}, {casino.blackjack.%{_p}%.chips::*}, "Blackjack")
+            send title "&c&l패배!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 패배하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    delete {casino.blackjack.%{_p}%.chips::*}
+    stop
+
+on rightclick on entity:
+    if entity's name is "{@npc}":
+        delete {casino.blackjack.%player%.chips::*}
+        send "{@prefix} 다음 창에 배팅할 칩을 넣어주세요." to player
+        wait 10 ticks
+        casinoChipGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::casinoBlackjackChipGUI} to true
+        stop
+
+on inventory click:
+    if uncolored display name of event-inventory contains "[ CASINO CHIP ]":
+        if {gui.%uuid of player%::casinoBlackjackChipGUI} is true:
+            if event-inventory is player's inventory:
+                stop
+
+            if clicked slot is 22:
+                cancel event
+                set {_chips::*} to casinoChipCount(player, event-inventory, "Blackjack")
+                if {_chips::*} is false:
+                    send "{@prefix} 배팅할 칩을 넣어주시기 바랍니다."
+                    stop
+                else if {_chips::*} is true:
+                    send "{@prefix} &6%moneyDigit({@max})%원&f 이상은 배팅하실 수 없습니다."
+                    stop
+                set {casino.blackjack.%player%.chips::*} to {_chips::*}
+                delete {gui.%uuid of player%::casinoBlackjackChipGUI}
+                close player's inventory
+                wait 1 tick
+                casinoBlackjackSetting(player)
+            else if clicked slot is between 0 and 10:
+                cancel event
+            else if clicked slot is between 16 and 26:
+                cancel event
+            stop
+
+    else if uncolored display name of event-inventory contains "[ CASINO BLACKJACK ]":
+        if {gui.%uuid of player%::casinoBlackjackGUI} is true:
+            cancel event
+            set {_deck::*} to {casino.blackjack.%player%.deck::*}
+            set {_player::*} to {casino.blackjack.%player%.player::*}
+            set {_dealer::*} to {casino.blackjack.%player%.dealer::*}
+            if {casino.blackjack.%player%.state} is "player":
+                if clicked slot is 47:
+                    casinoBlackjackDealer(player, {_deck::*}, {_player::*}, {_dealer::*}, false, true)
+                    delete {casino.blackjack.%player%.state}
+                    stop
+                if clicked slot is 49:
+                    casinoBlackjackDealer(player, {_deck::*}, {_player::*}, {_dealer::*}, false, false)
+                    delete {casino.blackjack.%player%.state}
+                    stop
+                else if clicked slot is 51:
+                    set {_rand} to casinoBlackjackRand(player)
+                    set {_name} to casinoBlackjackName({_rand})
+                    add {_name} to {_player::*}
+                    play sound "{@CARD_SOUND}" with volume 0.4 to player
+                    casinoBlackjackGUI(player, "player", {_player::*}, {_dealer::*})
+                    wait 1 tick
+                    set {gui.%uuid of player%::casinoBlackjackGUI} to true
+                    set {casino.blackjack.%player%.deck::*} to {_deck::*}
+                    set {casino.blackjack.%player%.player::*} to {_player::*}
+                    set {casino.blackjack.%player%.dealer::*} to {_dealer::*}
+                    set {casino.blackjack.%player%.state} to "player"
+                    set {_count} to casinoBlackjackCalculate({casino.blackjack.%player%.player::*})
+                    if {_count} > 21:
+                        set {casino.blackjack.%player%.state} to "bust"
+                        wait 2 seconds
+                        close player's inventory
+                        play sound "{@BUST_SOUND}" with volume 0.4 to player
+                        loop {casino.blackjack.%player%.chips::*}:
+                            set {casino.blackjack.%player%.chips::%loop-index%} to 0
+                        casinoChipGive(player, {casino.blackjack.%player%.chips::*}, "Blackjack")
+                        send title "&c&l버스트!" with subtitle "배팅액을 돌려받을 수 없습니다." to player for 3 seconds
+                        send "{@prefix} 카드의 합이 &a%{_count}%&f이(가) 되어 버스트 하였습니다. 배팅액을 돌려받을 수 없습니다."
+                        delete {casino.blackjack.%player%.price}
+                        stop
+                else if clicked slot is 99: # 없앰 처리
+                    send "{@prefix} 더블다운 하였습니다. 승리 시 배팅액의 2배를 추가로 받습니다."
+                    set {_rand} to casinoBlackjackRand(player)
+                    set {_name} to casinoBlackjackName({_rand})
+                    add {_name} to {_player::*}
+                    play sound "{@CARD_SOUND}" with volume 0.4 to player
+                    casinoBlackjackGUI(player, "player", {_player::*}, {_dealer::*})
+                    wait 1 tick
+                    set {gui.%uuid of player%::casinoBlackjackGUI} to true
+                    set {casino.blackjack.%player%.deck::*} to {_deck::*}
+                    set {casino.blackjack.%player%.player::*} to {_player::*}
+                    set {casino.blackjack.%player%.dealer::*} to {_dealer::*}
+                    set {casino.blackjack.%player%.state} to "player"
+                    set {_count} to casinoBlackjackCalculate({casino.blackjack.%player%.player::*})
+                    if {_count} > 21:
+                        set {casino.blackjack.%player%.state} to "bust"
+                        wait 2 seconds
+                        close player's inventory
+                        play sound "{@BUST_SOUND}" with volume 0.4 to player
+                        send title "&c&l버스트!" with subtitle "배팅액을 돌려받을 수 없습니다." to player for 3 seconds
+                        send "{@prefix} 카드의 합이 &a%{_count}%&f이(가) 되어 버스트 하였습니다. 배팅액을 돌려받을 수 없습니다."
+                        delete {casino.blackjack.%player%.price}
+                        stop
+                    wait 10 ticks
+                    casinoBlackjackDealer(player, {_deck::*}, {_player::*}, {_dealer::*}, true, false)
+                    delete {casino.blackjack.%player%.state}
+                    stop
+                
+on inventory close:
+    if {gui.%uuid of player%::casinoBlackjackChipGUI} is true:
+        loop 5 times:
+            set {_item} to slot (loop-number)+10 of player's current inventory
+            give {_item} to player
+        delete {gui.%uuid of player%::casinoBlackjackChipGUI}
+    if {gui.%uuid of player%::casinoBlackjackGUI} is true:
+        delete {gui.%uuid of player%::casinoBlackjackGUI}
+    if {casino.blackjack.%player%.deck::*} is set:
+        delete {casino.blackjack.%player%.deck::*}
+    if {casino.blackjack.%player%.player::*} is set:
+        delete {casino.blackjack.%player%.player::*}
+    if {casino.blackjack.%player%.dealer::*} is set:
+        delete {casino.blackjack.%player%.dealer::*}
+    if {casino.blackjack.%player%.state} is set:
+        delete {casino.blackjack.%player%.state}
+
+on quit:
+    delete {casino.blackjack.%player%.deck::*}
+    delete {Casino.blackjack.%player%.player::*}
+    delete {casino.blackjack.%player%.dealer::*}
+    delete {casino.blackjack.%player%.state}
+    delete {casino.blackjack.%player%.chips::*}

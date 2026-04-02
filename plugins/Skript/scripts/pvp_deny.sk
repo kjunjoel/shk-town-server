@@ -1,0 +1,14 @@
+options:
+    dir: plugins/Skript/data/police/ban_area.txt
+
+on enter region:
+    set {_region::*} to file contents of "{@dir}"
+    loop {_region::*}:
+        if "%event-region%" contains loop-value:
+            send action bar "&a&lPVP 금지구역 입장" to player
+
+on leave region:
+    set {_region::*} to file contents of "{@dir}"
+    loop {_region::*}:
+        if "%event-region%" contains loop-value:
+            send action bar "&a&lPVP 금지구역 퇴장" to player

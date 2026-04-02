@@ -1,0 +1,87 @@
+options:
+	# 접두사
+	prefix: &a&l[캐시]&f
+
+	# 로그 저장 장소
+	dir: plugins/Skript/data/logs/cash/cash_%now formatted as "yyyy-MM"%.txt
+
+on join:
+	set {cash::%uuid of player%} to 0 if {cash::%uuid of player%} isn't set
+
+# 변수
+# {cash::%uuid of player%} | 플레이어의 캐시
+
+function cashAdd(p: offlineplayer, n: number, option: text):
+	add {_n} to {cash::%uuid of {_p}%}
+	create file "{@dir}" if file "{@dir}" doesn't exist
+	write "[%now%] CashAdd %{_p}% %{_n}% -> %{cash::%uuid of {_p}%}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function cashRemove(p: offlineplayer, n: number, option: text):
+	remove {_n} from {cash::%uuid of {_p}%}
+	create file "{@dir}" if file "{@dir}" doesn't exist
+	write "[%now%] CashRemove %{_p}% %{_n}% -> %{cash::%uuid of {_p}%}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function cashSet(p: offlineplayer, n: number, option: text):
+	set {cash::%uuid of {_p}%} to {_n}
+	create file "{@dir}" if file "{@dir}" doesn't exist
+	write "[%now%] CashSet %{_p}% %{_n}% -> %{cash::%uuid of {_p}%}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+function cashClear(p: offlineplayer, option: text):
+	set {cash::%uuid of {_p}%} to 0
+	create file "{@dir}" if file "{@dir}" doesn't exist
+	write "[%now%] CashClear %{_p}% -> %{cash::%uuid of {_p}%}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+
+command /cash [<text>] [<offlineplayer>] [<number>]:
+	permission: op.user
+	permission message: {@prefix} 명령어를 사용할 권한이 없습니다.
+	trigger:
+		if arg 1 is "get":
+			if arg 2 isn't set:
+				send "{@prefix} 플레이어를 입력해주세요."
+				stop
+			send "{@prefix} &6%arg-2%&f님은 &e%moneyDigit({cash::%uuid of arg-2%})%&f캐시를 가지고 있습니다."
+			stop
+
+		else if arg 1 is "add":
+			if arg 2 isn't set:
+				send "{@prefix} 플레이어를 입력해주세요."
+			if arg 3 isn't set:
+				send "{@prefix} 금액을 입력해주세요."
+			cashAdd(arg-2, arg-3, "Admin")
+			send "{@prefix} &6%arg-2%&f님에게 &e%moneyDigit(arg-3)%&f캐시를 지급했습니다."
+			send "{@prefix} 현재 &6%arg-2%&f님은 &e%moneyDigit({cash::%uuid of arg-2%})%&f캐시를 가지고 있습니다."
+			stop
+		
+		else if arg 1 is "remove":
+			if arg 2 isn't set:
+				send "{@prefix} 플레이어를 입력해주세요."
+			if arg 3 isn't set:
+				send "{@prefix} 금액을 입력해주세요."
+			cashRemove(arg-2, arg-3, "Admin")
+			send "{@prefix} &6%arg-2%&f님에게서 &e%moneyDigit(arg-3)%&f캐시를 차감했습니다."
+			send "{@prefix} 현재 &6%arg-2%&f님은 &e%moneyDigit({cash::%uuid of arg-2%})%&f캐시를 가지고 있습니다."
+			stop
+
+		else if arg 1 is "set":
+			if arg 2 isn't set:
+				send "{@prefix} 플레이어를 입력해주세요."
+			if arg 3 isn't set:
+				send "{@prefix} 금액을 입력해주세요."
+			cashSet(arg-2, arg-3, "Admin")
+			send "{@prefix} &6%arg-2%&f님의 캐시를 &e%moneyDigit(arg-3)%&f캐시로 설정했습니다."
+			stop
+		
+		else if arg 1 is "clear":
+			if arg 2 isn't set:
+				send "{@prefix} 플레이어를 입력해주세요."
+			cashClear(arg-2, "Admin")
+			send "{@prefix} &6%arg-2%&f님의 캐시를 초기화했습니다."
+			stop
+
+		else:
+			send "{@prefix} /cash get [플레이어]"
+			send "{@prefix} /cash add [플레이어] [금액]"
+			send "{@prefix} /cash remove [플레이어] [금액]"
+			send "{@prefix} /cash set [플레이어] [금액]"
+			send "{@prefix} /cash clear [플레이어]"
+			stop

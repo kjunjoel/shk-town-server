@@ -1,0 +1,471 @@
+options:
+	1: [&4❤&f]
+	2: [&2&l주례&f]
+
+	max: 500
+	ring: 결혼 반지
+	arrow: 사랑의 큐피트
+
+	node: marry.user
+
+# 변수
+# {marry.requester::%uuid of player%} | 플레이어가 결혼을 신청한 플레이어의 UUID
+# {marry.requested::%uuid of player%} | 나에게 결혼을 신청한 플레이어의 UUID
+# {marry::%uuid of player%} | 플레이어가 결혼한 혹은 결혼 신청한 플레이어의 UUID
+# {marry.cool::%uuid of player%} | 결혼 신청 쿨타임
+# {marry.state::%uuid of player%} | 플레이어의 결혼 상태 (연애, 결혼전, 결혼후)
+# {marry.exp::%uuid of player%} | 플레이어의 결혼 경험치
+# {marry.nick::%uuid of player%} | 플레이어의 부부 별명
+# {marry.expcool::%uuid of player%} | 플레이어의 /결혼 경험치 명령어 쿨타임
+# {marry.nickcool::%uuid of player%} | 플레이어의 부부 별명 쿨타임
+
+# {officate.requester.1::%uuid of player%} | 플레이어가 주례를 신청한 플레이어 1의 UUID
+# {officate.requester.2::%uuid of player%} | 플레이어가 주례를 신청한 플레이어 2의 UUID
+# {officate.requested::%uuid of player%} | 내게 주례를 신청한 플레이어의 
+# {officate.state::%uuid of player%} | 주례 상태 (before, during)
+# {officate.time::%uuid of player%} | 주례 시작 일시
+# {officate.cool::%uuid of player%} | 주례 신청 쿨타임
+
+command /결혼 [<text>] [<offlineplayer>]:
+	trigger:
+		if arg-1 is "신청":
+			{marry.state::%uuid of player%} isn't set
+			if {marry.cool::%uuid of player%} is set:
+				send "{@1} 이미 청혼한 이력이 있습니다!"
+				stop
+			if uncolored name of player's tool isn't "{@ring}":
+				send "{@1} 결혼 반지를 손에 들고 다시 입력해주세요."
+				stop
+			set {_player} to arg-2
+			if {_player} is offline:
+				send "{@1} 온라인인 플레이어의 닉네임을 입력해주세요."
+				stop
+			if {marry.requested::%uuid of {_player}%} is set:
+				send "{@1} 해당 플레이어는 청혼 신청을 받은 상태입니다."
+				stop
+			if {marry::%uuid of {_player}%} is set:
+				send "{@1} 해당 플레이어는 이미 약혼 또는 결혼 상태입니다."
+				stop
+			remove 1 of player's tool from player's tool
+			send "" to all players
+			send "{@1} &e&l%player%&f님이 &e&l%{_player}%&f님에게 청혼하였습니다!" to all players
+			send "" to all players
+			send "{@1} 청혼 수락을 원하신다면 &a/&a&l결혼 수락&f을 입력해주세요." to {_player}
+			send "{@1} 청혼 수락을 원치 않으신다면 &c/&c&l결혼 거절&f을 입력해주세요." to {_player}
+			send "{@1} 30초 뒤에 자동으로 청혼이 취소됩니다." to {_player}
+			set {marry.requester::%uuid of player%} to uuid of {_player}
+			set {marry.requested::%uuid of {_player}%} to uuid of player
+			set {marry.cool::%uuid of player%} to 30
+
+		else if arg-1 is "수락":
+			if {marry.requested::%uuid of player%} isn't set:
+				send "{@1} 청혼을 받은 이력이 없습니다."
+				stop
+			send "" to all players
+			send "{@1} &e&l%player%&f님이 &e&l%{marry.requested::%uuid of player%} parsed as offlineplayer%&f님의 청혼을 수락했습니다!" to all players
+			send "" to all players
+			set {marry::%uuid of player%} to {marry.requested::%uuid of player%}
+			set {marry::%{marry::%uuid of player%}%} to uuid of player
+			set {marry.state::%uuid of player%} to "before"
+			set {marry.state::%{marry::%uuid of player%}%} to "before"
+			set {marry.exp::%uuid of player%} to 0
+			set {marry.exp::%{marry::%uuid of player%}%} to 0
+			delete {marry.cool::%{marry.requested::%uuid of player%}%}
+			delete {marry.requester::%{marry.requested::%uuid of player%}%}
+			delete {marry.requested::%uuid of player%}
+
+		else if arg-1 is "거절":
+			{marry.state::%uuid of player%} isn't set
+			if {marry.requested::%uuid of player%} isn't set:
+				send "{@1} 청혼을 받은 이력이 없습니다."
+				stop
+			send "" to all players
+			send "{@1} &e&l%player%&f님이 &e&l%{marry.requested::%uuid of player%} parsed as offlineplayer%&f님의 청혼을 거절했습니다!" to all players
+			send "" to all players
+			delete {marry.cool::%{marry.requested::%uuid of player%}%}
+			delete {marry.requester::%{marry.requested::%uuid of player%}%}
+			delete {marry.requested::%uuid of player%}
+
+		else if arg-1 is "정보":
+			if arg-2 isn't set:
+				if {marry.state::%uuid of player%} is "before":
+					send ""
+					send "{@1} &f&l내 결혼 정보"
+					send "{@1} 약혼자 | &e&l%{marry::%uuid of player%} parsed as offlineplayer%"
+					send "{@1} 경험치 | &6%{marry.exp::%uuid of player%}%/500"
+					send "{@1} &l&oTIP! 경험치를 모두 채웠다면 주례사에게 주례를 요청하세요!"
+					send ""
+				else if {marry.state::%uuid of player%} is "after":
+					send "{@1} &f&l내 결혼 정보"
+					send "{@1} 배우자 | &e&l%{marry::%uuid of player%} parsed as offlineplayer%"
+					if {marry.nick::%uuid of player%} isn't set:
+						send "{@1} 별명 | 설정되지 않음"
+					else:
+						send "{@1} 별명 | &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤"
+					send "{@1} &l&oTIP! /부부 별명으로 별명을 설정할 수 있습니다!"
+			else:
+				if {marry.state::%uuid of arg-2%} isn't set:
+					send "{@1} 해당 플레이어는 약혼 또는 결혼하지 않았습니다."
+				if {marry.state::%uuid of arg-2%} is "before":
+					send ""
+					send "{@1} &e&l%arg-2%&f&l님의 결혼 정보"
+					send "{@1} 약혼자 | &e&l%{marry::%uuid of arg-2%} parsed as offlineplayer%"
+					send "{@1} 경험치 | &6%{marry.exp::%uuid of arg-2%}%/500"
+					send ""
+				else if {marry.state::%uuid of arg-2%} is "after":
+					send "{@1} &e&l%arg-2%&f&l님의 결혼 정보"
+					send "{@1} 배우자 | &e&l%{marry::%uuid of arg-2%} parsed as offlineplayer%"
+					if {marry.nick::%uuid of arg-2%} isn't set:
+						send "{@1} 별명 | 설정되지 않음"
+					else:
+						send "{@1} 별명 | &4&l❤&c&l%{marry.nick::%uuid of arg-2%}%&a&l부부&4&l❤"
+
+		else if arg-1 is "뽀뽀":
+			{marry.state::%uuid of player%} is "before"
+			if {marry.exp::%uuid of player%} >= 500:
+				send "{@1} 최대 경험치에 도달했습니다."
+				stop
+			if {marry::%uuid of player%} parsed as offlineplayer is offline:
+				send "{@1} 약혼자가 오프라인일 때는 경험치를 쌓을 수 없습니다."
+				stop
+			set {_distance} to taxiTeleportCalculation(player's location, {marry::%uuid of player%} parsed as player's location)
+			if {_distance} > 5:
+				send "{@1} 약혼자와의 거리가 너무 멀어 경험치를 쌓을 수 없습니다."
+				stop
+			if difference between {marry.expcool::%uuid of player%} and now < 5 minutes:
+				set {_cool} to {marry.expcool::%uuid of player%}
+				set {_5min} to "5 minutes" parsed as timespan
+				add {_5min} to {_cool}
+				set {_time} to difference between {_cool} and now
+				set {_time} to "%{_time}%"
+				send "{@1} 아직 쿨타임입니다. &7(쿨타임 해제까지 %playtimeName({_time})%)"
+				stop
+			add 1 to {marry.exp::%uuid of player%}
+			add 1 to {marry.exp::%{marry::%uuid of player%}%}
+			send "{@1} &f결혼 경험치 +1 &7(%{marry.exp::%uuid of player%}%/500)"
+			send "{@1} &f결혼 경험치 +1 &7(%{marry.exp::%uuid of player%}%/500)" to {marry::%uuid of player%} parsed as player
+			make player run command "particle heart ~ ~ ~ 1 1 1 0.1 10 normal" as op
+			make {marry::%uuid of player%} parsed as player run command "particle heart ~ ~ ~ 1 1 1 0.1 10 normal" as op
+			set {marry.expcool::%uuid of player%} to now
+			set {marry.expcool::%{marry::%uuid of player%}%} to now
+
+		else if arg-1 is "파혼":
+			{marry.state::%uuid of player%} is "before"
+			{officate.requested::%uuid of player%} isn't set
+			send "" to all players
+			send "{@1} &e&l%player%&f님과 &e&l%{marry::%uuid of player%} parsed as offlineplayer%&f님이 파혼하였습니다." to all players
+			send "" to all players
+			delete {marry.exp::%uuid of player%}
+			delete {marry.expcool::%uuid of player%}
+			delete {marry.state::%uuid of player%}
+			delete {marry.exp::%{marry::%uuid of player%}%}
+			delete {marry.expcool::%{marry::%uuid of player%}%}
+			delete {marry.state::%{marry::%uuid of player%}%}
+			delete {marry::%{marry::%uuid of player%}%}
+			delete {marry::%uuid of player%}
+
+		else:
+			if {marry.state::%uuid of player%} isn't set:
+				send "{@1} /결혼 정보 <닉네임> &8&l| &f플레이어의 결혼 관련 정보를 확인합니다."
+				send "{@1} /결혼 신청 <닉네임> &8&l| &f결혼을 신청합니다. 결혼 반지가 소모됩니다."
+				send "{@1} /결혼 수락 &8&l| &f청혼을 수락합니다."
+				send "{@1} /결혼 거절 &8&l| &f청혼을 거절합니다."
+			else if {marry.state::%uuid of player%} is "before":
+				send "{@1} /결혼 정보 &8&l| &f결혼 관련 정보를 확인합니다."
+				send "{@1} /결혼 정보 <닉네임> &8&l| &f플레이어의 결혼 관련 정보를 확인합니다."
+				send "{@1} /결혼 뽀뽀 &8&l| &f뽀뽀하여 결혼 경험치를 얻습니다. &7(쿨타임 5분)"
+				send "{@1} /결혼 파혼 &8&l| &f결혼을 파혼합니다." if {officate.requested::%uuid of player%} isn't set
+			else if {marry.state::%uuid of player%} is "after":
+				send "{@1} /결혼 정보 &8&l| &f결혼 관련 정보를 확인합니다."
+				send "{@1} /결혼 정보 <닉네임> &8&l| &f플레이어의 결혼 관련 정보를 확인합니다."
+				send "{@1} /부부 키스 &8&l| &f키스하여 경험치를 얻습니다. &7(쿨타임 30초, 현재는 경험치 획득 불가)"
+				send "{@1} /부부 별명 <별명> &8&l| &f부부 별명을 설정합니다. &7(쿨타임 1일)"
+
+command /marry_reset:
+	permission: op.user
+	trigger:
+		delete {officate.room::*}
+
+command /부부 [<text>] [<text>]:
+	trigger:
+		if arg-1 is "별명":
+			{marry.state::%uuid of player%} is "after"
+			if difference between {marry.nickcool::%uuid of player%} and now < 1 day:
+				set {_cool} to {marry.nickcool::%uuid of player%}
+				set {_1day} to "1 day" parsed as timespan
+				add {_1day} to {_cool}
+				set {_time} to difference between {_cool} and now
+				set {_time} to "%{_time}%"
+				send "{@1} 아직 쿨타임입니다. &7(쿨타임 해제까지 %playtimeName({_time})%)"
+				stop
+			if arg-2 isn't set:
+				send "{@1} 부부 별명은 1글자 이상이여야 합니다."
+				stop
+			if length of arg-2 >= 3:
+				send "{@1} 부부 별명은 2글자 이하여야 합니다."
+				stop
+			loop {marry.nick::*}:
+				if arg-2 is loop-value:
+					send "{@1} 이미 존재하는 별명입니다."
+					stop
+			set {marry.nick::%uuid of player%} to arg-2
+			set {marry.nick::%{marry::%uuid of player%}%} to arg-2
+			set {marry.nickcool::%uuid of player%} to now
+			set {marry.nickcool::%{marry::%uuid of player%}%} to now
+			send "{@1} 부부 별명이 &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤&f로 설정되었습니다."
+			send "{@1} 부부 별명이 &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤&f로 설정되었습니다." to {marry::%uuid of player%} parsed as player
+			execute console command "tab player %player% abovename &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤"
+			execute console command "tab player %{marry::%uuid of player%} parsed as offlineplayer% abovename &4&l❤&c&l%{marry.nick::%uuid of player%}%&a&l부부&4&l❤"
+
+		else if arg-1 is "키스":
+			{marry.state::%uuid of player%} is "after"
+			if {marry::%uuid of player%} parsed as offlineplayer is offline:
+				send "{@1} 배우자가 오프라인일 때는 키스할 수 없습니다."
+				stop
+			set {_distance} to taxiTeleportCalculation(player's location, {marry::%uuid of player%} parsed as player's location)
+			if {_distance} > 5:
+				send "{@1} 약혼자와의 거리가 너무 멀어 키스할 수 없습니다."
+				stop
+			if difference between {marry.expcool::%uuid of player%} and now < 30 seconds:
+				set {_cool} to {marry.expcool::%uuid of player%}
+				set {_30sec} to "30 seconds" parsed as timespan
+				add {_30sec} to {_cool}
+				set {_time} to difference between {_cool} and now
+				set {_time} to "%{_time}%"
+				send "{@1} 아직 쿨타임입니다. &7(쿨타임 해제까지 %playtimeName({_time})%)"
+				stop
+			loop 3 times:
+				make player run command "particle heart ~ ~ ~ 1 1 1 0.02 15 normal" as op
+			loop 3 times:
+				make {marry::%uuid of player%} parsed as player run command "particle heart ~ ~ ~ 1 1 1 0.02 15 normal" as op
+			set {marry.expcool::%uuid of player%} to now
+			set {marry.expcool::%{marry::%uuid of player%}%} to now
+
+command /부부쿨타임초기화 [<offlineplayer>]:
+	permission: op.user
+	trigger:
+		delete {marry.nickcool::%uuid of arg-1%}
+		stop
+		send "{@1} &f%arg-1%님의 부부 별명 변경 쿨타임이 초기화 되었습니다." to player
+
+command /주례 [<text>] [<player>] [<player>]:
+	trigger:
+		if arg-1 is "신청":
+			player has permission "{@node}"
+			if "%region at player%" doesn't contain "weddingroom":
+				send "{@2} 주례 신청은 식장 안에서만 할 수 있습니다."
+				stop
+			if "%region at player%" contains "weddingroom1":
+				loop {officate.room::*}:
+					if loop-value is "1":
+						send "{@2} 이미 제1식장에서 주례가 진행중입니다."
+						stop
+				set {officate.state::%uuid of player%} to "1"
+			if "%region at player%" contains "weddingroom2":
+				loop {officate.room::*}:
+					if loop-value is "2":
+						send "{@2} 이미 제2식장에서 주례가 진행중입니다."
+						stop
+				set {officate.state::%uuid of player%} to "2"
+			if {officate.state::%uuid of player%} is "before":
+				send "{@2} 이미 주례 대기 중입니다."
+				stop
+			if {officate.state::%uuid of player%} is "after":
+				send "{@2} 이미 주례 중입니다."
+				stop
+			if {officate.state::%uuid of player%} is "set":
+				send "{@2} 이미 주례 신청 내역이 존재합니다."
+				stop
+			if arg-2 isn't set:
+				send "{@2} 올바른 닉네임을 입력해주세요."
+				stop
+			if arg-3 isn't set:
+				send "{@2} 올바른 닉네임을 입력해주세요."
+				stop
+			if arg-2 is player:
+				send "{@2} 본인의 결혼식은 주례할 수 없습니다."
+				stop
+			if arg-3 is player:
+				send "{@2} 본인의 결혼식은 주례할 수 없습니다."
+				stop
+			if {marry::%uuid of arg-2%} isn't uuid of arg-3:
+				send "{@2} 두 플레이어는 약혼 상태가 아닙니다."
+				stop
+			if {marry::%uuid of arg-3%} isn't uuid of arg-2:
+				send "{@2} 두 플레이어는 약혼 상태가 아닙니다."
+				stop
+			if {marry.state::%uuid of arg-2%} isn't "before":
+				send "{@2} 두 플레이어는 약혼 상태가 아닙니다."
+				stop
+			if {marry.state::%uuid of arg-3%} isn't "before":
+				send "{@2} 두 플레이어는 약혼 상태가 아닙니다."
+				stop
+			if {marry.exp::%uuid of arg-2%} < 500:
+				send "{@2} 아직 두 플레이어는 결혼 경험치를 모두 채우지 못했습니다."
+				stop
+			if {marry.exp::%uuid of arg-3%} < 500:
+				send "{@2} 아직 두 플레이어는 결혼 경험치를 모두 채우지 못했습니다."
+				stop
+			if {officate.requested::%uuid of arg-2%} is set:
+				send "{@2} 이미 해당 플레이어는 결혼식을 진행 중입니다."
+				stop
+			if {officate.requested::%uuid of arg-3%} is set:
+				send "{@2} 이미 해당 플레이어는 결혼식을 진행 중입니다."
+				stop
+			send "{@2} &e&l%arg-2%&f님과 &e&l%arg-3%&f님에게 주례를 신청하였습니다!"
+			send "{@1} 주례를 원하신다면 &a/&a&l주례 수락&f을 입력해주세요." to arg-2
+			send "{@1} 주례를 원치 않으신다면 &c/&c&l주례 거절&f을 입력해주세요." to arg-2
+			send "{@1} 30초 뒤에 자동으로 주례 신청이 취소됩니다." to arg-2
+			send "{@1} 주례를 원하신다면 &a/&a&l주례 수락&f을 입력해주세요." to arg-3
+			send "{@1} 주례를 원치 않으신다면 &c/&c&l주례 거절&f을 입력해주세요." to arg-3
+			send "{@1} 30초 뒤에 자동으로 주례 신청이 취소됩니다." to arg-3
+			set {officate.requester.1::%uuid of player%} to uuid of arg-2
+			set {officate.requester.2::%uuid of player%} to uuid of arg-3
+			set {officate.requested::%uuid of arg-2%} to uuid of player
+			set {officate.requested::%uuid of arg-3%} to uuid of player
+			set {officate.cool::%uuid of player%} to 30
+
+		else if arg-1 is "종료":
+			{officate.state::%uuid of player%} is "after"
+			{officate.time::%uuid of player%} is set
+			if difference between {officate.time::%uuid of player%} and now < 3 minutes:
+				set {_cool} to {officate.time::%uuid of player%}
+				set {_3min} to "3 minutes" parsed as timespan
+				add {_3min} to {_cool}
+				set {_time} to difference between {_cool} and now
+				set {_time} to "%{_time}%"
+				send "{@2} %playtimeName({_time})% 후 종료할 수 있습니다."
+				stop
+			send "{@2} 결혼식이 종료되었습니다."
+			send "{@2} 결혼식이 종료되었습니다." to {officate.requester.1::%uuid of player%} parsed as player
+			send "{@2} 결혼식이 종료되었습니다." to {officate.requester.2::%uuid of player%} parsed as player
+			make {officate.requester.1::%uuid of player%} parsed as player run command "particle heart ~ ~ ~ 1 1 1 0.1 30 normal" as op
+			make {officate.requester.2::%uuid of player%} parsed as player run command "particle heart ~ ~ ~ 1 1 1 0.1 30 normal" as op
+			execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 3 &f상태: &c대기 중"
+			execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 5 &f"
+			execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 6 &f"
+			delete {marry.exp::%{officate.requester.1::%uuid of player%}%}
+			delete {marry.expcool::%{officate.requester.1::%uuid of player%}%}
+			set {marry.state::%{officate.requester.1::%uuid of player%}%} to "after"
+			delete {marry.exp::%{officate.requester.2::%uuid of player%}%}
+			delete {marry.expcool::%{officate.requester.2::%uuid of player%}%}
+			set {marry.state::%{officate.requester.2::%uuid of player%}%} to "after"
+			delete {officate.requested::%{officate.requester.1::%uuid of player%}%}
+			delete {officate.requested::%{officate.requester.2::%uuid of player%}%}
+			delete {officate.requester.1::%uuid of player%}
+			delete {officate.requester.2::%uuid of player%}
+			delete {officate.state::%uuid of player%}
+			delete {officate.time::%uuid of player%}
+			delete {officate.room::%uuid of player%}
+
+		else if arg-1 is "수락":
+			{marry.state::%uuid of player%} is "before"
+			{marry.exp::%uuid of player%} >= 500
+			{officate.state::%{officate.requested::%uuid of player%}%} isn't "before"
+			if {officate.requested::%uuid of player%} isn't set:
+				send "{@2} 주례 신청을 받은 이력이 없습니다."
+				stop
+			send "{@2} 주례 신청이 수락되었습니다."
+			send "{@2} 주례 신청이 수락되었습니다." to {marry::%uuid of player%} parsed as player
+			send "" to all players
+			send "{@1} 3분 뒤 중앙동 결혼식장 &l제%{officate.state::%{officate.requested::%uuid of player%}%}%식장&f에서 &e&l%player%&f님과 &e&l%{marry::%uuid of player%} parsed as player%&f님의 결혼식이 시작됩니다. &7(주례사 | %{officate.requested::%uuid of player%} parsed as player%)" to all players
+			send "" to all players
+			delete {officate.cool::%{officate.requested::%uuid of player%}%}
+			set {officate.room::%{officate.requested::%uuid of player%}%} to {officate.state::%{officate.requested::%uuid of player%}%}
+			set {officate.state::%{officate.requested::%uuid of player%}%} to "before"
+			execute console command "hologram setline wedding-%{officate.room::%{officate.requested::%uuid of player%}%}% 3 &f상태: &d입장 중"
+			execute console command "hologram setline wedding-%{officate.room::%{officate.requested::%uuid of player%}%}% 5 &e&l%{officate.requester.1::%{officate.requested::%uuid of player%}%} parsed as player%"
+			execute console command "hologram setline wedding-%{officate.room::%{officate.requested::%uuid of player%}%}% 6 &e&l%{officate.requester.2::%{officate.requested::%uuid of player%}%} parsed as player%"
+			wait 2 minutes
+			send "{@2} 결혼식 시작까지 1분 남았습니다." to {officate.requested::%uuid of player%} parsed as player
+			wait 30 seconds
+			send "{@2} 결혼식 시작까지 30초 남았습니다." to {officate.requested::%uuid of player%} parsed as player
+			wait 20 seconds
+			send "{@2} 결혼식 시작까지 10초 남았습니다." to {officate.requested::%uuid of player%} parsed as player
+			wait 10 seconds
+			if {officate.requested::%uuid of player%} parsed as offlineplayer is online:
+				send "{@2} 3분이 지났습니다. 이제 주례를 시작하면 됩니다!" to {officate.requested::%uuid of player%} parsed as player
+				execute console command "hologram setline wedding-%{officate.room::%{officate.requested::%uuid of player%}%}% 3 &f상태: &a진행 중"
+				set {officate.time::%{officate.requested::%uuid of player%}%} to now
+				set {officate.state::%{officate.requested::%uuid of player%}%} to "after"
+
+		else if arg-1 is "거절":
+			{marry.state::%uuid of player%} is "before"
+			{marry.exp::%uuid of player%} >= 500
+			{officate.state::%{officate.requested::%uuid of player%}%} isn't "before"
+			if {officate.requested::%uuid of player%} isn't set:
+				send "{@2} 주례 신청을 받은 이력이 없습니다."
+				stop
+			send "{@2} 주례 신청이 거절되었습니다."
+			send "{@2} 주례 신청이 거절되었습니다." to {marry::%uuid of player%} parsed as player
+			delete {officate.requester.1::%{officate.requested::%uuid of player%}%}
+			delete {officate.requester.2::%{officate.requested::%uuid of player%}%}
+			delete {officate.state::%{officate.requested::%uuid of player%}%}
+			delete {officate.cool::%{officate.requested::%uuid of player%}%}
+			delete {officate.requested::%uuid of player%}
+			delete {officate.requested::%{marry::%uuid of player%}%}
+
+		else:
+			send "{@2} /주례 신청 <닉네임> <닉네임> &8&l| &f두 플레이어의 주례를 신청합니다." if player has permission "{@node}"
+			send "{@2} /주례 종료 &8&l| &f현재 진행 중인 주례를 종료합니다. (주례 시작 후 3분 이후 종료 가능)" if player has permission "{@node}"
+			send "{@2} /주례 수락 &8&l| &f주례를 수락합니다."
+			send "{@2} /주례 거절 &8&l| &f주례를 거절합니다."
+
+on rightclick with stick:
+	if uncolored name of player's tool is "{@arrow}":
+		{marry.state::%uuid of player%} is "before"
+		if {marry.exp::%uuid of player%} >= 500:
+			send "{@1} 최대 경험치에 도달했습니다."
+			stop
+		if {marry::%uuid of player%} parsed as offlineplayer is offline:
+			send "{@1} 약혼자가 오프라인일 때는 경험치를 쌓을 수 없습니다."
+			stop
+		set {_distance} to taxiTeleportCalculation(player's location, {marry::%uuid of player%} parsed as player's location)
+		if {_distance} > 5:
+			send "{@1} 약혼자와의 거리가 너무 멀어 경험치를 쌓을 수 없습니다."
+			stop
+		remove 1 of player's tool from player's tool
+		add 100 to {marry.exp::%uuid of player%}
+		set {marry.exp::%uuid of player%} to 500 if {marry.exp::%uuid of player%} >= 500
+		add 100 to {marry.exp::%{marry::%uuid of player%}%}
+		set {marry.exp::%{marry::%uuid of player%}%} to 500 if {marry.exp::%{marry::%uuid of player%}%} >= 500
+		send "{@1} &f결혼 경험치 +100 &7(%{marry.exp::%uuid of player%}%/500)" to player
+		send "{@1} &f결혼 경험치 +100 &7(%{marry.exp::%uuid of player%}%/500)" to {marry::%uuid of player%} parsed as player
+		make player run command "particle heart ~ ~ ~ 1 1 1 0.1 1000 normal" as op
+		make {marry::%uuid of player%} parsed as player run command "particle heart ~ ~ ~ 1 1 1 0.1 1000 normal" as op
+
+every 1 second:
+	loop {marry.cool::*}:
+		remove 1 from {marry.cool::%loop-index%}
+		if {marry.cool::%loop-index%} is 0:
+			send "{@1} &e&l%loop-index parsed as offlineplayer%&f님의 청혼이 자동 취소되었습니다!" to all players
+			delete {marry.requested::%{marry.requester::%loop-index%}%}
+			delete {marry.requester::%loop-index%}
+			delete {marry.cool::%loop-index%}
+	loop {officate.cool::*}:
+		remove 1 from {officate.cool::%loop-index%}
+		if {officate.cool::%loop-index%} is 0:
+			send "{@2} 주례 신청이 자동 취소되었습니다!" to loop-index parsed as offlineplayer
+			delete {officate.requested::%{officate.requester.1::%loop-index%}%}
+			delete {officate.requested::%{officate.requester.2::%loop-index%}%}
+			delete {officate.requester.1::%loop-index%}
+			delete {officate.requester.2::%loop-index%}
+			delete {officate.cool::%loop-index%}
+
+on quit:
+	{officate.state::%uuid of player%} is set
+	if {officate.state::%uuid of player%} is "before":
+		send "{@1} 주례사 &e%player%&f님이 서버에서 퇴장하여 결혼식이 취소되었습니다." to all players
+	else if {officate.state::%uuid of player%} is "after":
+		send "{@1} 주례사 &e%player%&f님이 서버에서 퇴장하여 결혼식이 취소되었습니다." to all players
+	execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 3 &f상태: &c대기 중"
+	execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 5 &f"
+	execute console command "hologram setline wedding-%{officate.room::%uuid of player%}% 6 &f"
+	delete {officate.requested::%{officate.requester.1::%uuid of player%}%}
+	delete {officate.requested::%{officate.requester.2::%uuid of player%}%}
+	delete {officate.requester.1::%uuid of player%}
+	delete {officate.requester.2::%uuid of player%}
+	delete {officate.state::%uuid of player%}
+	delete {officate.cool::%uuid of player%}
+	delete {officate.time::%uuid of player%}
+	delete {officate.room::%uuid of player%}

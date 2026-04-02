@@ -1,0 +1,28 @@
+options:
+    prefix: [ &6&l!&f ]
+    name: &f[ &6&l뚝배기 &e&l밧줄 &f]
+
+on death:
+    if name of attacker's tool is "{@name}":
+        if {guide.attend::%uuid of victim%} is true:
+            send "{@prefix} 출근 중인 가이드의 머리는 가져갈 수 없습니다." to attacker
+            send "{@prefix} 당신은 출근 중이여서 머리가 보호 되었습니다." to victim
+            stop
+        loop all items in victim's inventory:
+            if uncolored name of loop-item is "[ 머리따기 보호권 ]":
+                set {_item} to 1 of loop-item
+                remove 1 of loop-item from victim's inventory
+                send "{@prefix} %name of {_item}%f을(를) 소지 중인 플레이어를 살해하였으므로 머리를 가져올 수 없습니다." to attacker
+                send "{@prefix} %name of {_item}%f 1개를 사용하여 머리를 보호하였습니다." to victim
+                stop
+        remove 1 of attacker's tool from attacker's tool
+        set {_item} to victim's skull named "&f%victim%"
+        itemGive(attacker, {_item}, 1, "Rope")
+        if {mafia.hide::%attacker%} is set:
+            send "{@prefix} &e???님&f이 {@name}로 &c머리&f를 가져갔습니다!" to victim
+        else:
+            send "{@prefix} &e%attacker%님&f이 {@name}로 &c머리&f를 가져갔습니다!" to victim
+        send "{@prefix} &e%victim%님&f의 &c머리&f를 가져왔습니다!" to attacker
+
+
+

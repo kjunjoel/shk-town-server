@@ -1,0 +1,282 @@
+options:
+    prefix: [ &6&l!&f ]
+
+# 변수
+# {vote.vote::%name%} | true or false
+# {vote.date::%name%} | text
+# {vote.number::%name%::%number%} | nickname
+# {vote.done::%name%::%uuid of player%}
+
+function voteGUI(p: player, t: text):
+    set {_name} to {_t}
+    replace all "_" in {_name} with " "
+    set {_inv} to chest inventory with 3 rows named "&b&l[ SHK WORLD %{_name}% ]"
+    set {_n} to size of {vote.number::%{_t}%::*}
+    set {_slot::*} to 12, 14 if {_n} is 1
+    set {_slot::*} to 11, 13, 15 if {_n} is 2
+    set {_slot::*} to 10, 12, 14, 16 if {_n} is 3
+    set {_slot::*} to 9, 11, 13, 15, 17 if {_n} is 4
+    set {_slot::*} to 10, 11, 12, 14, 15, 16 if {_n} is 5
+    set {_slot::*} to 10, 11, 12, 13, 14, 15, 16 if {_n} is 6
+    set {_slot::*} to 9, 10, 11, 12, 14, 15, 16, 17 if {_n} is 7
+    set {_slot::*} to 9, 10, 11, 12, 13, 14, 15, 16, 17 if {_n} is 8
+    loop {_n}+1 times:
+        if loop-number is {_n} + 1:
+            set slot {_slot::%loop-number%} of {_inv} to {vote.icon::X} named "&f기권" with lore "&a좌클릭&7하여 투표", "&7클릭하면 바꿀 수 없으니 신중히 선택하시기 바랍니다."
+        else:
+            if {vote.number::%{_t}%::%loop-number%} is "찬성":
+                set slot {_slot::%loop-number%} of {_inv} to "Lantum" parsed as offlineplayer's head named "&f찬성" with lore "&a좌클릭&7하여 투표", "&7클릭하면 바꿀 수 없으니 신중히 선택하시기 바랍니다."
+            else if {vote.number::%{_t}%::%loop-number%} is "반대":
+                set slot {_slot::%loop-number%} of {_inv} to "GyeongRye" parsed as offlineplayer's head named "&f반대" with lore "&a좌클릭&7하여 투표", "&7클릭하면 바꿀 수 없으니 신중히 선택하시기 바랍니다."
+            else:
+                set slot {_slot::%loop-number%} of {_inv} to {vote.number::%{_t}%::%loop-number%} parsed as offlineplayer's skull named "&7[기호%loop-number%번] &f%{vote.number::%{_t}%::%loop-number%}%" with lore "&a좌클릭&7하여 투표", "&7클릭하면 바꿀 수 없으니 신중히 선택하시기 바랍니다."
+    open {_inv} to {_p}
+
+command /선거관리 [<text>] [<text>] [<text>] [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "목록":
+            set {_ind} to 1
+            send "{@prefix} 선거 목록"
+            loop {vote.vote::*}:
+                send "&7[%{_ind}%]&f %loop-index% (선거일: %{vote.date::%loop-index%}%)"
+                loop {vote.number::%loop-index%::*}:
+                    send "&8ㄴ 기호%loop-index-2%번 %loop-value-2%"
+                add 1 to {_ind}
+
+        else if arg-1 is "생성":
+            if arg-2 isn't set:
+                send "{@prefix} 생성할 선거 이름을 입력해주세요."
+                stop
+            if {vote.vote::%arg-2%} is set:
+                send "{@prefix} 이미 생성된 선거입니다."
+                stop
+            set {vote.vote::%arg-2%} to true
+            sync create file path "plugins/Skript/data/logs/vote/%arg-2%.txt"
+            send "{@prefix} 선거 &e%arg-2%&f이 생성되었습니다."
+
+        else if arg-1 is "삭제":
+            if arg-2 isn't set:
+                send "{@prefix} 삭제할 선거 이름을 입력해주세요."
+                stop
+            if {vote.vote::%arg-2%} isn't set:
+                send "{@prefix} 생성되지 않은 선거입니다."
+                stop
+            delete {vote.vote::%arg-2%}
+            delete {vote.date::%arg-2%}
+            delete {vote.number::%arg-2%::*}
+            delete {vote.done::%arg-2%::*}
+            sync delete file path "plugins/Skript/data/logs/vote/%arg-2%.txt"
+            send "{@prefix} 선거 &e%arg-2%&f이 삭제되었습니다."
+
+        else if arg-1 is "후보등록":
+            if arg-2 isn't set:
+                send "{@prefix} 후보를 등록할 선거 이름을 입력해주세요."
+                stop
+            if {vote.vote::%arg-2%} isn't set:
+                send "{@prefix} 생성되지 않은 선거입니다."
+                stop
+            if arg-3 parsed as integer isn't set:
+                send "{@prefix} 기호를 입력해주세요."
+                stop
+            if arg-4 isn't set:
+                send "{@prefix} 닉네임을 입력해주세요."
+                stop
+            set {vote.number::%arg-2%::%arg-3%} to arg-4
+            send "{@prefix} 선거 &e%arg-2%&f의 기호 %arg-3%번을 &b%arg-4%&f으로 설정하였습니다."
+
+        else if arg-1 is "후보제거":
+            if arg-2 isn't set:
+                send "{@prefix} 후보를 등록할 선거 이름을 입력해주세요."
+                stop
+            if {vote.vote::%arg-2%} isn't set:
+                send "{@prefix} 생성되지 않은 선거입니다."
+                stop
+            if arg-3 parsed as integer isn't set:
+                send "{@prefix} 기호를 입력해주세요."
+                stop
+            delete {vote.number::%arg-2%::%arg-3%}
+            send "{@prefix} 선거 &e%arg-2%&f의 기호 %arg-3%번을 삭제하였습니다."
+
+        else if arg-1 is "기간설정":
+            if arg-2 isn't set:
+                send "{@prefix} 후보를 등록할 선거 이름을 입력해주세요."
+                stop
+            if {vote.vote::%arg-2%} isn't set:
+                send "{@prefix} 생성되지 않은 선거입니다."
+                stop
+            if arg-3 isn't set:
+                send "{@prefix} 선거일을 입력해주세요."
+                stop
+            set {vote.date::%arg-2%} to arg-3
+            send "{@prefix} 선거 &e%arg-2%&f의 선거일이 &a%arg-3%&f로 설정되었습니다."
+
+        else:
+            send "{@prefix} /선거관리 목록"
+            send "{@prefix} /선거관리 생성 [선거이름]"
+            send "{@prefix} /선거관리 삭제 [선거이름]"
+            send "{@prefix} /선거관리 후보등록 [선거이름] [기호] [닉네임]"
+            send "{@prefix} /선거관리 후보제거 [선거이름] [기호]"
+            send "{@prefix} /선거관리 기간설정 [선거이름] [선거일]"
+            send "     &7ㄴ /선거관리 기간설정 [선거이름] 0000-00-00"
+
+command /선거 [<text>]:
+    trigger:
+        if group of player is "튜토리얼":
+            stop
+        if group of player is "학생":
+            send "{@prefix} 학생은 공직선거법 제14조에 의거하여 선거권이 없어 투표할 수 없습니다. 졸업 후 선거에 참여해주시기 바랍니다."
+            stop
+        if {prison.during::%uuid of player%} >= 3000:
+            send "{@prefix} 공직선거법 제17조제1항제1호에 의거하여 선거권이 없어 투표할 수 없습니다."
+            stop
+        if arg-1 isn't set:
+            send "{@prefix} 선거 이름을 입력해주세요."
+            send " "
+            set {_ind} to 1
+            send "{@prefix} 선거 목록"
+            loop {vote.vote::*}:
+                if {vote.date::%loop-index%} is now formatted as "yyyy-MM-dd":
+                    send "&7[%{_ind}%]&f %loop-index% &7(선거일: %{vote.date::%loop-index%}%) &e<진행 중>"
+                else:
+                    send "&7[%{_ind}%]&f %loop-index% &7(선거일: %{vote.date::%loop-index%}%)"
+                add 1 to {_ind}
+            send "&7└ &f/선거 [선거이름]&7을 입력하여 선거에 참여할 수 있습니다."
+            stop
+        if {vote.vote::%arg-1%} isn't set:
+            send "{@prefix} 없는 선거입니다. 이름을 다시 입력해주세요"
+            stop
+        if now formatted as "yyyy-MM-dd" is {vote.date::%arg-1%}:
+            if {vote.done::%arg-1%::%uuid of player%} is set:
+                send "{@prefix} 이미 선거에 참여했습니다."
+                stop
+            voteGUI(player, arg-1)
+        wait 1 tick
+        set {gui.%uuid of player%::voteGUI} to arg-1
+
+command /선거결과 [<text>]:
+    trigger:
+        if player isn't op:
+            if now formatted as "yyyy-MM-dd" is {vote.date::%arg-1%}:
+                set {_temp} to false
+            else:
+                set {_temp} to true
+        else:
+            set {_temp} to true
+        if {vote.vote::%arg-1%} isn't set:
+            send "{@prefix} 선거 &e%arg-1%&f을 찾을 수 없습니다."
+            stop
+        set {_file::*} to content of file path "plugins/Skript/data/logs/vote/%arg-1%.txt"
+        set {_n} to size of {vote.number::%arg-1%::*}
+        loop {_n} times:
+            set {_number.%loop-number%} to 0
+        set {_number.X} to 0
+        loop {_file::*}:
+            set {_list::*} to loop-value split by " "
+            add 1 to {_number.%{_list::4}%}
+        set {_sum} to 0
+        set {_sum.fake} to 0
+        loop {_n} times:
+            add {_number.%loop-number%} to {_sum}
+            add {_number.%loop-number%} to {_sum.fake}
+        add {_number.X} to {_sum.fake}
+        send ""
+        send "{@prefix} &b&lSHK WORLD %arg-1% &f결과"
+        if {_sum} is 0:
+            loop {_n} times:
+                set {_percent.%loop-number%} to 0
+        else:
+            loop {_n} times:
+                set {_percent.%loop-number%} to (round ({_number.%loop-number%} / {_sum} * 10000)) / 100
+            set {_percent.X} to (round ({_number.X} / {_sum} * 10000)) / 100
+        set {_percent} to (round ({_sum} / {vote.number} * 10000)) / 100
+        if {_temp} is true:
+            loop {vote.number::%arg-1%::*}:
+                if loop-value is "찬성":
+                    send "&f찬성 &8&l| &e%{_number.1}%&f표 &7(%{_percent.%loop-index%}%%%)"
+                else if loop-value is "반대":
+                    send "&f반대 &8&l| &e%{_number.2}%&f표 &7(%{_percent.%loop-index%}%%%)"
+                else:
+                    send "&7[기호%loop-index%번] &f%loop-value% &8&l| &e%{_number.%loop-index%}%&f표 &7(%{_percent.%loop-index%}%%%)"
+            send "&f기권 &8&l| &e%{_number.X}%&f표"
+        else:
+            set {_now} to convert date now to unix date
+            add 86400 to {_now}
+            set {_now} to convert unix date {_now} to date
+            loop {vote.number::%arg-1%::*}:
+                if loop-value is "찬성":
+                    send "&f찬성 &8&l| &f%{_now} formatted as "M월 d일"% 이후 공개"
+                else if loop-value is "반대":
+                    send "&f반대 &8&l| &f%{_now} formatted as "M월 d일"% 이후 공개"
+                else:
+                    send "&7[기호%loop-index%번] &f%loop-value% &8&l| &f%{_now} formatted as "M월 d일"% 이후 공개"
+            send "&f기권 &8&l| &f%{_now} formatted as "M월 d일"% 이후 공개"
+        send "&l총 투표자 수 &8&l| &f총 &e%moneyDigit({vote.number})%&f명 중 &e%{_sum.fake}%&f명 참여 &7(투표율 %{_percent}%%%)"
+        send ""
+
+command /vote [<text>] [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "icon":
+            arg-2 is set
+            set {vote.icon::%arg-2%} to player's tool
+            send "{@prefix} 아이템 %arg-2% 설정 완료"
+
+        else if arg-1 is "set":
+            set {_total} to 0
+            loop all offline players:
+                if {estate.lasttime.%uuid of loop-offlineplayer%} isn't set:
+                    add 1 to {_total}
+                else if difference between now and {estate.lasttime.%uuid of loop-offlineplayer%} <= 7 days:
+                    add 1 to {_total}
+            set {vote.number} to {_total}
+
+on inventory click:
+    if {gui.%uuid of player%::voteGUI} is set:
+        if event-inventory is player's inventory:
+            stop
+        set {_vote} to {gui.%uuid of player%::voteGUI}
+        cancel event
+        if clicked slot isn't air:
+            set {_name} to name of clicked item
+            set {_data::*} to uncolored {_name} split by " "
+            replace all "[기호" in {_data::1} with ""
+            replace all "번]" in {_data::1} with ""
+            close player's inventory
+            if {_data::1} is "찬성":
+                send "{@prefix} 찬성하였습니다. 소중한 한 표 감사합니다."
+            else if {_data::1} is "반대":
+                send "{@prefix} 반대하였습니다. 소중한 한 표 감사합니다."
+            else if {_data::1} is "기권":
+                send "{@prefix} 기권하였습니다. 소중한 한 표 감사합니다."
+            else:
+                send "{@prefix} %{_name}%에 투표하였습니다. 소중한 한 표 감사합니다."
+            loop {list.admin::*}:
+                if "%player%" is loop-value:
+                    stop
+            if {_data::1} is "찬성":
+                sync append "%now formatted as "HH:mm:ss"% | %player% 1" to file path "plugins/Skript/data/logs/vote/%{_vote}%.txt"
+            else if {_data::1} is "반대":
+                sync append "%now formatted as "HH:mm:ss"% | %player% 2" to file path "plugins/Skript/data/logs/vote/%{_vote}%.txt"
+            else if {_data::1} is "기권":
+                sync append "%now formatted as "HH:mm:ss"% | %player% X" to file path "plugins/Skript/data/logs/vote/%{_vote}%.txt"
+            else:
+                sync append "%now formatted as "HH:mm:ss"% | %player% %{_data::1}%" to file path "plugins/Skript/data/logs/vote/%{_vote}%.txt"
+            set {vote.done::%{_vote}%::%uuid of player%} to true
+
+every 1 minute:
+    if now formatted as "HH:mm" is "00:00":
+        execute console command "vote set"
+    if now formatted as "mm" is "00" or "15" or "30" or "45":
+        loop {vote.date::*}:
+            if now formatted as "yyyy-MM-dd" is loop-value:
+                loop all players:
+                    if {vote.done::%loop-index%::%uuid of loop-player%} isn't set:
+                        send "" to loop-player                
+                        send "{@prefix} 아직 &c참여하지 않은 %loop-index%&f이(가) 있습니다. &e/선거 %loop-index%&f을(를) 입력해 선거에 참여할 수 있습니다." to loop-player
+                        send "" to loop-player
+                        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to loop-player
+        
+on inventory close:
+    if {gui.%uuid of player%::voteGUI} is set:
+        delete {gui.%uuid of player%::voteGUI}

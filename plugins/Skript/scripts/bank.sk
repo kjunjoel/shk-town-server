@@ -1,0 +1,888 @@
+options:
+    # 접두사
+    prefix: <##bd3995>&l[은행]&f
+
+    # 은행
+    은행총재: 은행총재
+    은행부총재: 은행부총재
+    은행감사: 은행감사
+    은행국장: 은행국장
+    은행부국장: 은행부국장
+    은행부장: 은행부장
+    은행과장: 은행과장
+    은행원: 은행원
+
+    # 럭펌 노드명
+    shkbankAdmin: shkbank.admin # 은행총재 ~ 은행부총재
+    shkbankUser: shkbank.user # 은행총재 ~ 은행원
+
+# 변수
+# {shkbank.user::*}                           | 은행 소속 공무원 목록
+# {shkbank.user.%uuid of player%.class}       | 은행 소속 직급 목록
+
+command /은행 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@shkbankAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {shkbank.user::*} is not set:
+                send "{@prefix} 은행 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@prefix} 은행 소속 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {shkbank.user::*}
+            loop "{@은행총재}", "{@은행부총재}", "{@은행감사}", "{@은행국장}", "{@은행부국장}", "{@은행부장}", "{@은행과장}" and "{@은행원}":
+                loop {_list::*}:
+                    if {shkbank.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@prefix} %{_ind}%. %loop-value-2% (%{shkbank.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {shkbank.user::*}:
+                if loop-value is arg-2:
+                    send "{@prefix} 해당 플레이어는 이미 은행에 소속되어 있습니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@prefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg 3 is not set:
+                send "{@prefix} 직급을 입력해주세요."
+                stop
+            if arg 3 is "{@은행총재}" or "{@은행부총재}" or "{@은행감사}" or "{@은행국장}" or "{@은행부국장}" or "{@은행부장}" or "{@은행과장}" or "{@은행원}":
+                if group of player is "{@은행총재}":
+                    if arg 3 is "{@은행총재}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@은행부총재}":
+                    if arg 3 is "{@은행총재}" or "{@은행부총재}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {shkbank.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                send "{@prefix} &6%arg-2%&f님이 은행 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                set {shkbank.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else:
+                send "{@prefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {shkbank.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@prefix} 해당 플레이어는 은행 소속이 공무원이 아닙니다."
+                stop
+            if group of player is "{@은행총재}":
+                if {shkbank.user.%uuid of arg-2%.class} is "{@은행총재}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            else if group of player is "{@은행부총재}":
+                if {shkbank.user.%uuid of arg-2%.class} is "{@은행총재}" or "{@은행부총재}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {shkbank.user::*}
+            execute console command "lp user %arg-2% parent remove %{shkbank.user.%uuid of arg-2%.class}%"
+            delete {shkbank.user.%uuid of arg-2%.class}
+            send "{@prefix} &6%arg-2%&f님이 은행 소속 공무원에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@prefix} /은행 목록 &8&l| &f은행 소속 공무원 목록을 확인합니다."
+            send "{@prefix} /은행 채용 [플레이어명] [직급] &8&l| &f플레이어를 직급으로 채용합니다."
+            send "{@prefix} /은행 해임 [플레이어명] &8&l| &f플레이어를 은행에서 해임합니다."
+            send "{@prefix} /은행공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+
+command /은행공지 [<text>]:
+    permission: {@shkbankAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@prefix} 공지 내용을 입력해주세요."
+            stop
+        send "" to all players
+        send "{@prefix} &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop
+
+options:
+    @: &6[&e&l예산&6]&f
+
+    # 로그
+    dir: plugins/Skript/data/logs/budget
+
+# 변수
+# {budget::%name%}  | 기관 예산
+
+function budgetAdd(name: text, p: offlineplayer, n: number, t: text):
+    add {_n} to {budget::%{_name}%}
+    balanceRemove({_p}, {_n}, "Budget") if {_t} isn't "OP"
+    if {_t} is "OP":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add 서버 %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "Tax":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add 세금(일반직) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "국고기부":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(국고기부) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "인지대기부":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(인지대기부) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "국고입금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(국고입금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "인지대입금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(인지대입금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "등록금입금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(등록금입금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else:
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}% %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+
+function budgetRemove(name: text, p: offlineplayer, n: number, t: text):
+    remove {_n} from {budget::%{_name}%}
+    if {_t} isn't "Salary":
+        if {_t} isn't "OP":
+            balanceAdd({_p}, {_n}, "Budget")
+    if {_t} is "OP":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove 서버 %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "Salary":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove %{_p}%(일급) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "국고출금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove %{_p}%(국고출금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "인지대출금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove %{_p}%(인지대출금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} is "등록금출금":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Add %{_p}%(등록금출금) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else if {_t} contains "테러실패":
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove %{_p}%(%{_t}%) %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+    else:
+        sync insert "%now formatted as "yyyyMMdd HHmmss"% Remove %{_p}% %{_n}% -> %{budget::%{_name}%}%" at line 1 of file path "{@dir}/%{_name}%.txt"
+
+function budgetList(p: player, name: text, page: number, t: text):
+    set {_file::*} to content of file path "{@dir}/%{_name}%.txt"
+    send "&6예산 입출금 기록 (%now%)" to {_p}
+    if {_file::*} isn't set:
+        send "&4예산 입출금 기록을 찾을 수 없음." to {_p}
+        stop
+    set {_max} to round up (size of {_file::*} / 10)
+    send " &e---- &6기록 &e-- &6페이지 &c%{_page}%&6/&c%{_max}% &e----" to {_p}
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_page}-1)*10+1) and ({_page}*10):
+            set {_list::*} to loop-value split by " "
+            set {_money} to {_list::5} parsed as number
+            set {_left} to {_list::7} parsed as number
+            if {_list::3} is "Add":
+                set {_type} to "입금"
+            else if {_list::3} is "Remove":
+                set {_type} to "출금"
+            send "&7[%{_ind}%] &f%{_list::1}% | %{_list::4}% | %moneyDigit({_money})%원 %{_type}% | 잔액 %moneyDigit({_left})%원" to {_p}
+    if {_page} < {_max}:
+        if {_t} is "None":
+            send "&c/예산 %{_name}% 확인 %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p}
+        else if {_t} is "OP":
+            send "&c/budget get %{_name}% %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p}
+
+function budgetBankList(p: player, page: number):
+    set {_file::*} to content of file path "{@dir}/국고.txt"
+    send "&6예산 입출금 기록 (%now%)" to {_p}
+    if {_file::*} isn't set:
+        send "&4예산 입출금 기록을 찾을 수 없음." to {_p}
+        stop
+    set {_max} to round up (size of {_file::*} / 10)
+    send " &e---- &6기록 &e-- &6페이지 &c%{_page}%&6/&c%{_max}% &e----" to {_p}
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_page}-1)*10+1) and ({_page}*10):
+            set {_list::*} to loop-value split by " "
+            set {_money} to {_list::5} parsed as number
+            set {_left} to {_list::7} parsed as number
+            if {_list::3} is "Add":
+                set {_type} to "입금"
+            else if {_list::3} is "Remove":
+                set {_type} to "출금"
+            send "&7[%{_ind}%] &f%{_list::1}% | %{_list::4}% | %moneyDigit({_money})%원 %{_type}% | 잔액 %moneyDigit({_left})%원" to {_p}
+    if {_page} < {_max}:
+        send "&c/국고 확인 %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p}
+
+function budgetCourtList(p: player, page: number):
+    set {_file::*} to content of file path "{@dir}/인지대.txt"
+    send "&6예산 입출금 기록 (%now%)" to {_p}
+    if {_file::*} isn't set:
+        send "&4예산 입출금 기록을 찾을 수 없음." to {_p}
+        stop
+    set {_max} to round up (size of {_file::*} / 10)
+    send " &e---- &6기록 &e-- &6페이지 &c%{_page}%&6/&c%{_max}% &e----" to {_p}
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_page}-1)*10+1) and ({_page}*10):
+            set {_list::*} to loop-value split by " "
+            set {_money} to {_list::5} parsed as number
+            set {_left} to {_list::7} parsed as number
+            if {_list::3} is "Add":
+                set {_type} to "입금"
+            else if {_list::3} is "Remove":
+                set {_type} to "출금"
+            send "&7[%{_ind}%] &f%{_list::1}% | %{_list::4}% | %moneyDigit({_money})%원 %{_type}% | 잔액 %moneyDigit({_left})%원" to {_p}
+    if {_page} < {_max}:
+        send "&c/인지대 확인 %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p}
+
+function budgetUnivList(p: player, page: number):
+    set {_file::*} to content of file path "{@dir}/등록금.txt"
+    send "&6예산 입출금 기록 (%now%)" to {_p}
+    if {_file::*} isn't set:
+        send "&4예산 입출금 기록을 찾을 수 없음." to {_p}
+        stop
+    set {_max} to round up (size of {_file::*} / 10)
+    send " &e---- &6기록 &e-- &6페이지 &c%{_page}%&6/&c%{_max}% &e----" to {_p}
+    set {_ind} to 0
+    loop {_file::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_page}-1)*10+1) and ({_page}*10):
+            set {_list::*} to loop-value split by " "
+            set {_money} to {_list::5} parsed as number
+            set {_left} to {_list::7} parsed as number
+            if {_list::3} is "Add":
+                set {_type} to "입금"
+            else if {_list::3} is "Remove":
+                set {_type} to "출금"
+            send "&7[%{_ind}%] &f%{_list::1}% | %{_list::4}% | %moneyDigit({_money})%원 %{_type}% | 잔액 %moneyDigit({_left})%원" to {_p}
+    if {_page} < {_max}:
+        send "&c/등록금 확인 %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." to {_p}
+
+on load:
+    loop "시청", "의회", "대법원", "검찰청", "경찰청", "대학교", "특허청", "감사원", "국고", "인지대", "문화방송원", "등록금", and "은행":
+        set {budget::%loop-value%} to 0 if {budget::%loop-value%} isn't set
+
+command /예산 [<text>] [<text>] [<number>]:
+    trigger:
+        if arg-1 is "시청":
+            if player has permission "city.admin":
+                set {_name} to "시청"
+            else:
+                send "{@@} 당신은 시청 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "의회":
+            if player has permission "congress.user":
+                set {_name} to "의회"
+            else:
+                send "{@@} 당신은 의회 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "대법원":
+            if player has permission "court.admin":
+                set {_name} to "대법원"
+            else:
+                send "{@@} 당신은 대법원 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "검찰청":
+            if player has permission "prose.admin":
+                set {_name} to "검찰청"
+            else:
+                send "{@@} 당신은 검찰청 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "경찰청":
+            if player has permission "police.admin":
+                set {_name} to "경찰청"
+            else:
+                send "{@@} 당신은 경찰청 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "대학교":
+            if player has permission "univ.admin":
+                set {_name} to "대학교"
+            else:
+                send "{@@} 당신은 대학교 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "문화방송원":
+            if player has permission "culbro.admin":
+                set {_name} to "문화방송원"
+            else:
+                send "{@@} 당신은 문화방송원 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "은행":
+            if player has permission "shkbank.admin":
+                set {_name} to "은행"
+            else:
+                send "{@@} 당신은 은행 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "헌법재판소":
+            if player has permission "ccourt.admin":
+                set {_name} to "헌법재판소"
+            else:
+                send "{@@} 당신은 헌법재판소 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "특허청":
+            if player has permission "kipo.admin":
+                set {_name} to "특허청"
+            else:
+                send "{@@} 당신은 특허청 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "국고":
+            if player has permission "budget.admin":
+                set {_name} to "국고"
+            else:
+                send "{@@} 당신은 국고를 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "인지대":
+            if player has permission "court.admin":
+                set {_name} to "인지대"
+            else:
+                send "{@@} 당신은 법원 인지대를 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "등록금":
+            if player has permission "univ.admin":
+                set {_name} to "등록금"
+            else:
+                send "{@@} 당신은 대학교 등록금을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 is "감사원":
+            if player has permission "bai.admin":
+                set {_name} to "감사원"
+            else:
+                send "{@@} 당신은 감사원 예산을 관리할 권한이 없습니다."
+                stop
+
+        else if arg-1 isn't "시청" or "의회" or "대법원" or "검찰청" or "경찰청" or "대학교" or "문화방송원" or "은행" or "특허청" or "인지대" or "등록금" or "국고":
+            send "{@@} 올바른 기관명을 입력하십시오."
+            send "     &7└ 시청, 대법원, 검찰청, 경찰청, 대학교, 문화방송원, 은행, 특허청, 국고, 인지대, 등록금"
+            send "{@@} /예산 [기관명] 확인 [페이지] &8&l| &f예산 입출금 기록을 확인합니다."
+            send "{@@} /예산 [기관명] 입금 [금액] &8&l| &f금액만큼 예산을 입금합니다."
+            send "{@@} /예산 [기관명] 출금 [금액] &8&l| &f금액만큼 예산을 출금합니다."
+            stop
+ 
+        if arg-2 is "확인":
+            set {_page} to arg-3
+            if {_page} isn't set:
+                set {_page} to 1
+            send "{@@} 현재 &a%{_name}%&f의 예산은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            budgetList(player, {_name}, {_page}, "None")
+
+        else if arg-2 is "입금":
+            if arg-3 isn't set:
+                send "{@@} 입금할 금액을 입력해주세요."
+                stop
+            if arg-3 <= 0:
+                send "{@@} 0원 이하는 입금할 수 없습니다."
+                stop
+            if arg-3 > player's balance:
+                send "{@@} 입금액은 잔액보다 많을 수 없습니다."
+                stop
+            budgetAdd({_name}, player, arg-3, "None")
+            send "{@@} &6%moneyDigit(arg-3)%&f원을 입금하였습니다. 현재 &a%{_name}%&f의 예산은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+
+        else if arg-2 is "출금":
+            if arg-3 isn't set:
+                send "{@@} 출금할 금액을 입력해주세요."
+                stop
+            if arg-3 <= 0:
+                send "{@@} 0원 이하는 출금할 수 없습니다."
+                stop
+            if arg-3 > {budget::%{_name}%}:
+                send "{@@} 출금액은 예산 잔액보다 많을 수 없습니다."
+                stop
+            budgetRemove({_name}, player, arg-3, "None")
+            send "{@@} &6%moneyDigit(arg-3)%&f원을 출금하였습니다. 현재 &a%{_name}%&f의 예산은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+
+        else:
+            send "{@@} /예산 [기관명] 확인 [페이지] &8&l| &f예산 입출금 기록을 확인합니다."
+            send "{@@} /예산 [기관명] 입금 [금액] &8&l| &f금액만큼 예산을 입금합니다."
+            send "{@@} /예산 [기관명] 출금 [금액] &8&l| &f금액만큼 예산을 출금합니다."
+
+command /국고 [<text>] [<number>]:
+    trigger:
+        if arg-1 is "확인":
+            set {_page} to arg-2
+            if {_page} isn't set:
+                set {_page} to 1
+            set {_name} to "국고"
+            send "{@@} 현재 &a%{_name}%금&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            budgetBankList(player, {_page})
+            stop
+
+        else if arg-1 is "출금":
+            player has permission "budget.admin"
+            if arg-2 isn't set:
+                send "{@@} 출금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 출금할 수 없습니다."
+                stop
+            if arg-2 > {budget::국고}:
+                send "{@@} 출금액은 국고 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "국고"
+            budgetRemove("국고", player, arg-2, "국고출금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 출금하였습니다. 현재 &a%{_name}%금&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else if arg-1 is "입금":
+            if arg-2 isn't set:
+                send "{@@} 입금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 입금할 수 없습니다."
+                stop
+            if arg-2 > player's balance:
+                send "{@@} 입금액은 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "국고"
+            budgetAdd("국고", player, arg-2, "국고입금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 입금하였습니다. 현재 &a%{_name}%금&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else if arg-1 is "기부":
+            if arg-2 isn't set:
+                send "{@@} 기부할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 기부할 수 없습니다."
+                stop
+            if arg-2 > player's balance:
+                send "{@@} 기부액은 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "국고"
+            budgetAdd("국고", player, arg-2, "국고기부")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 기부하였습니다. 현재 &a%{_name}%금&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else:
+            send "{@@} /국고 확인 [페이지] &8&l| &f국고의 입출금 기록을 확인합니다."
+            send "{@@} /국고 입금 [금액] &8&l| &f금액만큼 국고로 예산을 입금합니다." if player has permission "budget.admin"
+            send "{@@} /국고 출금 [금액] &8&l| &f금액만큼 국고에서 예산을 출금합니다." if player has permission "budget.admin"
+            send "{@@} /국고 기부 [금액] &8&l| &f금액만큼 국고에 예산을 기부합니다."
+            stop
+
+command /인지대 [<text>] [<number>]:
+    trigger:
+        if arg-1 is "확인":
+            set {_page} to arg-2
+            if {_page} isn't set:
+                set {_page} to 1
+            set {_name} to "인지대"
+            send "{@@} 현재 &a%{_name}%금&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            budgetCourtList(player, {_page})
+            stop
+
+        else if arg-1 is "출금":
+            player has permission "budget.admin"
+            if arg-2 isn't set:
+                send "{@@} 출금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 출금할 수 없습니다."
+                stop
+            if arg-2 > {budget::인지대}:
+                send "{@@} 출금액은 인지대 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "인지대"
+            budgetRemove("인지대", player, arg-2, "인지대출금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 출금하였습니다. 현재 &a%{_name}%&f는 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else if arg-1 is "입금":
+            if arg-2 isn't set:
+                send "{@@} 입금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 입금할 수 없습니다."
+                stop
+            if arg-2 > player's balance:
+                send "{@@} 입금액은 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "인지대"
+            budgetAdd("인지대", player, arg-2, "인지대입금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 입금하였습니다. 현재 &a%{_name}%&f는 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else if arg-1 is "기부":
+            if arg-2 isn't set:
+                send "{@@} 기부할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 기부할 수 없습니다."
+                stop
+            if arg-2 > player's balance:
+                send "{@@} 기부액은 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "인지대"
+            budgetAdd("인지대", player, arg-2, "인지대기부")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 기부하였습니다. 현재 &a%{_name}%&f는 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else:
+            send "{@@} /인지대 확인 [페이지] &8&l| &f인지대의 입출금 기록을 확인합니다."
+            send "{@@} /인지대 입금 [금액] &8&l| &f금액만큼 인지대로 예산을 입금합니다." if player has permission "court.admin"
+            send "{@@} /인지대 출금 [금액] &8&l| &f금액만큼 인지대에서 예산을 출금합니다." if player has permission "court.admin"
+            send "{@@} /인지대 기부 [금액] &8&l| &f금액만큼 인지대에 예산을 기부합니다."
+            stop
+
+command /등록금 [<text>] [<number>]:
+    trigger:
+        if arg-1 is "확인":
+            set {_page} to arg-2
+            if {_page} isn't set:
+                set {_page} to 1
+            set {_name} to "등록금"
+            send "{@@} 현재 &a%{_name}%&f은 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            budgetUnivList(player, {_page})
+            stop
+
+        else if arg-1 is "출금":
+            player has permission "budget.admin"
+            if arg-2 isn't set:
+                send "{@@} 출금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 출금할 수 없습니다."
+                stop
+            if arg-2 > {budget::인지대}:
+                send "{@@} 출금액은 등록금 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "등록금"
+            budgetRemove("등록금", player, arg-2, "등록금출금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 출금하였습니다. 현재 &a%{_name}%&f는 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else if arg-1 is "입금":
+            if arg-2 isn't set:
+                send "{@@} 입금할 금액을 입력해주세요."
+                stop
+            if arg-2 <= 0:
+                send "{@@} 0원 이하는 입금할 수 없습니다."
+                stop
+            if arg-2 > player's balance:
+                send "{@@} 입금액은 잔액보다 많을 수 없습니다."
+                stop
+            set {_name} to "등록금"
+            budgetAdd("인지대", player, arg-2, "등록금입금")
+            send "{@@} &6%moneyDigit(arg-2)%&f원을 입금하였습니다. 현재 &a%{_name}%&f는 &6%moneyDigit({budget::%{_name}%})%&f원입니다."
+            stop
+
+        else:
+            send "{@@} /등록금 확인 [페이지] &8&l| &f등록금의 입출금 기록을 확인합니다."
+            send "{@@} /등록금 입금 [금액] &8&l| &f금액만큼 등록금으로 예산을 입금합니다." if player has permission "univ.admin"
+            send "{@@} /등록금 출금 [금액] &8&l| &f금액만큼 등록금에서 예산을 출금합니다." if player has permission "univ.admin"
+            stop
+
+command /budget [<text>] [<text>] [<number>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "get":
+            if arg-2 isn't set:
+                send "{@@} 기관명을 입력해주세요."
+                stop
+            loop "시청", "의회", "대법원", "검찰청", "경찰청", "대학교", "특허청", "문화방송원", "국고", "인지대", "감사원", "등록금" and "은행":
+                if arg-2 is loop-value:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@@} 올바른 기관명을 입력해주세요."
+                stop
+            set {_page} to arg-3
+            if {_page} isn't set:
+                set {_page} to 1
+            send "{@@} 현재 &a%arg-2%&f의 예산은 &6%moneyDigit({budget::%arg-2%})%&f원입니다."
+            budgetList(player, arg-2, {_page}, "OP")
+    
+        else if arg-1 is "give":
+            if arg-2 isn't set:
+                send "{@@} 기관명을 입력해주세요."
+                stop
+            loop "시청", "의회", "대법원", "검찰청", "경찰청", "대학교", "특허청", "문화방송원", "국고", "인지대", "감사원", "등록금" and "은행":
+                if arg-2 is loop-value:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@@} 올바른 기관명을 입력해주세요."
+                stop
+            if arg-3 isn't set:
+                send "{@@} 추가할 금액을 입력해주세요."
+                stop
+            budgetAdd(arg-2, player, arg-3, "OP")
+            send "{@@} &6%moneyDigit(arg-3)%&f원을 추가하였습니다. 현재 &a%arg-2%&f의 예산은 &6%moneyDigit({budget::%arg-2%})%&f원입니다."
+
+        else if arg-1 is "take":
+            if arg-2 isn't set:
+                send "{@@} 기관명을 입력해주세요."
+                stop
+            loop "시청", "의회", "대법원", "검찰청", "경찰청", "대학교", "특허청", "문화방송원", "국고", "인지대", "감사원", "등록금" and "은행":
+                if arg-2 is loop-value:
+                    set {_temp} to true
+            if {_temp} isn't set:
+                send "{@@} 올바른 기관명을 입력해주세요."
+                stop
+            if arg-3 isn't set:
+                send "{@@} 삭제할 금액을 입력해주세요."
+                stop
+            if arg-3 > {budget::%arg-2%}:
+                send "{@@} 삭제할 금액은 예산보다 클 수 없습니다."
+                stop
+            budgetRemove(arg-2, player, arg-3, "OP")
+            send "{@@} &6%moneyDigit(arg-3)%&f원을 삭제하였습니다. 현재 &a%arg-2%&f의 예산은 &6%moneyDigit({budget::%arg-2%})%&f원입니다."
+
+        else:
+            send "{@@} /budget get [이름] [페이지] &8&l| &f기관의 예산 입출금 기록을 확인합니다."
+            send "{@@} /budget give [이름] [금액] &8&l| &f금액만큼 기관의 예산을 추가합니다."
+            send "{@@} /budget take [이름] [금액] &8&l| &f금액만큼 기관의 예산을 삭제합니다."
+
+options:
+    # 럭펌 그룹명
+
+    # 시청       
+    시청장: 시청장      
+    부시청장: 부시청장       
+    관리관: 관리관          
+    이사관: 이사관         
+    부이사관: 부이사관
+    서기관: 서기관
+    사무관: 사무관
+    주사: 주사
+    주사보: 주사보
+    서기: 서기
+    서기보: 서기보
+
+    # 경찰
+    경찰청장: 경찰청장
+    치안정감: 치안정감
+    치안감: 치안감
+    경무관: 경무관
+    총경: 총경
+    경정: 경정
+    경감: 경감
+    경위: 경위
+    경사: 경사
+    경장: 경장
+    순경: 순경
+    
+    # 검찰
+    검찰총장: 검찰총장
+    검사장: 검사장
+    차장검사: 차장검사
+    부장검사: 부장검사
+    부부장검사: 부부장검사
+    검사: 검사
+
+    # 대학교
+    총장: 총장
+    부총장: 부총장
+    학과장: 학과장
+    교수: 교수
+    조교수: 조교수
+    전임교원: 전임교원
+
+    # 문화방송원
+    원장: 문화방송원원장
+    부원장: 문화방송원부원장
+    차장: 문화방송원차장
+    부장: 문화방송원부장
+    부부장: 문화방송원부부장
+    부원: 문화방송원부원
+    인턴: 문화방송원인턴
+
+    # 의회
+    의장: 의장
+    의원: 의원
+
+    # 법원
+    대법원장: 대법원장
+    대법관: 대법관
+    수석부장판사: 수석부장판사
+    부장판사: 부장판사
+    판사: 판사
+    판사시보: 판사시보
+
+    # 헌재
+    헌법재판소장: 헌법재판소장
+    헌법재판관: 헌법재판관
+
+    # 특허청
+    특허청장: 특허청장
+    특허청차장: 특허청차장
+
+    #감사원
+    감사위원: 감사위원
+
+    #공백
+    공백: BLANK
+
+    #prefix
+    !: &f[ §x§1§a§6§7§f§bO§x§2§b§7§5§f§7f§x§3§d§8§2§f§3f§x§4§e§9§0§e§fi§x§5§f§9§e§e§bc§x§7§1§a§b§e§7e §x§8§2§b§9§e§4S§x§9§4§c§6§e§0a§x§a§5§d§4§d§cl§x§b§6§e§2§d§8a§x§c§8§e§f§d§4r§x§d§9§f§d§d§0y &f]
+
+    dir: plugins/Skript/data/logs/tax/%now formatted as "yyyy-MM-dd"%.txt
+
+function OfficeSalaryPrice(p: player) :: number:
+    if group of {_p} is "{@의장}" or "{@대법원장}":
+        return 3100000
+    else if group of {_p} is "{@공백}":
+        return 2900000
+    else if group of {_p} is "{@시청장}" or "{@은행총재}" or "{@경찰청장}" or "{@검찰총장}" or "{@총장}" or "{@원장}" or "{@대법관}":
+        return 2700000
+    else if group of {_p} is "{@부시청장}" or "{@은행부총재}" or "{@치안정감}" or "{@검사장}" or "{@부총장}" or "{@부원장}":
+        return 2500000
+    else if group of {_p} is "{@관리관}" or "{@경무관}" or "{@부장검사}" or "{@차장}" or "{@수석부장판사}" or "{@특허청장}":
+        return 2300000
+    else if group of {_p} is "{@이사관}" or "{@은행국장}" or "{@치안감}":
+        return 2100000
+    else if group of {_p} is "{@부이사관}" or "{@총경}" or "{@부부장검사}" or "{@학과장}" or "{@부장}" or "{@부장판사}" or "{@특허청차장}":
+        return 1900000
+    else if group of {_p} is "{@서기관}" or "{@경정}" or "{@교수}":
+        return 1700000
+    else if group of {_p} is "{@사무관}" or "{@은행부국장}" or "{@경감}" or "{@검사}" or "{@조교수}" or "{@부부장}" or "{@판사}":
+        return 1500000
+    else if group of {_p} is "{@주사}" or "{@경위}":
+        return 1300000
+    else if group of {_p} is "{@주사보}" or "{@은행부장}" or "{@경사}" or "{@부원}":
+        return 1100000
+    else if group of {_p} is "{@서기}" or "{@경장}" or "{@판사시보}":
+        return 900000
+    else if group of {_p} is "{@서기보}" or "{@은행원}" or "{@순경}" or "{@전임교원}" or "{@인턴}":
+        return 700000
+    return 0
+
+command /공무원일급 [<text>] [<text>]:
+    trigger:
+        stop
+        if arg-1 isn't set:
+            send "{@!} 기관명을 입력해주세요."
+            send "     &7└ 시청, 의회, 대법원, 검찰청, 경찰청, 대학교, 문화방송원, 은행, 특허청, 감사원"
+            stop
+        loop "시청", "의회", "대법원", "검찰청", "경찰청", "대학교", "특허청", "문화방송원", "감사원", and "은행":
+            if arg-1 is loop-value:
+                if arg-1 is "시청":
+                    if player doesn't have permission "city.user":
+                        send "{@!} 당신은 &d&l시청&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+                else if arg-1 is "의회":
+                    if player doesn't have permission "congress.user":
+                        send "{@!} 당신은 &e&l의회&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+                else if arg-1 is "대법원":
+                    if player doesn't have permission "court.user":
+                        send "{@!} 당신은 &c&l대법원&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+                else if arg-1 is "검찰청":
+                    if player doesn't have permission "prose.user":
+                        send "{@!} 당신은 &9&l검찰청&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "경찰청":
+                    if player doesn't have permission "police.user":
+                        send "{@!} 당신은 &b&l경찰청&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "대학교":
+                    if player doesn't have permission "univ.user":
+                        send "{@!} 당신은 &a&l대학교&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "문화방송원":
+                    if player doesn't have permission "culbro.user":
+                        send "{@!} 당신은 &3&l문화방송원&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "은행":
+                    if player doesn't have permission "shkbank.user":
+                        send "{@!} 당신은 &e&l상어은행&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "헌법재판소":
+                    if player doesn't have permission "ccourt.user":
+                        send "{@!} 당신은 &6&l헌법&c재판소&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+                else if arg-1 is "감사원":
+                    if player doesn't have permission "bai.user":
+                        send "{@!} 당신은 &5&l감사원&f의 일급을 받을 권한이 없습니다."
+                        stop
+
+
+                else if arg-1 is "특허청":
+                    if player doesn't have permission "kipo.user":
+                        send "{@!} 당신은 &9&l특&1&l허&b청&f의 일급을 받을 권한이 없습니다."
+                        stop
+                set {_temp} to true
+
+        if {_temp} isn't set:
+            send "{@!} 올바른 기관명을 입력해주세요."
+            send "     &7└ 시청, 의회, 대법원, 검찰청, 경찰청, 대학교, 문화방송원, 은행, 특허청, 감사원"
+            stop
+
+        if arg-2 is "받기":
+            if {office.salary::%uuid of player%} is true:
+                send title "&6&l[&6&l&o!&6&l]" with subtitle "&7일급을 이미 받으셨습니다." for 2 seconds
+                stop
+            set {_price} to OfficeSalaryPrice(player)
+            if {_price} < 0:
+                send title "&6&l[&6&l&o!&6&l]" with subtitle "&7일급이 설정되지 않았습니다." for 2 seconds
+                stop
+            set {_tax} to {_price}*0.1
+            add {_tax} to {job.tax}
+            set {_real} to {_price}*0.9
+            create file "{@dir}" if file "{@dir}" doesn't exist
+            
+
+            if {_real} > {budget::%arg-1%}:
+                send "{@@} 예산이 부족하여 일급을 받을 수 없습니다."
+                stop
+
+            write "%now formatted as "yyyy-MM-dd HH:mm:ss"% %player% %{_tax}% -> %{job.tax}%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to player
+
+            budgetRemove(arg-1, player, {_real}, "None")
+            balanceAdd(player, {_real}, "%arg-1%OfficeSalary")
+            send title "&e&l%moneyDigit({_real})%원" with subtitle "&7일급을 지급받았습니다." for 2 seconds
+            send " {@!} &bSHK WORLD &a공무원 &f급여 명세서"
+            send " {@!} &f성명: &e%player% &f| &f지급일: %now formatted as "yyyy.MM.dd"%"
+            send " {@!} &f&l임금항목&f: 기본급 &a%moneyDigit({_price})%&f원"
+            send " {@!} &f&l공제내역&f: 소득세 &a%moneyDigit({_tax})%&f원"
+            send " {@!} &f&l실지급액&f: &a%moneyDigit({_real})%&f원"
+            stop
+
+
+            
+        else:
+            send " &7&l&m──────────────────────────────────────────────────"
+            send "   {@!} &f/공무원일급 [기관] 받기 &7- 자신의 직업 일급을 지급받습니다."
+            send "       &6└ &f%player's group% &7일급을 받습니다."
+            send " &7&l&m──────────────────────────────────────────────────"
+            stop
+
+command /office_salary_reset [<offlineplayer>]:
+    permission: op.user
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg-1 is "all":
+            delete {office.salary::*}
+            send " {@!} &e모든 플레이어&f의 공무원 일급 지급 데이터를 정상적으로 초기화하였습니다."
+            stop
+        delete {office.salary::%uuid of arg-1%}
+        send " {@!} &e%arg-1%&f님의 공무원 일급 지급 데이터를 정상적으로 초기화하였습니다."

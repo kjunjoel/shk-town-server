@@ -1,0 +1,85 @@
+import:
+    java.util.List
+    org.bukkit.event.block.BlockFertilizeEvent
+    org.bukkit.block.BlockState
+
+options:
+    prefix: &f[ &6&l!&f ]
+
+on quit:
+    delete {event.talking::%player%}
+
+command /event_set:
+    permission: op
+    trigger:
+        loop all offlineplayers:
+            if size of {event.carrier::%uuid of loop-offlineplayer%::*} is 7:
+                set {event.carrier::%uuid of loop-offlineplayer%} to true
+        send "done"
+
+command /event_remove [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {event.talking::%arg-1%}
+        send "deleted the variable of %arg-1%"
+
+on right click on entity:
+    if uncolored name of entity is "이벤트 서버로 이동":
+        {quit::%player%} isn't set
+        set {quit::%player%} to true
+        connect player to "secondary_server"
+
+on right click on entity:
+    if uncolored name of entity is "말 달리기":
+        {quit::%player%} isn't set
+        set {quit::%player%} to true
+        connect player to "horse_riders_server"
+
+
+on quit:
+    delete {quit::%player%}
+
+on rightclick:
+    if uncolored name of player's tool is "[ 설날 ] 떡국":
+        make player run command "effect give %player% minecraft:saturation 18000 0 true" as op
+        make player run command "effect give %player% minecraft:regeneration 300 0 true" as op
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 설날 ] 구절판":
+        make player run command "effect give %player% minecraft:saturation 18000 0 true" as op
+        make player run command "effect give %player% minecraft:haste 300 1 true" as op
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 설날 ] 송편":
+        make player run command "effect give %player% minecraft:saturation 6000 0 true" as op
+        make player run command "effect give %player% minecraft:instant_health 1 2 true" as op
+        remove 1 of player's tool from player's tool
+    else if uncolored name of player's tool is "[ 설날 ] 전":
+        make player run command "effect give %player% minecraft:saturation 6000 0 true" as op
+        make player run command "effect give %player% minecraft:resistance 300 0 true" as op
+        make player run command "effect give %player% minecraft:luck 300 0 true" as op
+        remove 1 of player's tool from player's tool
+
+
+on rightclick on sign:
+    if "%x coord of event-block% %y coord of event-block% %z coord of event-block%" is "130.5 47.5 -5.5":
+        make player run command "warp crane" as op
+    else if "%x coord of event-block% %y coord of event-block% %z coord of event-block%" is "156.5 66.5 -25.5":
+        make player run command "warp down" as op
+
+command /coupon_reset <offlineplayer>:
+    permission: op.user
+    trigger:
+        delete {coupon.goodbye2022::%uuid of arg-1%}
+        delete {coupon.shark230319::%uuid of arg-1%}
+        delete {coupon.open2023::%uuid of arg-1%}
+        delete {coupon.shkworld0806::%uuid of arg-1%}
+        delete {coupon.shkworld0808::%uuid of arg-1%}
+        delete {coupon.도축업자::%uuid of arg-1%}
+        delete {coupon.SHKWORLD0826::%uuid of arg-1%}
+
+        send "Deleted record of %arg-1%'s coupon(goodbye2022)"
+        send "Deleted record of %arg-1%'s coupon(shark230319)"
+        send "Deleted record of %arg-1%'s coupon(open2023)"
+        send "Deleted record of %arg-1%'s coupon(shkworld0806)"
+        send "Deleted record of %arg-1%'s coupon(shkworld0808)"
+        send "Deleted record of %arg-1%'s coupon(도축업자)"
+        send "Deleted record of %arg-1%'s coupon(SHKWORLD0826)"

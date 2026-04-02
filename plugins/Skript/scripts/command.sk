@@ -1,0 +1,185 @@
+command /카페:
+    trigger:
+        send "<link:https://cafe.naver.com/shkworld>&ahttps://cafe.naver.com/shkworld" to player
+		
+command /디스코드:
+    trigger:
+        send "<link:https://discord.gg/74W7aCNSF2>&9https://discord.gg/74W7aCNSF2" to player
+
+command /연결:
+    trigger:
+        make player run command "discord link" as op
+
+command /리소스팩:
+    trigger:
+        execute console command "iatexture %player%"
+
+command /find_info [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        send "[ &6&l! &f] &e%arg-1%님&f의 신상 정보는 아래와 같습니다."
+        if arg-1 is online:
+            send "> 상태: &a온라인"
+        else:
+            send "> 상태: &c오프라인 &7(최근 접속 %{estate.lasttime.%uuid of arg-1%}%)"
+        send "> 직업: %prefix of arg-1%"
+        if {marry::%uuid of arg-1%} is set:
+            if {marry.state::%uuid of arg-1%} is "before":
+                send "> 약혼자: &e%{marry::%uuid of arg-1%} parsed as offlineplayer% &7(경험치 %{marry.exp::%uuid of arg-1%}%/500)"
+            else if {marry.state::%uuid of arg-1%} is "after":
+                if {marry.nick::%uuid of arg-1%} is set:
+                    send "> 배우자: &e%{marry::%uuid of arg-1%} parsed as offlineplayer% &7(%{marry.nick::%uuid of arg-1%}%부부)"
+                else:
+                    send "> 배우자: &e%{marry::%uuid of arg-1%} parsed as offlineplayer%"
+        set {_balance} to arg-1's balance
+        set {_stock} to stockProperty(arg-1)
+        set {_cryptocurrency} to cryptocurrencyProperty(arg-1)
+        set {_oneroom} to estatePrice(arg-1, "oneroom")
+        set {_apt} to estatePrice(arg-1, "apt")
+        set {_farm} to farmPrice(arg-1)
+        set {_store} to storePrice(arg-1)
+        set {_building} to buildingPrice(arg-1)
+        set {_money} to (arg-1's balance + {_stock} + {_cryptocurrency} + {_oneroom} + {_apt} + {_farm} + {_store} + {_building})
+        send "> &6잔액: &f%moneyDigit({_balance})%원"
+        send "> &6주식: &f%moneyDigit({_stock})%원"
+        send "> &6가상화폐: &f%moneyDigit({_cryptocurrency})%원"
+        send "> &6총 재산: &f%moneyDigit({_money})%원"
+        send "> &c부동산 &f목록은 아래와 같습니다."
+        loop 10 times:
+            set {_file::*} to file contents of "plugins/Skript/data/estate/oneroom/제%loop-number%원룸.txt"
+            loop {_file::*}:
+                set {_data::*} to loop-value-2 split by " "
+                if {estate.oneroom::제%loop-value-1%원룸.%{_data::1}%} is arg-1:
+                    send "> 제%loop-value-1%원룸 %{_data::1}%호 (소유주)"
+                if {estate.oneroom::제%loop-value-1%원룸.%{_data::1}%::couser::*} contains arg-1:
+                    send "> 제%loop-value-1%원룸 %{_data::1}%호 (공동소유주)"
+        loop 3 times:
+            set {_file::*} to file contents of "plugins/Skript/data/estate/apt/10%loop-number%동.txt"
+            loop {_file::*}:
+                set {_data::*} to loop-value-2 split by " "
+                if {estate.apt::10%loop-value-1%동.%{_data::1}%} is arg-1:
+                    send "> 10%loop-value-1%동 %{_data::1}%호 (소유주)"
+                if {estate.apt::10%loop-value-1%동.%{_data::1}%::couser::*} contains arg-1:
+                    send "> 10%loop-value-1%동 %{_data::1}%호 (공동소유주)"
+        send "> &e상가 &f목록은 아래와 같습니다."
+        set {_file::*} to file contents of "plugins/Skript/data/store/store.txt"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            if {store::%{_data::1}%} is arg-1:
+                send "> %{_data::1}% (소유주)"
+            if {store::%{_data::1}%::couser::*} contains arg-1:
+                send "> %{_data::1}% (공동소유주)"
+        send "> &6농장 &f목록은 아래와 같습니다."
+        set {_file::*} to file contents of "plugins/Skript/data/farming/farming.txt"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by "::"
+            if {farm::%{_data::1}%} is arg-1:
+                send "> %{_data::1}%번지 (소유주)"
+            if {farm::%{_data::1}%::couser::*} contains arg-1:
+                send "> %{_data::1}%번지 (공동소유주)"
+        send "> &a빌딩 &f목록은 아래와 같습니다."
+        set {_file::*} to file contents of "plugins/Skript/data/building/building.txt"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by " "
+            if {building::%{_data::1}%} is arg-1:
+                set {_name::*} to {_data::1} split by "-"
+                send "> 제%{_name::1}%빌딩 %{_name::2}%층 (소유주)"
+            if {building::%{_data::1}%::couser::*} contains arg-1:
+                set {_name::*} to {_data::1} split by "-"
+                send "> 제%{_name::1}%빌딩 %{_name::2}%층 (공동소유주)"
+        {guild.%uuid of arg-1%} is set
+        send "> 파벌 %{guild.name::%{guild.%uuid of arg-1%}%}%&f에 소속되어 있습니다."
+        set {_money} to {guild.money::%{guild.%uuid of arg-1%}%}
+        send "> 파벌 소유액은 &6%moneyDigit({_money})%원&f입니다."
+
+on command "/gsit:spin":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:gspin":
+    if sender is not op:
+        cancel event
+
+on command "/spin":
+    if sender is not op:
+        cancel event
+
+on command "/gspin":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:sit":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:gsit":
+    if sender is not op:
+        cancel event
+
+on command "/gsit":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:lay":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:glay":
+    if sender is not op:
+        cancel event
+
+on command "/glay":
+    if sender is not op:
+        cancel event
+
+on command "/lay":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:crawl":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:gcrawl":
+    if sender is not op:
+        cancel event
+
+on command "/crawl":
+    if sender is not op:
+        cancel event
+
+on command "/gcrawl":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:bellyflop":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:gbellyflop":
+    if sender is not op:
+        cancel event
+
+on command "/bellyflop":
+    if sender is not op:
+        cancel event
+
+on command "/gbellyflop":
+    if sender is not op:
+        cancel event
+
+on command "/gsit:gsitrl":
+    if sender is not op:
+        cancel event
+
+on command "/glist":
+    if sender is not op:
+        cancel event
+
+on command "/maps":
+    if sender is not op:
+        cancel event
+
+on command "/nuke":
+    if sender is not op:
+        cancel event

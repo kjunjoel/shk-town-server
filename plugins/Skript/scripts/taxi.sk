@@ -1,0 +1,260 @@
+import:
+    org.apache.commons.lang.StringEscapeUtils
+
+options:
+    npc1: [&6택시기사&f] 김상원
+    npc2: [&6택시기사&f] 김필원
+    npc3: [&6택시기사&f] 김아름
+    npc4: [&6택시기사&f] 정경례
+
+    loc: plugins/Skript/data/taxi/new_taxi.txt
+    locB: plugins/Skript/data/taxi/taxi_bunpyeong.txt
+    locC: plugins/Skript/data/taxi/taxi_newisland.txt
+
+    taxi1: plugins/Skript/data/taxi/taxi_1.txt
+    taxi2: plugins/Skript/data/taxi/taxi_2.txt
+    taxi3: plugins/Skript/data/taxi/taxi_3.txt
+    taxi4: plugins/Skript/data/taxi/taxi_4.txt
+
+on load:
+    set {taxi::*} to content of file path "{@loc}"
+    set {taxi.bunpyeong::*} to content of file path "{@locB}"
+    set {taxi.prefix} to "&f%StringEscapeUtils.unescapeJava("\uc002")%"
+
+on unload:
+    delete {taxi::*}
+    delete {taxi.bunpyeong::*}
+    delete {taxi.newisland::*}
+
+function taxiDistanceCalculation(1: location, 2: location) :: number:
+    set {_x.diff} to abs(x coord of {_1} - x coord of {_2})
+    set {_y.diff} to abs(y coord of {_1} - y coord of {_2})
+    set {_z.diff} to abs(z coord of {_1} - z coord of {_2})
+    set {_result} to {_x.diff} + {_y.diff} + {_z.diff}
+    return round {_result}
+
+function taxiTeleportCalculation(1: location, 2: location) :: number:
+    set {_x.diff} to abs(x coord of {_1} - x coord of {_2})
+    set {_y.diff} to abs(y coord of {_1} - y coord of {_2})
+    set {_z.diff} to abs(z coord of {_1} - z coord of {_2})
+    set {_result} to ({_x.diff}^2 + {_y.diff}^2 + {_z.diff}^2)^(1/2)
+    return {_result}
+
+function taxiTimeCalculation(dist: number, option: text) :: number:
+    set {_time} to 5
+    add round down ({_dist} / 30) to {_time}
+    if {_option} is "호출권":
+        if {_time} > 15:
+            set {_time} to 15
+    return {_time}
+
+function taxiPriceCalculation(dist: number, overcity: number) :: number:
+    set {_기본거리} to 200
+    set {_기본요금} to 3800
+    set {_추가거리} to 13
+    set {_추가요금} to 100
+    set {_시계외요금} to 3000
+
+    set {_result} to {_기본요금} + {_시계외요금} * {_overcity}
+    if {_dist} <= {_기본거리}:
+        return {_result}
+    else:
+        set {_d} to {_dist}
+        remove {_기본거리} from {_d}
+        set {_left.dist} to round up ({_d}/{_추가거리})
+        add {_left.dist}*{_추가요금} to {_result}
+        return {_result}
+
+function taxiGUI(p: player, loc: location, name: text): 
+    if {_name} is "호출권":
+        set {_inv} to chest inventory with 6 rows named "&6&l택시 호출권"
+    else:
+        set {_inv} to chest inventory with 6 rows named "&6&l상어택시"
+    set {_ind} to 0
+    if {_name} is "분평면":
+        set {_taxi::*} to {taxi.bunpyeong::*}
+    else if {_name} is "신규섬":
+        set {_taxi::*} to {taxi.newisland::*}
+    else:
+        set {_taxi::*} to {taxi::*}
+    loop {_taxi::*}:
+        set {_list::*} to loop-value split by " "
+        replace all "_" in {_list::1} with " "
+        if {_list::1} isn't "X":
+            set {_temp} to false
+            if {_name} is "중앙동":
+                if {_list::1} contains "서촌읍":
+                    set {_temp} to 1
+            else if {_name} is "서촌읍":
+                if {_list::1} contains "중앙동":
+                    set {_temp} to 1
+            set {_x} to {_list::2} parsed as number
+            set {_y} to {_list::3} parsed as number
+            set {_z} to {_list::4} parsed as number
+            set {_pos} to location at ({_x}, {_y}, {_z}) of {_p}'s world
+            set {_distance} to taxiDistanceCalculation({_loc}, {_pos})
+            set {_price} to taxiPriceCalculation({_distance}, {_temp})
+            set {_price} to moneyDigit({_price})
+            set {_item} to sunflower named "%{taxi.prefix}% &l%{_list::1}%" with custom model data {_list::5} parsed as integer
+            if uuid of {_p} is "253902dc-2287-4697-8472-6fa905916797": # kosown
+                set {_time} to 5
+            else if uuid of {_p} is "91b5d16d-86f0-4344-8e28-b9e3c14f190f": #SUPPORT_YUMI0470
+                set {_time} to 7
+            else:
+                set {_time} to taxiTimeCalculation({_distance}, {_name})
+            add "&e&l위치&f: %{_x}%, %{_y}%, %{_z}%" to lore of {_item}
+            add "&e&l거리&f: %moneyDigit({_distance})%m" to lore of {_item}
+            add "&e&l가격&f: &b%{_price}%원" to lore of {_item}
+            add "&a좌클릭 &f시 %{_time}%초 후 %{_list::1}%(으)로 이동됩니다." to lore of {_item}
+            set slot {_ind} of {_inv} to {_item}
+        add 1 to {_ind}
+    open {_inv} to {_p}
+
+# 텍시 베리어 추가하기(중앙동)
+command /taxi_1:
+    permission: op.user
+    trigger:
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] 방벽을 보고 다시 입력해주세요."
+            stop
+        sync append "%x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@taxi1}"
+        send "[ &6&l! &f] &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) taxi1.txt에 추가했습니다."
+
+# 택시 배리어 추가 (서촌읍/심심대교)
+command /taxi_2:
+    permission: op.user
+    trigger:
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] 방벽을 보고 다시 입력해주세요."
+            stop
+        sync append "%x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@taxi2}"
+        send "[ &6&l! &f] &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) taxi2.txt에 추가했습니다."
+
+# 텍시 베리어 추가하기(분평면)
+command /taxi_3:
+    permission: op.user
+    trigger:
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] 방벽을 보고 다시 입력해주세요."
+            stop
+        sync append "%x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@taxi3}"
+        send "[ &6&l! &f] &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) taxi3.txt에 추가했습니다."
+
+# 텍시 베리어 추가하기(신규섬)
+command /taxi_4:
+    permission: op.user
+    trigger:
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] 방벽을 보고 다시 입력해주세요."
+            stop
+        sync append "%x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@taxi4}"
+        send "[ &6&l! &f] &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) taxi4.txt에 추가했습니다."
+
+# 텍시 베리어 NPC 클릭 시 GUI 열기
+on rightclick on barrier:
+    set {_loc} to player's location
+    set {_file::*} to content of file path "{@taxi1}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of event-block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        taxiGUI(player, {_loc}, "중앙동")
+        wait 1 tick
+        set {gui.%uuid of player%::taxiGUI} to true
+        stop
+    delete {_file::*}
+    delete {_list::*}
+    set {_file::*} to content of file path "{@taxi2}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of event-block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        taxiGUI(player, {_loc}, "서촌읍")
+        wait 1 tick
+        set {gui.%uuid of player%::taxiGUI} to true
+        stop
+    delete {_file::*}
+    delete {_list::*}
+    set {_file::*} to content of file path "{@taxi3}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of event-block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        taxiGUI(player, {_loc}, "분평면")
+        wait 1 tick
+        set {gui.%uuid of player%::taxiGUI} to true
+        stop
+    set {_file::*} to content of file path "{@taxi4}"
+    loop {_file::*}:
+        set {_list::*} to loop-value split by " "
+        set {_temp} to true if "%location of event-block%" contains "x: %{_list::1}%, y: %{_list::2}%, z: %{_list::3}%" and {_list::4}
+    if {_temp} is true:
+        taxiGUI(player, {_loc}, "신규섬")
+        wait 1 tick
+        set {gui.%uuid of player%::taxiGUI} to true
+        stop
+
+on inventory click:
+    if {gui.%uuid of player%::taxiGUI} is true:
+        cancel event
+        if event-inventory is player's inventory:
+            stop
+
+        if clicked slot is air:
+            stop
+
+        if index of clicked slot is between 0 and 53:
+            set {_text} to "호출권" if uncolored display name of event-inventory contains "택시 호출권"
+            set {_lore::*} to lore of clicked item
+            set {_temp::*} to {_lore::1} split by ": "
+            replace all "," in {_temp::2} with ""
+            set {_pos} to {_temp::2}
+            set {_temp::*} to {_lore::2} split by ": "
+            replace all "," in {_temp::2} with ""
+            replace all "m" in {_temp::2} with ""
+            set {_distance} to uncolored {_temp::2} parsed as number
+            set {_temp::*} to {_lore::3} split by ": "
+            replace all "," in {_temp::2} with ""
+            replace all "원" in {_temp::2} with ""
+            set {_price} to uncolored {_temp::2} parsed as number
+            set {_temp::*} to {_lore::4} split by "후 "
+            replace all "(으)로 이동됩니다." in {_temp::2} with ""
+            set {_name} to {_temp::2}
+            if {_price} > player's balance:
+                send "%{taxi.prefix}% 잔액이 부족합니다."
+                stop
+            close player's inventory
+            set {_loc} to player's location    
+            set {_time} to taxiTimeCalculation({_distance}, {_text})
+            if {_text} isn't "호출권":
+                if uuid of player is "253902dc-2287-4697-8472-6fa905916797": # kosown
+                    set {_time} to 5
+                else if uuid of player is "91b5d16d-86f0-4344-8e28-b9e3c14f190f": #SUPPORT_YUMI0470
+                    set {_time} to 7
+            send "%{_text}% %{_time}%" if player is op
+            send "%{taxi.prefix}% %{_time}%초 뒤에 &e%{_name}%&f(으)로 이동됩니다. 3m 이상 움직이면 이동이 취소됩니다."
+            balanceRemove(player, {_price}, "Taxi")
+            set {taxi::%player%} to true
+            loop {_time}*10 times:
+                wait 2 ticks
+                set {_dist} to taxiTeleportCalculation({_loc}, player's location)
+                if {_dist} > 3:
+                    send "%{taxi.prefix}% 3m 이상 움직여 이동이 취소되었습니다."
+                    balanceAdd(player, {_price}, "Taxi")
+                    delete {taxi::%player%}
+                    stop
+                if mod(loop-number, 10) is 0:
+                    send action bar "&e%{_name}%&f(으)로 이동까지 &6%{_time} - round down (loop-number/10)%&f초 남음" to player
+            dailyquestSound(player, 5)
+            set {_price} to moneyDigit({_price})
+            execute console command "tp %player% %{_pos}%"
+            send "%{taxi.prefix}% &e%{_name}%&f(으)로 이동되었습니다. 요금은 &b%{_price}%원&f입니다."
+            delete {taxi::%player%}
+            stop
+
+        else:
+            stop
+
+on inventory close:
+    if {gui.%uuid of player%::taxiGUI} is true:
+        delete {gui.%uuid of player%::taxiGUI}

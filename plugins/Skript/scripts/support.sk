@@ -1,0 +1,188 @@
+on join:
+    if uuid of player is "029189db-abe3-43ac-a6ec-0bf4b216e278": # MaWangNim
+        send "&4&l† 마왕 강림 †" to all players
+    else if uuid of player is "0708f4fa-c590-4cee-8f67-558e498ed107": # ABCBklau
+        send "<##0099FF>&l주하가 등장했당" to all players
+    else if uuid of player is "07d68033-349f-4006-9b46-0cde21772abc": # Mmumg_
+        send "<##FF0000>&lBBQ<##FFCC00>&l황금올리브<##FFFF99>&l에 미친 <##000000>&l구<##FFFFFF>&l춘 <##FFFF99>&l두두등장~!!" to all players
+    else if uuid of player is "0cbc7cfc-6d61-4bd7-9662-b06eae03115b": # PearYo
+        send "<##FF00DD>떨.캔디.아이스.액상.브액 도매상 입장!" to all players
+    else if uuid of player is "18fd2077-075d-4252-a60b-c800387d4e86": # Aurora48672
+        send "&a&lDESTROY" to all players
+    else if uuid of player is "23547198-79cf-4d7a-9d05-48b32ccb9642": # kimmsc0405_
+        send "&b&l☆ &b&l노&5&l이 &b&l왓쪄여 ☆ ヾ(≧▽≦*)o" to all players
+    else if uuid of player is "23567190-1052-40ca-9fc9-d620a82dc6b1": # sabyuck_0 (미설정)
+        send "> <##87CEEB>&lSVIP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "253902dc-2287-4697-8472-6fa905916797": # kosown
+        send "&e&l귀하신 소은님이 입장 하십니다." to all players
+    else if uuid of player is "25ed1d57-1a6f-4d92-864d-f2c6750d8572": # ebull8
+        send "##<##FFFF00>&n&l이불<##FFFFCC>&l_안은_안전해" to all players
+    else if uuid of player is "2d73660d-2ab1-42fc-82c1-d3d923581ad9": # yeajun0212
+        send "<##00FF7F>&l예주니 <##7B68EE>&l등장!!" to all players
+    else if uuid of player is "3f72fc35-08ba-4d06-9a1c-68c1baadd76a": # K_Joker_0314 (미설정)
+        send "> <##87CEEB>&lSVIP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "46c08e51-63a3-4085-8a98-45a1676cecc5": # hehekong
+        send "<##D4B1FD>&lHi~ Kong!" to all players
+    else if uuid of player is "4a3f73b7-9cea-459c-95cd-df437ea0dc3b": # _TerrorMan_
+        send "&f&l비폭력주의자 민정우씨가 돌아오셨습니다." to all players
+    else if uuid of player is "6738ec24-8bae-40f5-97e1-036fbd90d037": # Jagaeg (미설정)
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "67f3b56d-7f77-4325-974b-ff1d6aceef79": # CRC_IDs_KCB
+        send "&b&l건드리지 말아줘요.제발...힐링하고 싶습니다." to all players
+    else if uuid of player is "6818f359-954a-44e0-a674-460d10427f28": # hhhh615 (미설정)
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "7683439f-86df-4bc0-8c67-5dd15903d18b": # tmon1031 (미설정)
+        send "> <##87CEEB>&lMVP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "7ed159a1-2b84-47a4-9c79-1e93759a122d": # zero060315
+        send "&a♬쇼커 둥장!♬" to all players
+    else if uuid of player is "845885df-df5b-4957-9c7c-0639380d1b5b": # star_tree_
+        stop
+    else if uuid of player is "8e868188-dcea-48a7-b6b3-8f83e9bcf037": # OwOLunala (미설정)
+        stop
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "9069ea90-77e9-4ab2-928d-438165f27005": # Hee_su_37 (미설정)
+        send "> <##87CEEB>&lSVIP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "91b5d16d-86f0-4344-8e28-b9e3c14f190f": # goyumi0470
+        send "<##FF33FF>&l&o&n유미님이 <##ffd700>&l&o&n소환사의 협곡<##FF33FF>&l&o&n에 도착하였습니다." to all players
+    else if uuid of player is "97d03cb8-4d38-4a00-b2cb-74d5eb5d6e03": # S2YOUMS2
+        send "&d♥♡&d&l.귀.요.미.등.장.&d♡♥" to all players
+    else if uuid of player is "9ee32158-a2d4-412c-b777-9dc9400dbe70": # Iron8379
+        send "&4&l우리들은 &c&l정의&4&l라는 이름의 복수에 사로잡힌 평범한 인간이다" to all players
+    else if uuid of player is "a077a475-51c1-4ba0-b983-eac10c4be1ce": # ms7477oo
+        stop
+    else if uuid of player is "ac683b06-0717-47a2-a690-1debaa673046": # ANGSS6500
+        send "<##66FFFF>앙쓰 입장!" to all players
+    else if uuid of player is "aed69ba6-053d-434d-b0ae-660d32a39c1f": # au_guk (미설정)
+        send "> <##87CEEB>&lSVIP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "af6f370c-6363-4e19-894c-20dd61bba641": # mmjin (미설정)
+        send "&b&l미미가 넘어지면 므므 등장!" to all players
+    else if uuid of player is "af779ab2-fc50-4554-9c29-735d5f3bbd56": # Keil_PVP (미설정)
+        send "> <##87CEEB>&lMVP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "b083cd11-7905-41a0-8c4f-2ab65378b92f": # HoE9Yo
+        send "&d&l '24. 11. 16. &e&l I’m getting married." to all players
+    else if uuid of player is "bac2bca2-c558-4f5d-b59a-6549c5d60882": # Hood_S (미설정)
+        send "> <##87CEEB>&lMVP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "c14ea76d-c050-4835-9806-4adac407829e": # cat_purrr
+        send "<##660000>&l고양아 <##000066>&l야옹해봐" to all players
+    else if uuid of player is "c5cbd1cd-5fff-4885-9f54-52a5396b097e": # LytLs (미설정)
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "cf4447d4-8290-4be9-b7b1-ce614dc9805a": # ggbhamsterbutler
+        send "&b&l햄스터를 사랑하는 햄집사 출두요!!!!" to all players
+    else if uuid of player is "d415bde2-610c-4d89-85f2-2f38b6c62912": # Ven_detta_ (미설정)
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "da2220f5-faae-4a09-a3f1-d3b7f1def3e7": # 72Deus
+        send "<##696969>Deus lo Vult" to all players
+    else if uuid of player is "daa20280-ea4d-407f-8c05-e1cf5e9ddf1b": # som_0
+        send "&e&l.•⁰° 솜 °⁰•. &b&l여기 접수하러 왔다 ._." to all players
+    else if uuid of player is "df3e93b9-748e-4848-9a15-ca48ec556cc1": # bini0729
+        send "&e&l비니와써여 ㅇ_<" to all players
+    else if uuid of player is "e8710e0f-cbb4-42f8-ab13-733f554b496f": # Twich_Dyr
+        send "<##FF0033>VDT<##FF0033>&l그룹 대표이사님 들어오십니다" to all players
+    else if uuid of player is "f0f23cb6-8885-4240-b432-744e08c15654": # Viva_Va_Viva (미설정)
+        send "> <##87CEEB>&lSVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+    else if uuid of player is "f3965539-4a9a-4b42-b7ec-5cd2f6dcb329": # Smerf_ (미설정)
+        send "> <##87CEEB>&lMVP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+
+    else if player has permission "VIP+.user":
+        {list.admin::*} doesn't contain "%player%"
+        uuid of player isn't "06ae8bea-92da-43f2-a896-7eee24ba24dd" # 개인 요청 (_GOMDORI__)
+        send "> <##87CEEB>&lVIP+ &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+        stop
+    
+    else if player has permission "VIP.user":
+        {list.admin::*} doesn't contain "%player%"
+        uuid of player isn't "aa6c68a5-4f65-4a4f-b1cb-8c4b91d2e0bc" # 개인 요청 (CS48)
+        send "> <##87CEEB>&lVIP &e&l%player%님&f이 서버에 접속하셨습니다! <" to all players
+
+on quit:
+    if uuid of player is "029189db-abe3-43ac-a6ec-0bf4b216e278": # MaWangNim
+        send "&c&l악마가 봉인되었습니다." to all players
+    else if uuid of player is "253902dc-2287-4697-8472-6fa905916797": # kosown
+        send "&e&l귀하신 소은님께서 퇴장하셨습니다" to all players
+    else if uuid of player is "46c08e51-63a3-4085-8a98-45a1676cecc5": # hehekong (미설정)
+        send "<##D4B1FD>&lBye~ Kong!"
+    else if uuid of player is "67f3b56d-7f77-4325-974b-ff1d6aceef79": # CRC_IDs_KCB
+        send "&b부디 그의 재산을 상장폐지로부터 보호받게 해주소서..." to all players
+    else if uuid of player is "91b5d16d-86f0-4344-8e28-b9e3c14f190f": # goyumi0470 (미설정)
+        send "> <##87CEEB>&lRVIP+ &e&l%player%님&f이 서버에서 퇴장하셨습니다! <" to all players
+    else if uuid of player is "af6f370c-6363-4e19-894c-20dd61bba641": # mmjin
+        send "&b&l미미가 넘어지면 므므 퇴장..." to all players
+    else if uuid of player is "bac2bca2-c558-4f5d-b59a-6549c5d60882": # Hood_S (미설정)
+        send "> <##87CEEB>&lMVP+ &e&l%player%님&f이 서버에서 퇴장하셨습니다! <" to all players
+    
+    else if player has permission "MVP.user":
+        {list.admin::*} doesn't contain "%player%"
+        uuid of player isn't "df3e93b9-748e-4848-9a15-ca48ec556cc1" # 개인 요청 (bini0729)
+        send "> <##87CEEB>&lMVP &e&l%player%님&f이 서버에서 퇴장하셨습니다! <" to all players
+        stop
+
+    else if player has permission "SVIP+.user":
+        {list.admin::*} doesn't contain "%player%"
+        uuid of player isn't "25ed1d57-1a6f-4d92-864d-f2c6750d8572" # 개인 요청 (ebull8)
+        send "> <##87CEEB>&lSVIP+ &e&l%player%님&f이 서버에서 퇴장하셨습니다! <" to all players
+
+
+command /누적후원보상 <offlineplayer> <integer>:
+    permission: op.user
+    trigger:
+        set {_taxi} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        set {_name} to name tag named "&f커스텀 칭호권" with lore "&7사용하려면 관리자 호출" and "&7거래가 불가능한 아이템입니다."
+        set {_support} to book named "&f[ <##87CEFA>SUPPORT &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+        if arg-2 is 1:
+            itemGive(arg-1, {_taxi}, 10, "Support")
+        if arg-2 is 3:
+            execute player command "lp user %arg-1% permission set SUPPORT.user"
+            set {_prefix} to book named "&f[ <##87CEFA>SUPPORT &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 20, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 5:
+            execute player command "lp user %arg-1% permission set VIP.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lVIP &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 20, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 10:
+            execute player command "lp user %arg-1% permission set VIP+.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lVIP+ &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 50, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 20:
+            execute player command "lp user %arg-1% permission set SVIP.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lSVIP &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 100, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 30:
+            execute player command "lp user %arg-1% permission set SVIP+.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lSVIP+ &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 100, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+            send formatted "[ &6&l! &f] <url:https://discord.gg/dvr2W7EeT7>&e&l여기<reset>&f를 눌러 &a빌딩 구매소&f로 이동합니다." to arg-1
+        if arg-2 is 50:
+            execute player command "lp user %arg-1% permission set MVP.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lMVP &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 200, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 100:
+            execute player command "lp user %arg-1% permission set MVP+.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lMVP+ &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 500, "Support")
+            itemGive(arg-1, {_name}, 1, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 150:
+            execute player command "lp user %arg-1% permission set RVIP.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lRVIP &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_taxi}, 1000, "Support")
+            itemGive(arg-1, {_name}, 2, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        if arg-2 is 200:
+            execute player command "lp user %arg-1% permission set RVIP+.user"
+            set {_prefix} to book named "&f[ <##87CEFA>&lRVIP+ &f]" with lore "&7우클릭하여 칭호를 획득합니다."
+            itemGive(arg-1, {_name}, 2, "Support")
+            itemGive(arg-1, {_prefix}, 1, "Support")
+        send "[ &6&l! &f] &a%arg-1%님&f에게 &e%moneyDigit(arg-2 * 10000)%원 &f누적 후원보상을 지급했습니다."
+        send "[ &6&l! &f] &e%moneyDigit(arg-2 * 10000)%원 &f누적 후원보상을 지급받았습니다." to arg-1
+        

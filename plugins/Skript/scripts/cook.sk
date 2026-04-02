@@ -1,0 +1,1074 @@
+import:
+    org.bukkit.event.player.PlayerInteractEvent
+    org.bukkit.Material
+
+options:
+    prefix: &f[&e서촌&b&l식자재&a마트&f]
+    gui: &e서촌&b&l식자재&a마트&f
+    data: plugins/Skript/data/cook/market.txt
+    
+# 변수
+# {cook.stock::%item type%.%custom model data%}  | item type & custom model data의 재고
+# {cook.volume::%item type%.%custom model data%} | item type & custom model data의 현재 재고(거래량)
+# {cook.close::%item.type%.%custom model data%}  | item type & custom model data의 장마감
+# {cook.vi::%item.type%.%custom model data%}     | item type & custom model data의 VI 발동 남은 시간 (minute)
+# {cook.npc::%name%}                             | name의 NPC 이름
+
+on load:
+    stop
+    set {_file::*} to content of file path "plugins/Skript/data/cook/ia.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        replace all "_" in {_data::1} with " "
+        set {cook.ia::%{_data::1}%} to {_data::2}
+
+function cookItem(i: item, price: integer, option: text) :: item:
+    set {_item} to {_i}
+    add "&f" to lore of {_i}
+    if {_price} is 0:
+        add "&7구매할 수 없음" to lore of {_i}
+    else:
+        add "&b현재 &f가격: &e&l%moneyDigit({_price})%&e원" to lore of {_i}
+    add "&f" to lore of {_i}
+    add "&6좌클릭&f하여 1개 &6구매" to lore of {_i} if {_option} isn't "purchase"
+    add "&a우클릭&f하여 1개 &a판매" to lore of {_i}
+    add "&6SHIFT + 좌클릭&f하여 64개 &6구매" to lore of {_i} if {_option} isn't "purchase"
+    add "&aSHIFT + 우클릭&f하여 모두 &a판매" to lore of {_i}
+    return {_i}
+
+function cookPrice(i: item) :: integer:
+    set {_stock} to {cook.stock::%type of {_i}%.%custom model data of {_i}%}
+    if {_stock} isn't set:
+        return 0
+    if type of {_i} is seed or pumpkin seed or melon seed or beetroot seed:
+        set {_price} to round down (200*({_stock}^(-0.1))+(200/{_stock}))
+    else:
+        set {_price} to round down (1000000000 / {_stock})
+    return {_price}
+
+function cookGUI1(p: player, option: text):
+    set {_inv} to chest inventory with 5 rows named "{@gui} - 과일 및 기타"
+    set slot 10 of {_inv} to cookItem(honey bottle, 1200, {_option})
+    set slot 11 of {_inv} to cookItem(brown mushroom, 1500, {_option})
+    set slot 12 of {_inv} to cookItem(crimson fungus, 1500, {_option})
+    set slot 13 of {_inv} to cookItem(warped fungus, 1500, {_option})
+    set slot 14 of {_inv} to cookItem(ice block, 200, {_option})
+    set slot 15 of {_inv} to cookItem(sugar, 300, {_option})
+    set slot 16 of {_inv} to cookItem(cocoa bean, cookPrice(cocoa bean), {_option})
+    set slot 29 of {_inv} to cookItem(cooked pork with custom model data 10033 named "&f양파", cookPrice(cooked pork with custom model data 10033), {_option})
+    set slot 30 of {_inv} to cookItem(cooked pork with custom model data 10028 named "&f토마토", cookPrice(cooked pork with custom model data 10028), {_option})
+    set slot 31 of {_inv} to cookItem(cooked pork with custom model data 10035 named "&f양배추", cookPrice(cooked pork with custom model data 10035), {_option})
+    set slot 32 of {_inv} to cookItem(paper with custom model data 10034 named "&f벼", cookPrice(paper with custom model data 10034), {_option})
+    set slot 33 of {_inv} to cookItem(apple, 750, {_option})
+    open {_inv} to {_p}
+
+function cookGUI2(p: player, option: text):
+    set {_inv} to chest inventory with 6 rows named "{@gui} - 요리도구"
+    set slot 12 of {_inv} to cookItem(paper with custom model data 10086 named "&f요리사용 조합대", 300000, {_option})
+    set slot 14 of {_inv} to cookItem(paper with custom model data 10094 named "&f요리사용 레시피책", 10000, {_option})
+    set slot 18 of {_inv} to cookItem(stick, 80, {_option})
+    set slot 19 of {_inv} to cookItem(bowl, 157, {_option})
+    set slot 20 of {_inv} to cookItem(empty bottle, 52, {_option})
+    set slot 21 of {_inv} to cookItem(bucket, 114, {_option})
+    set slot 23 of {_inv} to cookItem(paper with custom model data 10007 named "&f난로", 1430000, {_option})
+    set slot 24 of {_inv} to cookItem(paper with custom model data 10031 named "&f조리용 냄비", 518990, {_option})
+    set slot 25 of {_inv} to cookItem(paper with custom model data 10030 named "&f프라이팬", 481050, {_option})
+    set slot 26 of {_inv} to cookItem(paper with custom model data 10036 named "&f도마", 255900, {_option})
+    set slot 38 of {_inv} to cookItem(wooden sword with custom model data 10001 named "&f부싯돌 식칼", 144100, {_option})
+    set slot 39 of {_inv} to cookItem(wooden sword with custom model data 10004 named "&f철 식칼", 250000, {_option})
+    set slot 40 of {_inv} to cookItem(wooden sword with custom model data 10003 named "&f금 식칼", 38400, {_option})
+    set slot 41 of {_inv} to cookItem(wooden sword with custom model data 10002 named "&f다이아몬드 식칼", 1248800, {_option})
+    set slot 42 of {_inv} to cookItem(wooden sword with custom model data 10000 named "&f네더라이트 식칼", 1421700, {_option})
+    open {_inv} to {_p}
+
+function cookGUI3(p: player, option: text):
+    set {_inv} to chest inventory with 5 rows named "{@gui} - 정육 및 해산물"
+    set slot 10 of {_inv} to cookItem(beef, cookPrice(beef), {_option})
+    set slot 11 of {_inv} to cookItem(mutton, cookPrice(mutton), {_option})
+    set slot 12 of {_inv} to cookItem(pork, cookPrice(pork), {_option})
+    set slot 14 of {_inv} to cookItem(cooked pork with custom model data 10014 named "&f햄", cookPrice(cooked pork with custom model data 10014), {_option})
+    set slot 15 of {_inv} to cookItem(chicken, cookPrice(chicken), {_option})
+    set slot 16 of {_inv} to cookItem(egg, 630, {_option})
+    set slot 29 of {_inv} to cookItem(dried kelp, 20000, {_option})
+    set slot 30 of {_inv} to cookItem(salmon, cookPrice(salmon), {_option})
+    set slot 31 of {_inv} to cookItem(Milk Bucket, cookPrice(Milk), {_option})
+    set slot 32 of {_inv} to cookItem(cod, cookPrice(cod), {_option})
+    set slot 33 of {_inv} to cookItem(ink sac, cookPrice(ink sac), {_option})
+    open {_inv} to {_p}
+
+function cookGUI4(p: player, option: text):
+    set {_inv} to chest inventory with 5 rows named "{@gui} - 야채"
+    set slot 11 of {_inv} to cookItem(seed, cookPrice(seed), {_option})
+    set slot 12 of {_inv} to cookItem(pumpkin seed, cookPrice(pumpkin seed), {_option})
+    set slot 13 of {_inv} to cookItem(cocoa bean, cookPrice(cocoa bean), {_option})
+    set slot 14 of {_inv} to cookItem(melon seed, cookPrice(melon seed), {_option})
+    set slot 15 of {_inv} to cookItem(beetroot seed, cookPrice(beetroot seed), {_option})
+    set slot 28 of {_inv} to cookItem(pumpkin, cookPrice(pumpkin), {_option})
+    set slot 29 of {_inv} to cookItem(melon slice, cookPrice(melon slice), {_option})
+    set slot 30 of {_inv} to cookItem(sweet berries, cookPrice(sweet berries), {_option})
+    set slot 31 of {_inv} to cookItem(potato, cookPrice(potato), {_option})
+    set slot 32 of {_inv} to cookItem(carrot, cookPrice(carrot), {_option})
+    set slot 33 of {_inv} to cookItem(wheat item, cookPrice(wheat item), {_option})
+    set slot 34 of {_inv} to cookItem(beetroot, cookPrice(beetroot), {_option})
+    open {_inv} to {_p}
+
+function cookBuy(p: player, i: item, n: integer):
+    set {_volume} to {cook.volume::%type of {_i}%.%custom model data of {_i}%}
+    set {_lore::*} to uncolored lore of {_i}
+    set {_data::*} to {_lore::2} split by " "
+    if {_data::3} doesn't contain "원":
+        send "{@prefix} 해당 상품은 구매할 수 없습니다." to {_p}
+        stop
+    if {_lore::4} doesn't contain "구매":
+        stop
+    if {cook.close::%type of {_i}%.%custom model data of {_i}%} is set:
+        send "{@prefix} 해당 상품의 당일 거래가 마감되었습니다. 내일 오전 9시 이후에 다시 찾아주세요." to {_p}
+        stop
+    if {cook.vi::%type of {_i}%.%custom model data of {_i}%} is set:
+        send "{@prefix} 해당 상품은 변동성 완화 지침으로 인해 구매할 수 없습니다." to {_p}
+        stop
+    replace all "," in {_data::3} with ""
+    replace all "원" in {_data::3} with ""
+    set {_price} to ({_data::3} parsed as integer) * {_n}
+    if {_p}'s balance < {_price}:
+        send "{@prefix} 잔액이 부족합니다." to {_p}
+        stop
+    remove {_n} from {_volume}
+    if {cook.stock::%type of {_i}%.%custom model data of {_i}%} is set:
+        if {_volume} * 100 / {cook.stock::%type of {_i}%.%custom model data of {_i}%} <= 97:
+            send "{@prefix} 구매량 초과로 인해 거래가 취소되었습니다." to {_p}
+            stop
+    balanceRemove({_p}, {_price}, "CookShop")
+    set {_item} to {_i}
+    delete lore of {_item}
+    if name of {_item} is set:
+        make {_p} run command "iaget %{cook.ia::%uncolored name of {_item}%}% %{_n}%" as op
+    else:
+        itemGive({_p}, {_item}, {_n}, "Cook")
+    send "{@prefix} 성공적으로 아이템을 구매했습니다. &c(-%moneyDigit({_price})%원)" to {_p}
+    if {cook.stock::%type of {_i}%.%custom model data of {_i}%} is set:
+        set {_test.1} to {_volume} * 100 / {cook.stock::%type of {_i}%.%custom model data of {_i}%}
+        if {_test.1} <= 97.1:
+            if type of {_i} is seed or pumpkin seed or melon seed or beetroot seed:
+                stop
+            send "{@prefix} 특정 원자재상품의 당일거래가 마감되었습니다." to all players
+            set {cook.close::%type of {_i}%.%custom model data of {_i}%} to true
+        set {_test.2} to {_volume} * 100 / {cook.volume::%type of {_i}%.%custom model data of {_i}%}
+        if {_test.2} <= 99:
+            if type of {_i} is seed or pumpkin seed or melon seed or beetroot seed:
+                stop
+            send "{@prefix} 대규모 거래로 인한 변동성 완화 지침이 자동 시행됩니다. 일부 항목에 대한 거래가 제한될 수 있으므로 양해 부탁드립니다." to all players
+            set {cook.vi::%type of {_i}%.%custom model data of {_i}%} to 20
+        remove {_n} from {cook.volume::%type of {_i}%.%custom model data of {_i}%} if {cook.volume::%type of {_i}%.%custom model data of {_i}%} is set
+
+function cookSell(p: player, i: item, n: text):
+    set {_volume} to {cook.volume::%type of {_i}%.%custom model data of {_i}%}
+    set {_lore::*} to uncolored lore of {_i}
+    set {_data::*} to {_lore::2} split by " "
+    if {_data::3} doesn't contain "원":
+        send "{@prefix} 해당 아이템은 판매할 수 없습니다." to {_p}
+        stop
+    if {cook.close::%type of {_i}%.%custom model data of {_i}%} is set:
+        send "{@prefix} 해당 상품의 당일 거래가 마감되었습니다. 내일 오전 9시 이후에 다시 찾아주세요." to {_p}
+        stop
+    if {cook.vi::%type of {_i}%.%custom model data of {_i}%} is set:
+        send "{@prefix} 해당 아이템은 변동성 완화 지침으로 인해 판매할 수 없습니다." to {_p}
+        stop
+    set {_item} to {_i}
+    set {_amount.cod} to 0
+    set {_amount.salmon} to 0
+    if type of {_item} is cod:
+        loop all items in {_p}'s inventory:
+            if type of loop-item is cod:
+                if uncolored lore of loop-item contains "종류: 바닷물고기":
+                    add item amount of loop-item to {_amount}
+                    add loop-item to {_item::*}
+    else if type of {_item} is salmon:
+        loop all items in {_p}'s inventory:
+            if type of loop-item is cod:
+                if uncolored lore of loop-item contains "종류: 민물고기":
+                    add item amount of loop-item to {_amount}
+                    add loop-item to {_item::*}
+    delete lore of {_item}
+    set {_name.1} to name of {_item}
+    set {_name.1} to "" if {_name.1} isn't set
+    loop all items in {_p}'s inventory:
+        set {_name.2} to name of loop-item
+        set {_name.2} to "" if {_name.2} isn't set
+        if type of {_item} is type of loop-item:
+            if custom model data of {_item} is custom model data of loop-item:
+                if {_name.1} is {_name.2}:
+                    add item amount of loop-item to {_amount}
+                    add loop-item to {_item::*}
+    if {_amount} isn't set:
+        send "{@prefix} 판매할 상품을 가지고 있지 않습니다." to {_p}
+        stop
+    replace all "," in {_data::3} with ""
+    replace all "원" in {_data::3} with ""
+    if {_n} is "1":
+        set {_amount} to 1
+    add {_amount} to {_volume}
+    if {cook.stock::%type of {_i}%.%custom model data of {_i}%} is set:
+        if {_volume} / {cook.stock::%type of {_i}%.%custom model data of {_i}%} >= 1.04:
+            send "{@prefix} 판매량 초과로 인해 거래가 취소되었습니다." to {_p}
+            stop
+    set {_price} to ({_data::3} parsed as integer) * {_amount}
+    send {_loop.item} to {_p}
+    loop all items in {_p}'s inventory:
+        if type of {_item} is cod or salmon:
+            if uncolored lore of loop-item contains "등급: D" or "등급: E":
+                send "{@prefix} 등급 D 또는 E의 아이템을 인벤토리에서 제거한 뒤 다시 시도해주세요." to {_p}
+                stop
+    loop {_item::*}:
+        if {_n} is "1":
+            remove 1 of loop-value from {_p}'s inventory
+            exit 1 loop
+        else:
+            remove loop-value from {_p}'s inventory
+    balanceAdd({_p}, {_price}, "CookShop")
+    send "{@prefix} 성공적으로 아이템을 판매했습니다. &a(+%moneyDigit({_price})%원)" to {_p}
+    if {cook.stock::%type of {_i}%.%custom model data of {_i}%} is set:
+        set {_test.1} to {_volume} * 100 / {cook.stock::%type of {_i}%.%custom model data of {_i}%}
+        if {_test.1} >= 103.89:
+            if type of {_i} is seed or pumpkin seed or melon seed or beetroot seed:
+                stop
+            send "{@prefix} 특정 원자재상품의 당일거래가 마감되었습니다." to all players
+            set {cook.close::%type of {_i}%.%custom model data of {_i}%} to true
+        set {_test.2} to {_volume} * 100 / {cook.volume::%type of {_i}%.%custom model data of {_i}%}
+        if {_test.2} >= 101:
+            if type of {_i} is seed or pumpkin seed or melon seed or beetroot seed:
+                stop
+            send "{@prefix} 대규모 거래로 인한 변동성 완화 지침이 자동 시행됩니다. 일부 항목에 대한 거래가 제한될 수 있으므로 양해 부탁드립니다." to all players
+            set {cook.vi::%type of {_i}%.%custom model data of {_i}%} to 20
+        add {_amount} to {cook.volume::%type of {_i}%.%custom model data of {_i}%} if {cook.volume::%type of {_i}%.%custom model data of {_i}%} is set
+
+command /cook [<text>] [<integer>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "npc":
+            if arg-2 is between 1 and 4:
+                set {cook.npc::%arg-2%} to name of target entity
+                send "[ &6&l!&f ] NPC의 이름이 %name of target entity%로 설정되었습니다."
+            else:
+                send "[ &6&l!&f ] 1, 2, 3, 4 중 하나를 입력해주세요."
+                send "       &7└ 1은 과일 및 기타, 2는 요리도구, 3은 정육 및 해산물, 4는 야채"
+
+        else if arg-1 is "open":
+            if arg-2 is 1:
+                cookGUI1(player, "all")
+            else if arg-2 is 2:
+                cookGUI2(player, "all")
+            else if arg-2 is 3:
+                cookGUI3(player, "all")
+            else if arg-2 is 4:
+                cookGUI4(player, "all")
+            else:
+                send "[ &6&l!&f ] 1, 2, 3, 4 중 하나를 입력해주세요."
+                send "       &7└ 1은 과일 및 기타, 2는 요리도구, 3은 정육 및 해산물, 4는 야채"
+
+        else if arg-1 is "get_stock":
+            player's tool isn't air
+            set {_stock} to {cook.stock::%type of player's tool%.%custom model data of player's tool%}
+            send "[ &6&l!&f ] 현재 %type of player's tool% (%custom model data of player's tool%)의 재고(stock)는 &e%moneyDigit({_stock})%&f개입니다."
+
+        else if arg-1 is "get_volume":
+            player's tool isn't air
+            set {_stock} to {cook.stock::%type of player's tool%.%custom model data of player's tool%}
+            set {_volume} to {cook.volume::%type of player's tool%.%custom model data of player's tool%}
+            set {_percent} to (1 - ({_stock} / {_volume}))*100
+            send "[ &6&l!&f ] 현재 %type of player's tool% (%custom model data of player's tool%)의 재고(volume)는 &e%moneyDigit({_volume})%&f개입니다."
+            send "[ &6&l!&f ] 재고(stock)에 대한 변화량은 &a%{_percent}%%%&f입니다."
+
+        else if arg-1 is "get_price":
+            player's tool isn't air
+            set {_price} to cookPrice(player's tool)
+            send "[ &6&l!&f ] 현재 %type of player's tool% (%custom model data of player's tool%)의 가격은 &e%moneyDigit({_price})%&f원입니다."
+
+        else if arg-1 is "set_stock":
+            player's tool isn't air
+            if arg-2 isn't set:
+                send "[ &6&l!&f ] 설정할 재고(stock)를 입력해주세요."
+                stop
+            set {cook.stock::%type of player's tool%.%custom model data of player's tool%} to arg-2
+            send "[ &6&l!&f ] %type of player's tool% (%custom model data of player's tool%)의 재고(stock)를 &e%moneyDigit(arg-2)%&f개로 설정하였습니다."
+
+        else if arg-1 is "set_volume":
+            player's tool isn't air
+            if arg-2 isn't set:
+                send "[ &6&l!&f ] 설정할 재고(volume)를 입력해주세요."
+                stop
+            set {cook.volume::%type of player's tool%.%custom model data of player's tool%} to arg-2
+            send "[ &6&l!&f ] %type of player's tool% (%custom model data of player's tool%)의 재고(volume)를 &e%moneyDigit(arg-2)%&f개로 설정하였습니다."
+
+        else if arg-1 is "delete":
+            player's tool isn't air
+            delete {cook.stock::%type of player's tool%.%custom model data of player's tool%}
+            delete {cook.volume::%type of player's tool%.%custom model data of player's tool%}
+            delete {cook.close::%type of player's tool%.%custom model data of player's tool%}
+            delete {cook.vi::%type of player's tool%.%custom model data of player's tool%}
+            send "[ &6&l!&f ] %type of player's tool% (%custom model data of player's tool%)와 관련된 모든 정보를 삭제했습니다."
+
+        else if arg-1 is "initialize":
+            delete {cook.vi::*}
+            delete {cook.close::*}
+            set {_item::*} to seed, pumpkin seed, melon seed, beetroot seed, milk bucket
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 10000
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 10000
+            set {_item::*} to pumpkin, melon, wheat item, potato
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 3333333
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 3333333
+            set {_item::*} to paper with custom model data 10034, cooked pork with custom model data 10033, cooked pork with custom model data 10028, cooked pork with custom model data 10035, beetroot, carrot
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 1666665
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 1666665
+            set {_item::*} to sweet berries, cocoa bean
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 1427777
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 1427777
+            set {_item::*} to salmon, cod
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 200000
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 200000
+            set {_item::*} to beef, mutton
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 166667
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 166667
+            set {_item::*} to pork, cooked pork with custom model data 10014, chicken, ink sac
+            loop {_item::*}:
+                set {cook.stock::%type of loop-value%.%custom model data of loop-value%} to 333333
+                set {cook.volume::%type of loop-value%.%custom model data of loop-value%} to 333333
+            send "[ &6&l!&f ] 요리사 초기 설정을 완료했습니다."
+            
+        else:
+            send "/cook npc [1/2/3/4] | NPC 설정"
+            send "/cook open [1/2/3/4] | GUI 열기"
+            send "/cook get_stock <종류> | 손에 든 아이템의 저장된 재고(stock)를 확인합니다."
+            send "/cook get_volume <종류> | 손에 든 아이템의 현재 재고(volume)를 확인합니다."
+            send "/cook get_price <종류> | 손에 든 아이템의 재고(stock)에 따른 가격을 확인합니다."
+            send "/cook set_stock <종류> | 손에 든 아이템의 저장된 재고(stock)를 설정합니다."
+            send "/cook set_volume <종류> | 손에 든 아이템의 현재 재고(volume)를 설정합니다."
+            send "/cook delete <종류> | 손에 든 아이템과 관련된 모든 정보를 삭제합니다."
+            send "/cook initialize | 초기 재고를 설정합니다."
+
+on rightclick on entity:
+    loop {cook.npc::*}:
+        if loop-value is name of event-entity:
+            if loop-index is "1":
+                cookGUI1(player, "purchase")
+            else if loop-index is "2":
+                cookGUI2(player, "purchase")
+            else if loop-index is "3":
+                set {_temp} to true if player has permission "hunter.user"
+                set {_temp} to true if player has permission "fish.user"
+                if {_temp} is set:
+                    cookGUI3(player, "purchase")
+            if loop-index is "4":
+                set {_temp} to true if player has permission "farmer.user"
+                if {_temp} is set:
+                    cookGUI4(player, "purchase") 
+
+on rightclick on polished diorite slab:
+    set {_file::*} to content of file path "{@data}"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if x coord of event-block is between {_data::2} parsed as number and {_data::5} parsed as number:
+            if y coord of event-block is between {_data::3} parsed as number and {_data::6} parsed as number:
+                if z coord of event-block is between {_data::4} parsed as number and {_data::7} parsed as number:
+                    cookGUI1(player, "all") if {_data::1} is "1"
+                    cookGUI2(player, "all") if {_data::1} is "2"
+                    cookGUI3(player, "all") if {_data::1} is "3"
+                    cookGUI4(player, "all") if {_data::1} is "4"
+                    stop
+
+on inventory click:
+    set {_name} to display name of event-inventory
+    if {_name} contains "{@gui}":
+        cancel event
+        clicked item is set
+        event-inventory isn't player's inventory
+        if click type is left mouse button with shift:
+            uncolored lore of clicked item contains "좌클릭하여 1개 구매"
+            cookBuy(player, clicked item, 64)
+
+        else if click type is right mouse button with shift:
+            cookSell(player, clicked item, "all")
+
+        else if click type is left mouse button:
+            uncolored lore of clicked item contains "좌클릭하여 1개 구매"
+            cookBuy(player, clicked item, 1)
+
+        else if click type is right mouse button:
+            cookSell(player, clicked item, "1")
+
+command /요리사거래초기화:
+    permission: op.user
+    trigger:
+        loop {cook.vi::*}:
+            remove 1 from {cook.vi::%loop-index%}
+            delete {cook.vi::%loop-index%} if {cook.vi::%loop-index%} is 0
+        delete {cook.close::*}
+        loop {cook.volume::*}:
+            set {cook.stock::%loop-index%} to loop-value
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@prefix} 식자재 가격이 변동되었습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+
+every 1 minute:
+    loop {cook.vi::*}:
+        remove 1 from {cook.vi::%loop-index%}
+        delete {cook.vi::%loop-index%} if {cook.vi::%loop-index%} is 0
+    delete {cook.close::*}
+    if now formatted as "HH:mm" is "09:00":
+        loop {cook.volume::*}:
+            set {cook.stock::%loop-index%} to loop-value
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@prefix} 식자재 가격이 변동되었습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+
+# -------------------------------------------------------------------------------------------------
+
+# 변수
+# {cookshop.old::%name%}
+# {cookshop.new::%name%}
+# {cookshop.auto::%name%} | 플레이어를 저장
+
+options:
+    @: &e&l[요리사]&f
+    dir: plugins/Skript/data/cook
+    log: plugins/Skript/data/logs/cook/%now formatted as "yyyy-MM-dd"%.csv
+    loop2: "1-103", "1-105", "2-102", "2-105", "2-110", "3-103", "4-101", "4-102", "5-102", "5-105", "7-103"
+
+on load:
+    loop all files in dir path "{@dir}/data":
+        load yaml "%loop-value%" as "cookshop.%file name of loop-value%"
+
+function cookShopCalculate(p: offlineplayer) :: integer:
+    set {_ind} to 0
+    loop all files in dir path "{@dir}/data":
+        set {_player} to yaml value "owner" from "cookshop.%file name of loop-value%"
+        if {_player} is uuid of {_p}:
+            add 1 to {_ind}
+    return {_ind}
+
+function cookShopGUI(p: player, name: text):
+    set {_text} to yaml value "name" from "cookshop.%{_name}%.yml"
+    set {_inv} to chest inventory with 3 rows named "&e&l%{_text}% &0키오스크&8 (%{_name}%)"
+    loop 27 times:
+        set {_nbt} to nbt compound from yaml value "shop.%loop-number%.nbt" from "cookshop.%{_name}%.yml"
+        set {_item} to (yaml value "shop.%loop-number%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+        set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+        set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+        if type of {_item} is air:
+            continue
+        add "&f" to lore of {_item}
+        if {_price} isn't 0:
+            add "&6구매 &f가격: &e&l%moneyDigit({_price})%&e원" to lore of {_item}
+            add "&b남은 &f재고: &d&l%moneyDigit({_n})%&d개" to lore of {_item}
+        else:
+            add "&7가격이 설정되지 않음" to lore of {_item}
+        add "&f" to lore of {_item}
+        add "&6좌클릭&f하여 1개 &6구매" to lore of {_item}
+        add "&6SHIFT + 좌클릭&f하여 64개 &6구매" to lore of {_item}
+        set slot (loop-number)-1 of {_inv} to {_item}
+    open {_inv} to {_p}
+
+function cookShopAdminGUI(p: player, name: text):
+    set {_text} to yaml value "name" from "cookshop.%{_name}%.yml"
+    set {_inv} to chest inventory with 4 rows named "&e&l%{_text}% &0키오스크 관리&8 (%{_name}%)"
+    loop 27 times:
+        set {_nbt} to nbt compound from yaml value "shop.%loop-number%.nbt" from "cookshop.%{_name}%.yml"
+        set {_item} to (yaml value "shop.%loop-number%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+        set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+        set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+        if type of {_item} is air:
+            continue
+        add "&f" to lore of {_item}
+        if {_price} isn't 0:
+            add "&6현재 &f가격: &e&l%moneyDigit({_price})%&e원" to lore of {_item}
+            add "&b남은 &f재고: &d&l%moneyDigit({_n})%&d개" to lore of {_item}
+        else:
+            add "&7가격이 설정되지 않음" to lore of {_item}
+        add "&f" to lore of {_item}
+        add "&6좌클릭&f하여 가격 &6설정" to lore of {_item}
+        add "&a우클릭&f하여 재고 1개 &a추가" to lore of {_item}
+        add "&aSHIFT + 우클릭&f하여 재고 최대로 &a추가" to lore of {_item}
+        set slot (loop-number)-1 of {_inv} to {_item}
+    set {_tax} to yaml value "tax" from "cookshop.%{_name}%.yml"
+    if {cookshop.auto::%{_name}%} is set:
+        set slot 29 of {_inv} to green stained glass named "&a일세 자동이체가 활성화되어 있습니다."
+    else:
+        set slot 29 of {_inv} to red stained glass named "&c일세 자동이체가 비활성화되어 있습니다."
+    set {_now} to convert date now to unix date
+    set {_item} to black stained glass named "&e&l최근 10일간 매출 내역"
+    set {_total} to 0
+    loop 10 times:
+        set {_sum} to 0
+        set {_now} to convert unix date {_now} to date
+        set {_file::*} to content of file path "plugins/Skript/data/logs/cook/%{_now} formatted as "yyyy-MM-dd"%.csv"
+        loop {_file::*}:
+            set {_data::*} to loop-value-2 split by ","
+            if {_data::1} is {_name}:
+                add {_data::2} parsed as number to {_sum}
+        add {_sum} to {_total}
+        add "&f%{_now} formatted as "yyyy-MM-dd"% &8&l|&b %moneyDigit({_sum})%원" to lore of {_item}
+        set {_now} to convert date {_now} to unix date
+        remove 86400 from {_now}
+    add "&f&l합계&f &8&l|&d %moneyDigit({_total})%원" to lore of {_item}
+    set slot 31 of {_inv} to {_item}
+    if {cookshop.new::%{_name}%} is set:
+        set slot 33 of {_inv} to {vote.icon::O} named "&a이미 일세를 납부했습니다."
+    else:
+        set slot 33 of {_inv} to {vote.icon::X} named "&c아직 일세를 납부하지 않았습니다." with lore "&7클릭하여 일세 납부 &8(%moneyDigit({_tax})%원)"
+    open {_inv} to {_p}
+
+function cookShopBuy(p: player, name: text, i: integer, n: number):
+    set {_amount} to yaml value "shop.%{_i}%.amount" from "cookshop.%{_name}%.yml"
+    if {_amount} < {_n}:
+        send "{@@} 재고가 부족하여 구매할 수 없습니다." to {_p}
+        stop
+    set {_price} to yaml value "shop.%{_i}%.price" from "cookshop.%{_name}%.yml"
+    set {_price} to {_price} * {_n}
+    if {_p}'s balance < {_price}:
+        send "{@@} 잔액이 부족합니다." to {_p}
+        stop
+    set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml" parsed as offlineplayer
+    set {_nbt} to nbt compound from  yaml value "shop.%{_i}%.nbt" from "cookshop.%{_name}%.yml"
+    set {_item} to (yaml value "shop.%{_i}%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+    set {_cmd} to custom model data of {_item}
+    balanceRemove({_p}, {_price}, "CookShop")
+    balanceAdd({_owner}, {_price}, "CookShop")
+    itemGive({_p}, {_item}, {_n}, "CookShop")
+    send "{@@} 성공적으로 아이템을 구매했습니다. &c(-%moneyDigit({_price})%원)" to {_p}
+    send "{@@} &e%{_p}%&f님이 음식을 구매했습니다. &a(+%moneyDigit({_price})%원)" to {_owner}
+    remove {_n} from {_amount}
+    set yaml value "shop.%{_i}%.amount" from "cookshop.%{_name}%.yml" to {_amount}
+    save yaml "cookshop.%{_name}%.yml"
+    unload yaml "cookshop.%{_name}%.yml"
+    load yaml "{@dir}/data/%{_name}%.yml" as "cookshop.%{_name}%.yml"
+    if file path "{@log}" isn't available:
+        create file path "{@log}" 
+        wait 1 tick
+        sync append "location,price,cmd,buyer,owner" to file path "{@log}"
+    sync append "%{_name}%,%{_price}%,%{_cmd}%,%{_p}%,%{_owner}%" to file path "{@log}"
+    set {_amount} to 0
+    loop 27 times:
+        set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+        set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+        if {_price} isn't 0:
+            add {_n} to {_amount}
+    execute console command "hologram setline cook%{_name}% 6 &f음식 재고: &d%moneyDigit({_amount})%개"
+    execute console command "hologram setline cook%{_name}%-2 6 &f음식 재고: &d%moneyDigit({_amount})%개" if {@loop2} contains {_name}
+    
+function cookShopSell(p: player, name: text, i: integer, n: text):
+    set {_nbt} to nbt compound from yaml value "shop.%{_i}%.nbt" from "cookshop.%{_name}%.yml"
+    set {_item} to (yaml value "shop.%{_i}%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+    loop all items in {_p}'s inventory:
+        if type of {_item} is type of loop-item:
+            if custom model data of {_item} is custom model data of loop-item:
+                add item amount of loop-item to {_amount}
+    if {_amount} isn't set:
+        send "{@@} 재고를 추가할 아이템을 가지고 있지 않습니다." to {_p}
+        stop
+    if {_n} is "1":
+        set {_amount} to 1
+    set {_amount.old} to yaml value "shop.%{_i}%.amount" from "cookshop.%{_name}%.yml"
+    remove {_amount} of {_item} from {_p}'s inventory
+    send "{@@} 성공적으로 재고 &a%moneyDigit({_amount})%&f개를 추가했습니다." to {_p}
+    add {_amount} to {_amount.old}
+    set yaml value "shop.%{_i}%.amount" from "cookshop.%{_name}%.yml" to {_amount.old}
+    save yaml "cookshop.%{_name}%.yml"
+    unload yaml "cookshop.%{_name}%.yml"
+    load yaml "{@dir}/data/%{_name}%.yml" as "cookshop.%{_name}%.yml"
+    set {_amount} to 0
+    loop 27 times:
+        set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+        set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+        if {_price} isn't 0:
+            add {_n} to {_amount}
+    execute console command "hologram setline cook%{_name}% 6 &f음식 재고: &d%moneyDigit({_amount})%개"
+    execute console command "hologram setline cook%{_name}%-2 6 &f음식 재고: &d%moneyDigit({_amount})%개" if {@loop2} contains {_name}
+    
+function cookShopSetGUI(p: player, name: text):
+    set {_inv} to chest inventory with 3 rows named "요리사상가 %{_name}%"
+    loop 27 times:
+        set {_nbt} to nbt compound from yaml value "shop.%loop-number%.nbt" from "cookshop.%{_name}%.yml"
+        set {_item} to (yaml value "shop.%loop-number%.type" from "cookshop.%{_name}%.yml") parsed as item with nbt {_nbt}
+        set slot (loop-number)-1 of {_inv} to {_item}
+    open {_inv} to {_p}
+
+on rightclick on sign:
+    if tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:0" of nbt compound of event-block is "[요리사상가]":
+        if player is sneaking:
+            tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block is "구매 불가능"
+            set {_name} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:1" of nbt compound of event-block
+            set {_player} to yaml value "owner" from "cookshop.%{_name}%.yml"
+            if uuid of player isn't {_player}:
+                send "{@@} 이 요리사 상가의 주인만 해당 상가를 판매할 수 있습니다."
+                stop
+            make player run command "signedit 3 구매 가능" as op
+            set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block to "구매 가능"
+            make player run command "signedit 4" as op
+            set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:3" of nbt compound of event-block to ""
+            delete yaml value "owner" from "cookshop.%{_name}%.yml"
+            delete yaml list "co-owner" from "cookshop.%{_name}%.yml"
+            save yaml "cookshop.%{_name}%.yml"
+            unload yaml "cookshop.%{_name}%.yml"
+            load yaml "{@dir}/data/%{_name}%.yml" as "cookshop.%{_name}%.yml"
+            set {_data::*} to {_name} split by "-"
+            send "{@@} 요리사 상가 &e%{_data::1}%동 %{_data::2}%호&f를 판매했습니다."
+            execute console command "hologram setline cook%{_name}% 4 &f현재 상태: &c미운영중"
+            execute console command "hologram setline cook%{_name}%-2 4 &f현재 상태: &c미운영중" if {@loop2} contains {_name}
+            execute console command "hologram setline cook%{_name}% 5 &f소유주: &b없음"
+            execute console command "hologram setline cook%{_name}%-2 5 &f소유주: &b없음" if {@loop2} contains {_name}
+        else:
+            if player doesn't have permission "cook.user":
+                send "{@@} 요리사만 요리사 상가를 구매할 수 있습니다."
+                stop
+            set {_name} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:1" of nbt compound of event-block
+            set {_bool} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block
+            set {_player} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:3" of nbt compound of event-block
+            if {_bool} is "구매 가능":
+                if player isn't op:
+                    if cookShopCalculate(player) >= 1:
+                        send "{@@} 요리사 상가는 1개 이상 구매할 수 없습니다."
+                        stop
+                set {_tax} to yaml value "tax" from "cookshop.%{_name}%.yml"
+                if player's balance < {_tax}:
+                    send "{@@} 일세&7(%moneyDigit({_tax})%원)&f이 부족해 요리사 상가를 구매할 수 없습니다."
+                    stop
+                make player run command "signedit 3 구매 불가능" as op
+                set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block to "구매 불가능"
+                make player run command "signedit 4 %player%" as op
+                set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:3" of nbt compound of event-block to "%player%"
+                set yaml value "owner" from "cookshop.%{_name}%.yml" to uuid of player
+                save yaml "cookshop.%{_name}%.yml"
+                unload yaml "cookshop.%{_name}%.yml"
+                load yaml "{@dir}/data/%{_name}%.yml" as "cookshop.%{_name}%.yml"
+                set {_data::*} to {_name} split by "-"
+                send "{@@} 요리사 상가 &e%{_data::1}%동 %{_data::2}%호&f를 구매했습니다."
+                balanceRemove(player, {_tax}, "CookShopTax")
+                send "{@@} 요리사 상가 일세를 납부했습니다. &c(-%moneyDigit({_tax})%원)"
+                set {cookshop.new::%{_name}%} to true
+                execute console command "hologram setline cook%{_name}% 4 &f현재 상태: &a운영중"
+                execute console command "hologram setline cook%{_name}%-2 4 &f현재 상태: &a운영중" if {@loop2} contains {_name}
+                execute console command "hologram setline cook%{_name}% 5 &f소유주: &b%player%"
+                execute console command "hologram setline cook%{_name}%-2 5 &f소유주: &b%player%" if {@loop2} contains {_name}
+                
+            else:
+                if {_player} is "":
+                    send "{@@} 이 요리사 상가는 구매할 수 없습니다. &7(소유주 | 없음)"
+                else:
+                    send "{@@} 이 요리사 상가는 구매할 수 없습니다. &7(소유주 | %{_player}%)"
+
+on leftclick on sign:
+    player has permission "city.user"
+    if tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:0" of nbt compound of event-block is "[요리사상가]":
+        if player is sneaking:
+            tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block is "구매 불가능"
+            set {_player} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:3" of nbt compound of event-block
+            make player run command "signedit 3 구매 가능" as op
+            set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:2" of nbt compound of event-block to "구매 가능"
+            make player run command "signedit 4" as op
+            set tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:3" of nbt compound of event-block to ""
+            set {_name} to tag "PublicBukkitValues;coloredsigns:raw-lines;coloredsigns:1" of nbt compound of event-block
+            delete yaml value "owner" from "cookshop.%{_name}%.yml"
+            delete yaml list "co-owner" from "cookshop.%{_name}%.yml"
+            save yaml "cookshop.%{_name}%.yml"
+            unload yaml "cookshop.%{_name}%.yml"
+            load yaml "{@dir}/data/%{_name}%.yml" as "cookshop.%{_name}%.yml"
+            set {_data::*} to {_name} split by "-"
+            send "{@@} 요리사 상가 &e%{_data::1}%동 %{_data::2}%호&f를 압류했습니다. &7(원주인 | %{_player}%)"
+            send "{@@} &6%player%&f님이 요리사 상가 &e%{_data::1}%동 %{_data::2}%호&f를 압류했습니다." to {_player} parsed as offlineplayer
+            execute console command "hologram setline cook%{_name}% 4 &f현재 상태: &c미운영중"
+            execute console command "hologram setline cook%{_name}%-2 4 &f현재 상태: &c미운영중" if {@loop2} contains {_name}
+            execute console command "hologram setline cook%{_name}% 5 &f소유주: &b없음"
+            execute console command "hologram setline cook%{_name}%-2 5 &f소유주: &b없음" if {@loop2} contains {_name}
+            
+command /요리사상가 [<text>] [<offlineplayer>]:
+    permission: cook.user
+    permission message: {@@} 명령어를 사용할 권한이 없습니다.
+    trigger:
+        loop all files in dir path "{@dir}/data":
+            set {_player} to yaml value "owner" from "cookshop.%file name of loop-value%"
+            if {_player} is uuid of player:
+                set {_file} to "cookshop.%file name of loop-value%"
+                set {_loc} to yaml value "location" from {_file}
+                set {_name} to yaml value "name" from {_file}
+                set {_coowner::*} to yaml list "co-owner" from {_file}
+                exit 1 loop
+
+        if {_name} isn't set:
+            send "{@@} 소유하고 있는 요리사 상가가 없습니다."
+            stop
+
+        if arg-1 is "정보":
+            send "{@@} &6%player%&f님이 소유하고 계신 요리사 상가는 아래와 같습니다."
+            set {_data::*} to {_loc} split by "-"
+            if size of {_coowner::*} > 0:
+                set {_text} to ""
+                loop {_coowner::*}:
+                    set {_text} to "%loop-value parsed as offlineplayer%, %{_text}%"
+                    set {_size} to length of {_text} - 2
+                send "{@@} &e%{_data::1}%동 %{_data::2}%호&7 (%{_name}%) &f| 공동소유자 %first {_size} characters of {_text}%"
+            else:
+                send "{@@} &e%{_data::1}%동 %{_data::2}%호&7 (%{_name}%) &f| 공동소유자 없음"
+
+        else if arg-1 is "추가":
+            if arg-2 isn't set:
+                send "{@@} 공동소유자로 추가할 플레이어를 입력해주세요."
+                stop
+            if arg-2 is player:
+                send "{@@} 본인은 공동소유자로 추가할 수 없습니다."
+            if {_coonwer::*} contains uuid of arg-2:
+                send "{@@} 해당 플레이어는 이미 공동소유자로 추가되어 있습니다."
+                stop
+            add uuid of arg-2 to {_coowner::*}
+            set {_data::*} to {_loc} split by "-"
+            send "{@@} &6%arg-2%&f님을 상가 &e%{_data::1}%동 %{_data::2}%호&f의 공동소유자로 추가하였습니다."
+            send "{@@} &6%player%&f님이 당신을 상가 &e%{_data::1}%동 %{_data::2}%호&f의 공동소유자로 추가하였습니다." to arg-2
+            set yaml list "co-owner" from {_file} to {_coowner::*}
+            save yaml {_file}
+            unload yaml {_file}
+            load yaml "{@dir}/data/%{_loc}%.yml" as "cookshop.%{_loc}%.yml"
+
+        else if arg-1 is "삭제":
+            if arg-2 isn't set:
+                send "{@@} 공동소유자에서 삭제할 플레이어를 입력해주세요."
+                stop
+            if {_coowner::*} doesn't contain uuid of arg-2:
+                send "{@@} 해당 플레이어는 공동소유자가 아닙니다."
+                stop
+            remove uuid of arg-2 from {_coowner::*}
+            set {_data::*} to {_loc} split by "-"
+            send "{@@} &6%arg-2%&f님을 상가 &e%{_data::1}%동 %{_data::2}%호&f의 공동소유자에서 삭제하였습니다."
+            send "{@@} &6%player%&f님이 당신을 상가 &e%{_data::1}%동 %{_data::2}%호&f의 공동소유자에서 삭제하였습니다." to arg-2
+            set yaml list "co-owner" from {_file} to {_coowner::*}
+            save yaml {_file}
+            unload yaml {_file}
+            load yaml "{@dir}/data/%{_loc}%.yml" as "cookshop.%{_loc}%.yml"
+        
+        else:
+            send "{@@} /요리사상가 정보 &8&l|&f 요리사 상가 정보를 확인합니다."
+            send "{@@} /요리사상가 추가 [닉네임] &8&l|&f 요리사 상가의 공동소유자를 추가합니다."
+            send "{@@} /요리사상가 삭제 [닉네임] &8&l|&f 요리사 상가의 공동소유자를 삭제합니다."
+            send "     &7└ 요리사 상가를 판매하려면 표지판을 SHIFT + 우클릭 해주세요."
+
+command /요리사관리 [<integer>]:
+    permission: city.user
+    trigger:
+        set {_n} to arg-1
+        if arg-1 isn't set:
+            set {_n} to 1
+        set {_ind} to 0
+        set {_now} to convert date now to unix date
+        remove 86400 from {_now}
+        set {_now} to convert unix date {_now} to date
+        send "{@@} &a%{_now} formatted as "yyyy년 MM월 dd일"% &f요리사 상가 일세 납부 내역"
+        loop all files in dir path "{@dir}/data":
+            set {_name} to file name of loop-value
+            replace all ".yml" in {_name} with ""
+            set {_data::*} to {_name} split by "-"
+            set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml" parsed as offlineplayer
+            if {_owner} is set:
+                add 1 to {_ind}
+                if {_ind} is between ({_n}-1)*10+1 and {_n}*10:
+                    set {_tax} to yaml value "tax" from "cookshop.%{_name}%.yml"
+                    if {cookshop.old::%{_name}%} is set:
+                        send "&b[&e%{_ind}%&b] &6%{_data::1}%동 %{_data::2}%호&7 | &f소유주 %{_owner}%&7 | &f%moneyDigit({_tax})%원 &a납부 완료"
+                    else:
+                        send "&b[&e%{_ind}%&b] &6%{_data::1}%동 %{_data::2}%호&7 | &f소유주 %{_owner}%&7 | &f%moneyDigit({_tax})%원 &c미납부"
+        if {_ind} is 0:
+            send "{@@} 요리사 상가를 소유하고 있는 요리사가 아무도 없습니다."
+        else:
+            set {_maxpage} to round up ({_ind}/10)
+            send "&b/요리사관리 %{_n}+1%&f을(를) 입력하여 다음 페이지를 읽으세요." if {_n} < {_maxpage}
+
+command /cook_hologram:
+    permission: op
+    trigger:
+        loop all files in dir path "{@dir}/data":
+            set {_name} to file name of loop-value
+            replace all ".yml" in {_name} with ""
+            set {_data::*} to {_name} split by "-"
+            set {_title} to yaml value "name" from "cookshop.%{_name}%.yml"
+            execute player command "hologram setline cook%{_name}% 1 &e&l%{_title}%"
+            execute player command "hologram setline cook%{_name}% 2 &f%{_data::1}%동 %{_data::2}%호"
+            execute player command "hologram setline cook%{_name}% 3 &f"
+            if yaml path "owner" in "cookshop.%{_name}%.yml" has value:
+                set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml" parsed as offlineplayer
+                execute player command "hologram setline cook%{_name}% 4 &f현재 상태: &a운영중"
+                execute player command "hologram setline cook%{_name}%-2 4 &f현재 상태: &a운영중" if {@loop2} contains {_name}
+                execute player command "hologram setline cook%{_name}% 5 &f소유주: &b%{_owner}%"
+                execute player command "hologram setline cook%{_name}%-2 5 &f소유주: &b%{_owner}%" if {@loop2} contains {_name}
+            else:
+                execute player command "hologram setline cook%{_name}% 4 &f현재 상태: &c미운영중"
+                execute player command "hologram setline cook%{_name}%-2 4 &f현재 상태: &c미운영중" if {@loop2} contains {_name}
+                execute player command "hologram setline cook%{_name}% 5 &f소유주: &b없음"
+                execute player command "hologram setline cook%{_name}%-2 5 &f소유주: &b없음" if {@loop2} contains {_name}
+            set {_amount} to 0
+            loop 27 times:
+                set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+                set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+                if {_price} isn't 0:
+                    add {_n} to {_amount}
+            execute player command "hologram setline cook%{_name}% 6 &f음식 재고: &d%moneyDigit({_amount})%개"
+            execute player command "hologram setline cook%{_name}%-2 6 &f음식 재고: &d%moneyDigit({_amount})%개" if {@loop2} contains {_name}
+            
+command /cook_hologram_set <text> [<integer>] [<text>]:
+    permission: op
+    trigger:
+        set {_name} to arg-1
+        set {_data::*} to {_name} split by "-"
+        set {_title} to yaml value "name" from "cookshop.%{_name}%.yml"
+        if arg-2 is set:
+            execute player command "hologram create cook%{_name}%-%arg-2% &e&l%{_title}%"
+            execute player command "hologram addline cook%{_name}%-%arg-2% &f%arg-3%"
+            execute player command "hologram addline cook%{_name}%-%arg-2% &f"
+            if yaml path "owner" in "cookshop.%{_name}%.yml" has value:
+                set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml" parsed as offlineplayer
+                execute player command "hologram addline cook%{_name}%-%arg-2% &f현재 상태: &a운영중"
+                execute player command "hologram addline cook%{_name}%-%arg-2% &f소유주: &b%{_owner}%"
+            else:
+                execute player command "hologram addline cook%{_name}%-%arg-2% &f현재 상태: &c미운영중"
+                execute player command "hologram addline cook%{_name}%-%arg-2% &f소유주: &b없음"
+            set {_amount} to 0
+            loop 27 times:
+                set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+                set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+                if {_price} isn't 0:
+                    add {_n} to {_amount}
+            execute player command "hologram addline cook%{_name}%-%arg-2% &f음식 재고: &d%moneyDigit({_amount})%개"
+        else:
+            execute player command "hologram create cook%{_name}% &e&l%{_title}%"
+            execute player command "hologram addline cook%{_name}% &f%arg-3%"
+            execute player command "hologram addline cook%{_name}% &f"
+            if yaml path "owner" in "cookshop.%{_name}%.yml" has value:
+                set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml" parsed as offlineplayer
+                execute player command "hologram addline cook%{_name}% &f현재 상태: &a운영중"
+                execute player command "hologram addline cook%{_name}% &f소유주: &b%{_owner}%"
+            else:
+                execute player command "hologram addline cook%{_name}% &f현재 상태: &c미운영중"
+                execute player command "hologram addline cook%{_name}% &f소유주: &b없음"
+            set {_amount} to 0
+            loop 27 times:
+                set {_n} to yaml value "shop.%loop-number%.amount" from "cookshop.%{_name}%.yml"
+                set {_price} to yaml value "shop.%loop-number%.price" from "cookshop.%{_name}%.yml"
+                if {_price} isn't 0:
+                    add {_n} to {_amount}
+            execute player command "hologram addline cook%{_name}% &f음식 재고: &d%moneyDigit({_amount})%개"
+
+command /cookshop <text>:
+    permission: op
+    trigger:
+        stop
+        if file path "{@dir}/data/%arg-1%.yml" isn't available:
+            send "{@@} {@dir}/data/%arg-1%.yml을 먼저 생성한 수 다시 시도해주세요."
+            stop
+        cookShopSetGUI(player, arg-1)
+
+on inventory click:
+    if uncolored name of event-inventory contains "키오스크 관리":
+        cancel event
+        type of clicked item is set
+        set {_name::*} to uncolored name of event-inventory split by " "
+        replace all "(" in {_name::4} with ""
+        replace all ")" in {_name::4} with ""
+        if uncolored name of clicked item is "아직 일세를 납부하지 않았습니다.":
+            set {_tax} to yaml value "tax" from "cookshop.%{_name::4}%.yml"
+            if player's balance < {_tax}:
+                send "{@@} 잔액이 부족합니다."
+                stop
+            send "{@@} 요리사 상가 일세를 납부했습니다. &c(-%moneyDigit({_tax})%원)"
+            balanceRemove(player, {_tax}, "CookShopTax")
+            set {cookshop.new::%{_name::4}%} to true
+            cookShopAdminGUI(player, {_name::4})
+
+        else if uncolored name of clicked item is "일세 자동이체가 비활성화되어 있습니다.":
+            set {_owner} to yaml value "owner" from "cookshop.%{_name::4}%.yml" parsed as offlineplayer
+            set {cookshop.auto::%{_name::4}%} to {_owner}
+            set {cookshop.autotax::%{_name::4}%} to yaml value "tax" from "cookshop.%{_name::4}%.yml"
+            send "{@@} 일세 자동이체가 활성화되었습니다."
+            cookShopAdminGUI(player, {_name::4})
+
+        else if uncolored name of clicked item is "일세 자동이체가 활성화되어 있습니다.":
+            delete {cookshop.auto::%{_name::4}%}
+            delete {cookshop.autotax::%{_name::4}%}
+            send "{@@} 일세 자동이체가 비활성화되었습니다."
+            cookShopAdminGUI(player, {_name::4})
+
+        else:
+            if click type is left mouse button:
+                close player's inventory
+                send "{@@} 가격을 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+                set {cookshop::%player%} to "%{_name::4}% %index of clicked slot + 1%"
+
+            else if click type is right mouse button with shift:
+                cookShopSell(player, {_name::4}, index of clicked slot + 1, "all")
+                cookShopAdminGUI(player, {_name::4})
+
+            else if click type is right mouse button:
+                cookShopSell(player, {_name::4}, index of clicked slot + 1, "1")
+                cookShopAdminGUI(player, {_name::4})
+
+    else if uncolored name of event-inventory contains "키오스크":
+        cancel event
+        type of clicked item is set
+        if uncolored lore of clicked item contains "가격이 설정되지 않음":
+            send "{@@} 해당 음식은 구매할 수 없습니다."
+            stop
+        set {_name::*} to uncolored name of event-inventory split by " "
+        replace all "(" in {_name::3} with ""
+        replace all ")" in {_name::3} with ""
+        if click type is left mouse button with shift:
+            cookShopBuy(player, {_name::3}, index of clicked slot + 1, 64)
+            cookShopGUI(player, {_name::3})
+
+        else if click type is left mouse button:
+            cookShopBuy(player, {_name::3}, index of clicked slot + 1, 1)
+            cookShopGUI(player, {_name::3})
+        
+on inventory close:
+    if uncolored name of event-inventory contains "요리사상가":
+        set {_name::*} to uncolored name of event-inventory split by " "
+        loop 27 times:
+            set {_item} to slot (loop-number)-1 of event-inventory
+            set yaml value "shop.%loop-number%.type" from "cookshop.%{_name::2}%.yml" to "%type of {_item}%"
+            set yaml value "shop.%loop-number%.nbt" from "cookshop.%{_name::2}%.yml" to "%nbt compound of {_item}%"
+            set yaml value "shop.%loop-number%.price" from "cookshop.%{_name::2}%.yml" to 0
+            set yaml value "shop.%loop-number%.amount" from "cookshop.%{_name::2}%.yml" to 0
+        save yaml "cookshop.%{_name::2}%.yml"
+        unload yaml "cookshop.%{_name::2}%.yml"
+        load yaml "{@dir}/data/%{_name::2}%.yml" as "cookshop.%{_name::2}%.yml"
+
+on chat:
+    if {cookshop::%player%} is set:
+        cancel event
+        if message is "취소":
+            send "{@@} 가격 입력이 취소되었습니다."
+            set {_name::*} to {cookshop::%player%} split by " "
+            cookShopAdminGUI(player, {_name::1})
+            delete {cookshop::%player%}
+            stop
+
+        set {_price} to message parsed as integer
+        if {_price} isn't set:
+            send "{@@} 올바른 값을 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            stop
+        else if {_price} <= 0:
+            send "{@@} 올바른 값을 입력해주세요. 취소하시려면 &c취소&f를 입력해주세요."
+            stop
+        send "{@@} 가격이 &e%moneyDigit({_price})%원&f으로 설정되었습니다."
+        set {_name::*} to {cookshop::%player%} split by " "
+        set yaml value "shop.%{_name::2}%.price" from "cookshop.%{_name::1}%.yml" to {_price}
+        save yaml "cookshop.%{_name::1}%.yml"
+        unload yaml "cookshop.%{_name::1}%.yml"
+        load yaml "{@dir}/data/%{_name::1}%.yml" as "cookshop.%{_name::1}%.yml"
+        cookShopAdminGUI(player, {_name::1})
+        delete {cookshop::%player%}
+
+on rightclick on barrier:
+    set {_file::*} to content of file path "{@dir}/kiosk.txt"
+    loop {_file::*}:
+        set {_data::*} to loop-value split by " "
+        if "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%" is "%{_data::2}%, %{_data::3}%, %{_data::4}%":
+            set {_name} to {_data::1}
+            exit 1 loop
+    {_name} is set
+    set {_owner} to yaml value "owner" from "cookshop.%{_name}%.yml"
+    set {_coowner::*} to yaml list "co-owner" from "cookshop.%{_name}%.yml"
+    add {_owner} to {_coowner::*}
+    
+    if player is sneaking:
+        if player isn't op:
+            if {_coowner::*} doesn't contain uuid of player:
+                send "{@@} 해당 키오스크를 관리할 권한이 없습니다."
+                stop
+            cookShopAdminGUI(player, {_name})
+        else:
+            cookShopAdminGUI(player, {_name})
+
+    else:
+        cookShopGUI(player, {_name})
+
+command /요리사키오스크 [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 isn't set:
+            send "{@prefix} 키오스크를 설치할 요리사상가의 동-호수를 입력해주세요."
+            send "    &7└ 예시 /요리사키오스크 1-101"
+            stop
+        if file path "{@dir}/data/%arg-1%.yml" isn't available:
+            send "{@prefix} 요리사상가 &e%arg-1%&f을(를) 찾을 수 없습니다."
+            stop
+        if type of target block isn't barrier:
+            send "[ &6&l! &f] 키오스크(방벽)를 보고 다시 입력해주세요."
+            stop
+        sync append "%arg-1% %x coord of target block% %y coord of target block% %z coord of target block% %world of player%" to file path "{@dir}/kiosk.txt"
+        send "[ &6&l! &f] &b%arg-1%의 &f키오스크로 &e%x coord of target block% %y coord of target block% %z coord of target block% %world of player%&f을(를) kiosk.txt에 추가했습니다."
+
+every 1 minute:
+    if now formatted as "HH:mm" is "23:59":
+        delete {cookshop.old::*}
+        loop all files in dir path "{@dir}/data":
+            set {_name} to file name of loop-value
+            replace all ".yml" in {_name} with ""
+            if {cookshop.new::%{_name}%} isn't set:
+                set {_player} to {cookshop.auto::%{_name}%}
+                if {_player} is set:
+                    if balance of {_player} > {cookshop.autotax::%{_name}%}:
+                        balanceRemove({_player}, {cookshop.autotax::%{_name}%}, "CookShopTax")
+                        set {cookshop.old::%{_name}%} to true
+            else:
+                set {cookshop.old::%{_name}%} to true
+        delete {cookshop.new::*}
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        send " {@@} 요리사의 일세가 초기화 되었습니다." to all players
+        send " &7&m&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to all players
+        stop
+
+# ------------------------------------------------------
+
+on enter region:
+    if "%event-region%" contains "common-cook":
+        if player doesn't have permission "cook.user":
+            cancel event
+            send "&c&lHey!&7 Sorry, but you can't enter here."
+
+on consume:
+    if type of event-item is milk:
+        cancel event
+        stop
+    if type of event-item is Chorus Fruit:
+        cancel event
+        stop
+    else if type of event-item is steak or cooked mutton or cooked chicken or cooked pork or cooked cod or cooked salmon:
+        if custom model data of event-item is 0:
+            cancel event
+            remove 1 of player's tool from player's tool
+            add 1.5 to food level of player
+            add 0 to player's saturation
+            stop
+    else if type of event-item is apple:
+        cancel event
+        remove 1 of player's tool from player's tool
+        add 1 to food level of player
+        add 0 to player's saturation
+        stop
+    else if type of event-item is bread:
+        cancel event
+        remove 1 of player's tool from player's tool
+        add 0.5 to food level of player
+        add 0 to player's saturation
+        stop
+    set {_file::*} to content of file path "plugins/Skript/data/cook/type.txt"
+    loop {_file::*}:
+        if "%type of event-item%" is loop-value:
+            if custom model data of event-item is 0:
+                cancel event
+                remove 1 of player's tool from player's tool
+                apply potion of hunger of tier 0 to player for 1 second
+                add 0.5 to food level of player
+                add 0 to player's saturation
+                exit 1 loop

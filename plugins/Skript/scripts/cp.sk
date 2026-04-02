@@ -1,0 +1,62 @@
+options:
+	a: &e[ &6! &e]&r
+
+command /쿠폰 [<text>] [<text>]:
+	trigger:
+		if arg 1 is not set:
+			send "{@a} &2/쿠폰 [쿠폰이름] &7- &e아이템을 지급 받습니다."
+			if player is op:
+				send "{@a} &2/쿠폰 생성 [쿠폰이름] &7- &e쿠폰을 생성합니다. &7(손에 들고있는 아이템을 지급)"
+				send "{@a} &2/쿠폰 삭제 [쿠폰이름] &7- &e쿠폰을 삭제합니다."
+				send "{@a} &2/쿠폰 목록 &7- &e쿠폰 목록을 확인합니다."
+			stop
+		if arg 1 is not "생성" or "삭제" or "목록":
+			if arg 1 is not set:
+				stop
+			if {쿠폰::%arg 1%} is not set:
+				send "{@a} &c해당 이름의 쿠폰은 존재하지 않습니다."
+				stop
+			if {쿠폰::%arg 1%::%player's uuid%} is set:
+				send "{@a} &c당신은 이미 해당 쿠폰을 사용 하셨습니다."
+				stop
+			if player has enough space for 1 cake:
+				set {쿠폰::%arg 1%::%player's uuid%} to now formatted as "YYYY년 MM월 dd일"
+				send "{@a} &a아이템이 지급 되었습니다."
+				Come(player)
+				give {쿠폰::%arg 1%} to player
+				log "%player%님 %arg 1% 쿠폰 사용 (%{쿠폰::%arg 1%::%player's uuid%}%)" to "쿠폰/쿠폰로그.log"
+				send title "&a[쿠폰]" with subtitle "&7이용에 불편 드려 죄송합니다." to player for 3 seconds
+				stop
+			send "{@a} &c인벤토리 한칸을 비우고 다시 시도 해주세요."
+			no(player)
+		else:
+			if player is not op:
+				send "{@a} &c권한이 부족합니다."
+				stop
+			if arg 1 is "생성":
+				if arg 2 is set:
+					if player's tool is air:
+						send "{@a} &c아이템을 손에 들고 입력 해주세요."
+						no(player)
+						stop
+					if {쿠폰::%arg 2%} is set:
+						send "{@a} &c해당 이름의 쿠폰은 이미 존재합니다."
+						no(player)
+						stop
+					set {쿠폰::%arg 2%} to player's tool
+					send "{@a} &a%arg 2% 쿠폰을 생성 했습니다."
+			if arg 1 is "목록":
+				send "{@a} &6%size of {쿠폰::*}%&a개의 쿠폰이 존재합니다."
+				set {_a} to 0
+				loop {쿠폰::*}:
+					add 1 to {_a}
+					send "{@a} %{_a}%번 &a%loop-index% &7- &r%name of loop-value% &r%item amount of loop-value%개" to player
+			if arg 1 is "삭제":
+				if arg 2 is set:
+					if {쿠폰::%arg 2%} is not set:
+						send "{@a} &c해당 이름의 쿠폰은 존재하지 않습니다."
+						stop
+					clear {쿠폰::%arg 2%::*}
+					delete {쿠폰::%arg 2%}
+					send "{@a} &a%arg 2% 쿠폰을 삭제 했습니다."
+			

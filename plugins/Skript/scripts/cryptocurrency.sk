@@ -1,0 +1,558 @@
+options:
+    prefix: &6&l[가상화폐]&f # 접두사
+    loc: plugins/Skript/data/cryptocurrency
+    crypto: "비니코인", "메론코인", "상추코인", "솜코인", "벤데타코인", "아이언코인", "안드로이드코인", "예준코인", "도토리코인", "결코인", "서하코인", "호링코인"
+
+    buyGUI: &6&l[매수주문]&f
+    sellGUI: &6&l[매도주문]&f
+
+# 변수
+# {cryptocurrencies.%uuid of player%.sum::%number%} | 과거 가상화폐의 가격
+# 
+# {cryptocurrencies::*}                             | 가상화폐 이름 목록
+# {cryptocurrencies.item::%name%}                   | 가상화폐 아이템
+# {cryptocurrencies.start::%name%}                  | 가상화폐의 시작가
+# {cryptocurrencies.min::%name%}                    | 가상화폐의 최소변동가
+# {cryptocurrencies.max::%name%}                    | 가상화폐의 최대변동가
+# {cryptocurrencies.up::%name%}                     | 가상화폐의 상승확률
+# {cryptocurrencies.down::%name%}                   | 가상화폐의 하락확률
+# {cryptocurrencies.old::%name%}                    | 가상화폐의 과거 가격
+# {cryptocurrencies.new::%name%}                    | 가상화폐의 현재 가격
+# {cryptocurrencies.count.%name%::%uuid of player%} | 플레이어가 가지고 있는 가상화폐 개수
+# {cryptocurrencies.money.%name%::%uuid of player%} | 플레이어의 가상화폐 총매입금액
+# {cryptocurrencies.name::%player%}                 | 플레이어가 구매 중인 가상화폐
+
+on load:
+    create file path "{@loc}/crypto.yml" if file path "{@loc}/crypto.yml" isn't available
+    stop
+    load yaml "{@loc}/crypto.yml" as "crypto"
+    set {_now} to convert date now to unix date
+    loop {@crypto}:
+        set {_name} to loop-value
+        loop 11 times:
+            set {_n} to loop-value-2 - 1
+            if {_n} is 0:
+                set yaml value "%{_name}%.%{_n}%.price" from "crypto" to {cryptocurrencies.new::%{_name}%}
+                set yaml value "%{_name}%.%{_n}%.date" from "crypto" to {_now}
+            else:
+                set yaml value "%{_name}%.%{_n}%.price" from "crypto" to 0
+                set yaml value "%{_name}%.%{_n}%.date" from "crypto" to {_now}
+    save yaml "crypto"
+    unload yaml "crypto"
+
+command /crypto:
+    permission: op.user
+    trigger:
+        send {cryptocurrencies::*}
+
+function cryptocurrencyChange():
+    load yaml "{@loc}/crypto.yml" as "crypto"
+    set {_now} to convert date now to unix date
+    loop {cryptocurrencies.revive::*}:
+        set {cryptocurrencies.new::%loop-value%} to {cryptocurrencies.start::%loop-value%}
+        add loop-value to {cryptocurrencies::*}
+        send "{@prefix} 가상화폐 &e%loop-value%&f이 상장되었습니다." to all players
+    delete {cryptocurrencies.revive::*}
+    loop {cryptocurrencies::*}:
+        set {_name} to loop-value
+        set {cryptocurrencies.old::%loop-value%} to {cryptocurrencies.new::%loop-value%}
+        set {_random} to random number between 0 and 100
+        if {_random} <= {cryptocurrencies.down::%loop-value%}:
+            set {_state} to "D"
+        else if {_random} <= {cryptocurrencies.up::%loop-value%} + {cryptocurrencies.down::%loop-value%}:
+            set {_state} to "U"
+        else:
+            set {_state} to "N"
+        if {_state} is "N":
+            set {_smoething} to 0
+        if {cryptocurrencies.new::%loop-value%} >= {cryptocurrencies.start::%loop-value%}:
+            set {_change} to random integer between {cryptocurrencies.min::%loop-value%} and {cryptocurrencies.max::%loop-value%}
+        else:
+            set {_percent} to {cryptocurrencies.new::%loop-value%}/{cryptocurrencies.start::%loop-value%}
+            set {_change} to random integer between round up ({cryptocurrencies.min::%loop-value%}*{_percent}) and round up ({cryptocurrencies.max::%loop-value%}*{_percent})
+        if {_state} is "U":
+            add {_change} to {cryptocurrencies.new::%loop-value%}
+        else if {_state} is "D":
+            remove {_change} from {cryptocurrencies.new::%loop-value%}
+        loop 11 times:
+            set {_n} to 11 - loop-number
+            if {_n} is 0:
+                set yaml value "%{_name}%.%{_n}%.price" from "crypto" to {cryptocurrencies.new::%{_name}%}
+                set yaml value "%{_name}%.%{_n}%.date" from "crypto" to {_now}
+            else:
+                set yaml value "%{_name}%.%{_n}%.price" from "crypto" to (yaml value "%{_name}%.%{_n}-1%.price" from "crypto")
+                set yaml value "%{_name}%.%{_n}%.date" from "crypto" to (yaml value "%{_name}%.%{_n}-1%.date" from "crypto")
+        if {cryptocurrencies.new::%loop-value%} <= {cryptocurrencies.start::%loop-value%}*0.1:
+            send "{@prefix} 가상화폐 &e%loop-value%&f이 상장폐지되었습니다." to all players
+            remove loop-value from {cryptocurrencies::*}
+            delete {cryptocurrencies.old::%loop-value%}
+            delete {cryptocurrencies.count.%loop-value%::*}
+            delete {cryptocurrencies.money.%loop-value%::*}
+            add loop-value to {cryptocurrencies.revive::*}
+            loop 11 times:
+                set {_n} to loop-value-2 - 1
+                set yaml value "%{_name}%.%{_n}%.price" from "crypto" to 0
+                set yaml value "%{_name}%.%{_n}%.date" from "crypto" to {_now}
+    save yaml "crypto"
+    unload yaml "crypto"
+
+function cryptocurrencyDifference(new: number, old: number) :: text:
+    if {_old} isn't set:
+        return "&7이전 가격 정보가 없습니다."
+    if {_new} > {_old}:
+        set {_diff} to moneyDigit({_new} - {_old})
+        return "&c&l▲ %{_diff}%"
+    else if {_new} = {_old}:
+        return "&7&l= 0"
+    else:
+        set {_diff} to moneyDigit({_old} - {_new})
+        return "&b&l▼ %{_diff}%"
+
+function cryptoDiff(new: number, old: number) :: text:
+    if {_new} > {_old}:
+        set {_diff} to moneyDigit({_new} - {_old})
+        return "&c%moneyDigit({_new})%원 (▲ %{_diff}%)"
+    else if {_new} = {_old}:
+        return "&7%moneyDigit({_new})%원 (= 0)"
+    else:
+        set {_diff} to moneyDigit({_old} - {_new})
+        return "&b%moneyDigit({_new})%원 (▼ %{_diff}%)"
+
+function cryptocurrencyYield(p: player, s: text) :: text:
+    set {_sum} to {cryptocurrencies.added.%{_s}%::%uuid of {_p}%}
+    if {_sum} <= 0:
+        return "&c+∞%%"
+    set {_count} to {cryptocurrencies.bought.%{_s}%::%uuid of {_p}%}
+    set {_price.user} to {_sum}
+    set {_price.now} to {cryptocurrencies.new::%{_s}%}*{_count}
+    if {_price.user} < {_price.now}:
+        set {_rate} to (round down {_price.now}/{_price.user}*100000)/1000 - 100
+        return "&c+%{_rate}%%%"
+    else if {_price.user} > {_price.now}:
+        set {_rate} to 100 - (round down {_price.now}/{_price.user}*100000)/1000
+        return "&b-%{_rate}%%%"
+    else:
+        return "&7+0%%"
+
+function cryptocurrencyProperty(p: offlineplayer) :: number:
+    set {_result} to 0
+    loop {cryptocurrencies::*}:
+        add {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} * {cryptocurrencies.new::%loop-value%} to {_result}
+    return {_result}
+
+function cryptocurrencyCount(p: offlineplayer) :: text:
+    set {_result} to 0
+    loop {cryptocurrencies::*}:
+        add {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} * {cryptocurrencies.new::%loop-value%} to {_result}
+    return moneyDigit({_result})
+
+function cryptocurrencyBuy(p: player, s: text, count: number):
+    if {cryptocurrencies.new::%{_s}%} isn't set:
+        send "{@prefix} 해당 가상화폐는 매수할 수 없습니다." to {_p}
+        stop
+    set {_price} to {cryptocurrencies.new::%{_s}%}*{_count}
+    balanceRemove({_p}, {_price}, "Cyrptocurrency")
+    add {_count} to {cryptocurrencies.count.%{_s}%::%uuid of {_p}%}
+    add {_count} to {cryptocurrencies.bought.%{_s}%::%uuid of {_p}%}
+    add {_price} to {cryptocurrencies.money.%{_s}%::%uuid of {_p}%}
+    add {_price} to {cryptocurrencies.added.%{_s}%::%uuid of {_p}%}
+    send "{@prefix} &e%{_s}% &e&l%moneyDigit({_count})%개&f를 성공적으로 매수했습니다. &c(- %moneyDigit({_price})%원)" to {_p}
+
+function cryptocurrencySell(p: player, s: text, count: number):
+    if {cryptocurrencies.new::%{_s}%} isn't set:
+        send "{@prefix} 해당 가상화폐는 매도할 수 없습니다." to {_p}
+        stop
+    set {_price} to {cryptocurrencies.new::%{_s}%}*{_count}
+    remove {_count} from {cryptocurrencies.count.%{_s}%::%uuid of {_p}%}
+    remove {_price} from {cryptocurrencies.money.%{_s}%::%uuid of {_p}%}
+    if {cryptocurrencies.count.%{_s}%::%uuid of {_p}%} <= 0:
+        delete {cryptocurrencies.count.%{_s}%::%uuid of {_p}%}
+        delete {cryptocurrencies.money.%{_s}%::%uuid of {_p}%}
+        delete {cryptocurrencies.bought.%{_s}%::%uuid of {_p}%}
+        delete {cryptocurrencies.added.%{_s}%::%uuid of {_p}%}
+    set {_price} to round up ({_price} * 0.99)
+    send "{@prefix} &e%{_s}% &e&l%moneyDigit({_count})%개&f를 성공적으로 매도했습니다. &a(+ %moneyDigit({_price})%원)" to {_p}
+    balanceAdd({_p}, {_price}, "Cryptocurrency")
+
+function cryptocurrencyGUI(p: player):
+    set {_inv} to chest inventory with 3 rows named "{@prefix}"
+    loop 9 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 4 of {_inv} to {_p}'s skull named "&6&l%{_p}%" with lore "&f보유액: &e%cryptocurrencyCount({_p})%원"
+    set {_ind} to 0
+    loop {@crypto}:
+        if {cryptocurrencies::*} doesn't contain loop-value:
+            continue
+        if {cryptocurrencies.new::%loop-value%} <= {cryptocurrencies.start::%loop-value%}*0.2:
+            set {_item} to {cryptocurrencies.item::%loop-value%}'s skull named "&e&l%loop-value%&7 (상장폐지 위험)"
+        else:
+            set {_item} to {cryptocurrencies.item::%loop-value%}'s skull named "&e&l%loop-value%"
+        set {_price} to moneyDigit({cryptocurrencies.new::%loop-value%})
+        if {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} is set:
+            set {_count} to {cryptocurrencies.count.%loop-value%::%uuid of {_p}%}
+            add "&e%moneyDigit({_count})%개 &f보유" to lore of {_item}
+            set {_yield} to cryptocurrencyYield({_p}, loop-value)
+            add "&f수익률 %{_yield}%" to lore of {_item}
+        else:
+            add "&e0개 &f보유" to lore of {_item}
+        add "&6&l%{_price}%원" to lore of {_item}
+        set {_diff} to cryptocurrencyDifference({cryptocurrencies.new::%loop-value%}, {cryptocurrencies.old::%loop-value%})
+        add {_diff} to lore of {_item}
+        add "" to lore of {_item}
+        add "&a좌클릭&f하여 매수" to lore of {_item}
+        add "&c우클릭&f하여 매도" to lore of {_item}
+        set slot {_ind}+9 of {_inv} to {_item}
+        add 1 to {_ind}
+    open {_inv} to {_p}
+
+function cryptocurrencyAdvancedGUI(p: player):
+    set {_inv} to chest inventory with 3 rows named "{@prefix}"
+    load yaml "{@loc}/crypto.yml" as "crypto"
+    set {_now} to convert date now to unix date
+    loop 9 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 4 of {_inv} to {_p}'s skull named "&6&l%{_p}%" with lore "&f보유액: &e%cryptocurrencyCount({_p})%원"
+    set {_i} to {_p}'s skull named "&6&l%{_p}%" with lore "&f보유액: &e%cryptocurrencyCount({_p})%원"
+    loop {cryptocurrencies::*}:
+        if {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} is set:
+            add "&7└ %loop-value% %moneyDigit({cryptocurrencies.count.%loop-value%::%uuid of {_p}%})%개" to lore of {_i}
+    set slot 4 of {_inv} to {_i}
+    set {_ind} to 0
+    loop {@crypto}:
+        set {_name} to loop-value
+        if {cryptocurrencies::*} doesn't contain loop-value:
+            continue
+        if {cryptocurrencies.new::%loop-value%} <= {cryptocurrencies.start::%loop-value%}*0.2:
+            set {_item} to {cryptocurrencies.item::%loop-value%}'s skull named "&e&l%loop-value%&7 (상장폐지 위험)"
+        else:
+            set {_item} to {cryptocurrencies.item::%loop-value%}'s skull named "&e&l%loop-value%"
+        if {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} is set:
+            set {cryptocurrencies.added.%{_s}%::%uuid of {_p}%} to {cryptocurrencies.money.%{_s}%::%uuid of {_p}%} if {cryptocurrencies.added.%{_s}%::%uuid of {_p}%} isn't set
+            set {cryptocurrencies.bought.%loop-value%::%uuid of {_p}%} to {cryptocurrencies.count.%loop-value%::%uuid of {_p}%} if {cryptocurrencies.bought.%loop-value%::%uuid of {_p}%} isn't set
+            set {_count} to {cryptocurrencies.count.%loop-value%::%uuid of {_p}%}
+            add "&e%moneyDigit({_count})%개 &f보유" to lore of {_item}
+            set {_bought} to {cryptocurrencies.bought.%loop-value%::%uuid of {_p}%}
+            set {_avg} to round ({cryptocurrencies.added.%loop-value%::%uuid of {_p}%} / {_bought})
+            add "&f평균단가 &6%moneyDigit({_avg})%원" to lore of {_item}
+            set {_yield} to stockYield({_p}, loop-value)
+            set {_yield} to cryptocurrencyYield({_p}, loop-value)
+            add "&f수익률 %{_yield}%" to lore of {_item}
+        else:
+            add "&e0개 &f보유" to lore of {_item}
+        add "&f" to lore of {_item}
+        loop 10 times:
+            set {_n} to loop-value-2 - 1
+            set {_price.1} to yaml value "%{_name}%.%{_n}%.price" from "crypto"
+            set {_price.2} to yaml value "%{_name}%.%{_n}+1%.price" from "crypto"
+            if {_price.1} isn't 0:
+                set {_diff} to cryptoDiff({_price.1}, {_price.2})
+                set {_time} to yaml value "%{_name}%.%{_n}%.date" from "crypto"
+                set {_timediff} to ({_now} - {_time})
+                set {_timediff} to round down ({_timediff}/60)
+                if {_price.2} is 0:
+                    add "&8%{_timediff}%분 전 &7%moneyDigit({_price.1})%원" to lore of {_item}
+                else:
+                    add "&8%{_timediff}%분 전 %{_diff}%" to lore of {_item}
+        add "" to lore of {_item}
+        add "&a좌클릭&f하여 매수" to lore of {_item}
+        add "&c우클릭&f하여 매도" to lore of {_item}
+        set slot {_ind}+9 of {_inv} to {_item}
+        add 1 to {_ind}
+    unload yaml "crypto"
+    open {_inv} to {_p}
+
+function cryptocurrencySelectGUI(option: text, p: player, s: text, count: number):
+    if {_option} is "buy":
+        set {_inv} to chest inventory with 3 rows named "{@buyGUI} &e%{_s}%"
+    else if {_option} is "sell":
+        set {_inv} to chest inventory with 3 rows named "{@sellGUI} &e%{_s}%"
+    loop 27 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 9 of {_inv} to red stained glass pane named "&c초기화"
+    set slot 10 of {_inv} to red stained glass pane named "&c-100개"
+    set slot 11 of {_inv} to red stained glass pane named "&c-10개"
+    set slot 12 of {_inv} to red stained glass pane named "&c-1개"
+    set slot 14 of {_inv} to green stained glass pane named "&a+1개"
+    set slot 15 of {_inv} to green stained glass pane named "&a+10개"
+    set slot 16 of {_inv} to green stained glass pane named "&a+100개"
+    set slot 17 of {_inv} to green stained glass pane named "&a최대로 증가"
+    if {_option} is "buy":
+        set {_bal} to "%{_p}'s balance%"
+        set slot 4 of {_inv} to {_p}'s skull named "&f잔액: &6%balanceToWon({_bal})%"
+        set {_item} to sunflower named "&f매수할 가상화폐: &e%moneyDigit({_count})%개"
+        set {_price} to {cryptocurrencies.new::%{_s}%}*{_count}
+        add "&f매수가격: &e%moneyDigit({_price})%원" to lore of {_item}
+        if {_count} isn't 0:
+            if {_price} <= {_p}'s balance:
+                add "&a좌클릭&f하여 매수 가능" to lore of {_item}
+            else:
+                add "&7잔액이 부족합니다." to lore of {_item}
+        set slot 13 of {_inv} to {_item}
+    else if {_option} is "sell":
+        set {_n} to {cryptocurrencies.count.%{_s}%::%uuid of {_p}%}
+        set {_n} to 0 if {_n} isn't set
+        set slot 4 of {_inv} to {_p}'s skull named "&f보유 가상화폐: &6%moneyDigit({_n})%개"
+        set {_item} to sunflower named "&f매도할 가상화폐: &e%moneyDigit({_count})%개"
+        set {_price} to {cryptocurrencies.new::%{_s}%}*{_count}
+        add "&f매도가격: &e%moneyDigit({_price})%원" to lore of {_item}
+        if {_count} isn't 0:
+            if {cryptocurrencies.count.%{_s}%::%uuid of {_p}%} >= {_count}:
+                add "&a좌클릭&f하여 매도 가능" to lore of {_item}
+                add "&7증권거래세 3%%" to lore of {_item}
+            else:
+                add "&7보유하고 계신 가상화폐가 부족합니다." to lore of {_item}
+        set slot 13 of {_inv} to {_item}
+    open {_inv} to {_p}
+
+command /코인:
+    trigger:
+        set {_total} to 0
+        loop 14 times:
+            add {cryptocurrencies.%uuid of player%.sum::%loop-number%} to {_total}
+        if {_total} isn't 0:
+            balanceAdd(player, {_total}, "CryptocurrencyRefund")
+            send "{@prefix} 과거 시스템 상의 가상화폐 &6%moneyDigit({_total})%원&f을 전부 구매가로 매도했습니다."
+            delete {cryptocurrencies.%uuid of player%::*}
+            delete {cryptocurrencies.%uuid of player%.sum::*}
+        if player doesn't have paper with custom model data 23:
+            send " &c&l》 &7스마트폰이 없어 해당 기능을 이용할 수 없습니다."
+            stop
+        cryptocurrencyAdvancedGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::cryptocurrencyGUI} to true
+
+command /코인테스트:
+    permission: op.user
+    trigger:
+        if player doesn't have paper with custom model data 23:
+            send " &c&l》 &7스마트폰이 없어 해당 기능을 이용할 수 없습니다."
+            stop
+        cryptocurrencyAdvancedGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::cryptocurrencyGUI} to true
+
+command /코인관리 [<text>] [<text>] [<integer>] [<integer>] [<integer>] [<number>] [<number>] [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "확인":
+            send "{@prefix} 가상화폐 &e%arg-2%&f의 정보는 다음과 같습니다."
+            send "{@prefix} 시작가: %moneyDigit({cryptocurrencies.start::%arg-2%})%원"
+            send "{@prefix} 최소변동가: %moneyDigit({cryptocurrencies.min::%arg-2%})%원"
+            send "{@prefix} 최대변동가: %moneyDigit({cryptocurrencies.max::%arg-2%})%원"
+            send "{@prefix} 상승확률: %{cryptocurrencies.up::%arg-2%}%%%"
+            send "{@prefix} 하강확률: %{cryptocurrencies.down::%arg-2%}%%%"
+
+        else if arg-1 is "추가":
+            send "{@prefix} 가상화폐 &e%arg-2%&f이(가) 상장되었습니다." to all players
+            add arg-2 to {cryptocurrencies::*}
+            set {cryptocurrencies.start::%arg-2%} to arg-3
+            set {cryptocurrencies.new::%arg-2%} to arg-3
+            set {cryptocurrencies.min::%arg-2%} to arg-4
+            set {cryptocurrencies.max::%arg-2%} to arg-5
+            set {cryptocurrencies.up::%arg-2%} to arg-6
+            set {cryptocurrencies.down::%arg-2%} to arg-7
+            set {cryptocurrencies.item::%arg-2%} to arg-8
+
+        else if arg-1 is "변경":
+            send "{@prefix} 가상화폐 &e%arg-2%&f의 정보가 변경되었습니다."
+            set {cryptocurrencies.start::%arg-2%} to arg-3
+            set {cryptocurrencies.min::%arg-2%} to arg-4
+            set {cryptocurrencies.max::%arg-2%} to arg-5
+            set {cryptocurrencies.up::%arg-2%} to arg-6
+            set {cryptocurrencies.down::%arg-2%} to arg-7
+            set {cryptocurrencies.item::%arg-2%} to arg-8 if arg-8 is set
+            
+        else if arg-1 is "삭제":
+            send "{@prefix} 가상화폐 &e%arg-2%&f이(가) 상장 폐지되었습니다." to all players
+            remove arg-2 from {cryptocurrencies::*}
+            delete {cryptocurrencies.old::%arg-2%}
+            delete {cryptocurrencies.new::%arg-2%}
+            delete {cryptocurrencies.start::%arg-2%}
+            delete {cryptocurrencies.min::%arg-2%}
+            delete {cryptocurrencies.max::%arg-2%}
+            delete {cryptocurrencies.up::%arg-2%}
+            delete {cryptocurrencies.down::%arg-2%}
+            delete {cryptocurrencies.item::%arg-2%}
+            delete {cryptocurrencies.count.%arg-2%::*}
+            delete {cryptocurrencies.money.%arg-2%::*}
+
+        else if arg-1 is "초기화":
+            send "{@prefix} 모든 가상화폐 가격이 초기화되었습니다."
+            loop {cryptocurrencies::*}:
+                delete {cryptocurrencies.old::%loop-value%}
+                set {cryptocurrencies.new::%loop-value%} to {cryptocurrencies.start::%loop-value%}
+
+        else:
+            send "{@prefix} /코인관리 확인 [이름]"
+            send "{@prefix} /코인관리 추가 [이름] [시작가(원)] [최소변동가(원)] [최대변동가(원)] [상승확률(%%)] [하강확률(%%)]"
+            send "{@prefix} /코인관리 변경 [이름] [시작가(원)] [최소변동가(원)] [최대변동가(원)] [상승확률(%%)] [하강확률(%%)]"
+            send "{@prefix} /코인관리 삭제 [이름]"
+            send "{@prefix} /코인관리 초기화"
+
+command /cryptocurrency_find <offlineplayer>:
+    permission: op.user
+    trigger:
+        send "%arg-1%'s cryptocurrencies"
+        loop {cryptocurrencies::*}:
+            send "%loop-value% %{cryptocurrencies.count.%loop-value%::%uuid of arg-1%}%개" if {cryptocurrencies.count.%loop-value%::%uuid of arg-1%} is set
+
+command /cryptocurrency_delete <offlineplayer> <text>:
+    permission: op.user
+    trigger:
+        delete {cryptocurrencies.count.%arg-2%::%uuid of arg-1%}
+        delete {cryptocurrencies.money.%arg-2%::%uuid of arg-1%}
+        send "deleted %arg-1%'s %arg-2%"
+
+on inventory click:
+    if {gui.%uuid of player%::cryptocurrencyGUI} is true:
+        cancel event
+        event-inventory isn't player's inventory
+        if index of clicked slot >= 9:
+            type of clicked item is set
+            set {_name} to uncolored name of clicked item
+            replace all " (상장폐지 위험)" in {_name} with ""
+            if click type is left mouse button:
+                if {cryptocurrencies.new::%{_name}%} is 0:
+                    send "{@prefix} 해당 가상화폐는 구매할 수 없습니다."
+                    stop
+                cryptocurrencySelectGUI("buy", player, {_name}, 0)
+                wait 1 tick
+                set {gui.%uuid of player%::cryptocurrencyBuyGUI} to true
+                set {cryptocurrencies.name::%player%} to {_name}
+            else if click type is right mouse button:
+                cryptocurrencySelectGUI("sell", player, {_name}, 0)
+                wait 1 tick
+                set {gui.%uuid of player%::cryptocurrencySellGUI} to true
+                set {cryptocurrencies.name::%player%} to {_name}
+            stop
+
+    else if {gui.%uuid of player%::cryptocurrencyBuyGUI} is true:
+        cancel event
+        set {_name} to name of slot 13 of player's current inventory
+        set {_list::*} to {_name} split by ": "
+        replace all "개" in {_list::2} with ""
+        replace all "," in {_list::2} with ""
+        set {_count} to uncolored {_list::2} parsed as number
+        set {_name} to {cryptocurrencies.name::%player%}
+        if clicked slot is 13:
+            if click type is left mouse button:
+                if uncolored lore of clicked item contains "좌클릭하여 매수 가능":
+                    cryptocurrencyBuy(player, {_name}, {_count})
+                    close player's inventory
+                    stop
+        else if index of clicked slot is between 9 and 17:
+            if clicked slot is 9:
+                set {_count} to 0
+            else if clicked slot is 10:
+                if {_count} > 100:
+                    remove 100 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 11:
+                if {_count} > 10:
+                    remove 10 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 12:
+                if {_count} > 1:
+                    remove 1 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 14:
+                add 1 to {_count}
+            else if clicked slot is 15:
+                add 10 to {_count}
+            else if clicked slot is 16:
+                add 100 to {_count}
+            else if clicked slot is 17:
+                set {_price} to {cryptocurrencies.new::%{_name}%}
+                set {_count} to (round down (player's balance)/{_price})
+            cryptocurrencySelectGUI("buy", player, {_name}, {_count})
+            wait 1 tick
+            set {gui.%uuid of player%::cryptocurrencyBuyGUI} to true
+            set {cryptocurrencies.name::%player%} to {_name}
+
+    else if {gui.%uuid of player%::cryptocurrencySellGUI} is true:
+        cancel event
+        set {_name} to name of slot 13 of player's current inventory
+        set {_list::*} to {_name} split by ": "
+        replace all "개" in {_list::2} with ""
+        replace all "," in {_list::2} with ""
+        set {_count} to uncolored {_list::2} parsed as number
+        set {_name} to {cryptocurrencies.name::%player%}
+        if clicked slot is 13:
+            if click type is left mouse button:
+                if uncolored lore of clicked item contains "좌클릭하여 매도 가능":
+                    cryptocurrencySell(player, {_name}, {_count})
+                    close player's inventory
+                    stop
+        else if index of clicked slot is between 9 and 17:
+            if clicked slot is 9:
+                set {_count} to 0
+            else if clicked slot is 10:
+                if {_count} > 100:
+                    remove 100 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 11:
+                if {_count} > 10:
+                    remove 10 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 12:
+                if {_count} > 1:
+                    remove 1 from {_count}
+                else:
+                    set {_count} to 0
+            else if clicked slot is 14:
+                add 1 to {_count}
+            else if clicked slot is 15:
+                add 10 to {_count}
+            else if clicked slot is 16:
+                add 100 to {_count}
+            else if clicked slot is 17:
+                if {cryptocurrencies.count.%{_name}%::%uuid of player%} is set:
+                    set {_count} to {cryptocurrencies.count.%{_name}%::%uuid of player%}
+                else:
+                    set {_count} to 0
+            cryptocurrencySelectGUI("sell", player, {_name}, {_count})
+            wait 1 tick
+            set {gui.%uuid of player%::cryptocurrencySellGUI} to true
+            set {cryptocurrencies.name::%player%} to {_name}
+            stop
+
+on inventory close:
+    if {gui.%uuid of player%::cryptocurrencyGUI} is true:
+        delete {gui.%uuid of player%::cryptocurrencyGUI}
+    if {gui.%uuid of player%::cryptocurrencyBuyGUI} is true:
+        delete {gui.%uuid of player%::cryptocurrencyBuyGUI}
+    if {gui.%uuid of player%::cryptocurrencySellGUI} is true:
+        delete {gui.%uuid of player%::cryptocurrencySellGUI}
+    if {cryptocurrencies.name::%player%} is set:
+        delete {cryptocurrencies.name::%player%}
+
+every 1 second:
+    if now formatted as "mm:ss" contains "05:00" or "15:00" or "25:00" or "35:00" or "45:00" or "55:00":
+        send "%nl%                &f가상화폐의 가격이 &6변동&f되었습니다.%nl%  &a[ /코인 ] &7명령어를 통하여 가격을 확인해주시기 바랍니다!%nl%" to all players
+        cryptocurrencyChange()
+        loop all players:
+            if {gui.%uuid of loop-player%::cryptocurrencyGUI} is true:
+                cryptocurrencyAdvancedGUI(loop-player)
+                wait 1 tick
+                set {gui.%uuid of loop-player%::cryptocurrencyGUI} to true
+            else:
+                set {_name} to name of slot 13 of loop-player's current inventory
+                set {_list::*} to {_name} split by ": "
+                replace all "주" in {_list::2} with ""
+                replace all "," in {_list::2} with ""
+                set {_count} to uncolored {_list::2} parsed as number
+                set {_name} to {cryptocurrencies.name::%loop-player%}
+                if {gui.%uuid of loop-player%::cryptocurrencyBuyGUI} is true:
+                    cryptocurrencySelectGUI("buy", loop-player, {_name}, {_count})
+                    wait 1 tick
+                    set {gui.%uuid of loop-player%::cryptocurrencyBuyGUI} to true
+                else if {gui.%uuid of loop-player%::cryptocurrencySellGUI} is true:
+                    cryptocurrencySelectGUI("sell", loop-player, {_name}, {_count})
+                    wait 1 tick
+                    set {gui.%uuid of loop-player%::cryptocurrencySEllGUI} to true
+                set {cryptocurrencies.name::%loop-player%} to {_name}

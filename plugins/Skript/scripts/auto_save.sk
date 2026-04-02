@@ -1,0 +1,13 @@
+every 30 minutes:
+    send "&9서버 자동 저장을 시작합니다!" to all players
+    make console execute command "save-all"
+    send "&9자동저장 완료!" to all players
+
+command /저장:
+    permission: op.user
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        send "&9서버 자동 저장을 시작합니다!" to all players
+        make console execute command "save-all"
+        send "&9자동저장 완료!" to all players
+            

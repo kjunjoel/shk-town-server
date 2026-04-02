@@ -1,0 +1,548 @@
+# MinePick_beta1.sk 파일은 크리에이티브 커먼즈 저작자표시-비영리-변경금지 4.0 국제 라이선스가 적용 되어 있습니다.
+# 이 라이선스의 설명을 보고 싶으시면 https://creativecommons.org/licenses/by-nc-nd/4.0 을(를) 참조하세요.
+
+# 원저작자 : Vhone
+# 블로그 : https://blog.naver.com/v_hone
+# 배포 : https://blog.naver.com/v_hone/222061452690
+# 버전 : beta2
+
+# beta2
+#  - 1.17 버전으로 업데이트
+
+options:
+	ID: casino.yacht
+	PREFIX: &0&l[ CASINO YACHT DICE ]
+	
+	CHANCE: 3
+	
+	COLOR_1: &f&l
+	COLOR_2: &f&l
+	COLOR_3: &f&l
+	COLOR_4: &f&l
+	COLOR_5: &f&l
+	COLOR_6: &f&l
+	
+	SOUND_READY: BLOCK_NOTE_BLOCK_BASS
+	SOUND_UNREADY: BLOCK_NOTE_BLOCK_BELL
+	SOUND_JOIN: BLOCK_WOODEN_DOOR_OPEN
+	SOUND_QUIT: BLOCK_WOODEN_DOOR_CLOSE
+	SOUND_RECORD: BLOCK_GLASS_PLACE
+	SOUND_LOOTING: BLOCK_NOTE_BLOCK_HAT
+	SOUND_LOOTEND: BLOCK_NOTE_BLOCK_COW_BELL
+	SOUND_PICKUP: ENTITY_PLAYER_ATTACK_NODAMAGE # UI_TOAST_IN
+	SOUND_PICKDOWN: ENTITY_PLAYER_ATTACK_NODAMAGE # UI_TOAST_OUT
+	SOUND_END: UI_TOAST_CHALLENGE_COMPLETE
+
+	EN_WAIT: 대기 중
+	EN_READY: 준비됨
+	EN_TOTAL: 총합
+	EN_NOT_ENOUGH_SPACE: 이미 게임이 진행중입니다.
+	# EN_TRY_YOUR_TURN: %{_this.name}%님의 차례입니다.%nl% &r{@CHANCE}&7번 굴릴 수 있습니다.
+
+on load:
+	suppress variable save warning
+
+	delete {{@ID}.const::*}
+	delete {{@ID}::*}
+	delete {{@ID}.user::*}
+
+	casinoYacht_loadVariable( false )
+
+# 서버 종료, 리로드 시 모든 게임 중단
+on unload:
+	loop indexes of {{@ID}::play::*}:
+		loop {{@ID}::play::%loop-value-1%::player::*}:
+			close inventory of loop-value-2
+	delete {{@ID}::*}
+
+#> 게임에 필요한 데이터 세팅
+#> @param override 데이터 덮어쓰기 여부
+#> ***
+#> @invisible
+function casinoYacht_loadVariable(override:boolean=true):
+
+	if {{@ID}.const::*} is set:
+		{_override} is false
+		stop
+	
+	# set {{@ID}::dice::char::*} to "⚀" and "⚁", "⚂", "⚃", "⚄", "⚅"
+	set {{@ID}.const::dice::item::1} to book with custom model data 59 named "&f&l1"
+	set {{@ID}.const::dice::item::2} to book with custom model data 60 named "&f&l2"
+	set {{@ID}.const::dice::item::3} to book with custom model data 61 named "&f&l3"
+	set {{@ID}.const::dice::item::4} to book with custom model data 62 named "&f&l4"
+	set {{@ID}.const::dice::item::5} to book with custom model data 63 named "&f&l5"
+	set {{@ID}.const::dice::item::6} to book with custom model data 64 named "&f&l6"
+	
+	set {{@ID}.const::icon::team::*} to red stained glass and blue stained glass
+	set {{@ID}.const::icon::turn::*} to red concrete and blue concrete 
+	set {{@ID}.const::icon::player} to white stained glass named "&r플레이어"
+	set {{@ID}.const::icon::crafting} to green stained glass pane named "&r굴리기"
+	set {{@ID}.const::icon::stick} to white stained glass pane named "&r"
+	set {{@ID}.const::icon::frame} to black stained glass pane named "&r"
+	
+	set {{@ID}.const::icon::unrecord} to white stained glass
+	set {{@ID}.const::icon::record::*} to red stained glass and blue stained glass
+	
+	set {{@ID}.const::record::name::1} to "&r█ Aces&r"
+	set {{@ID}.const::record::name::2} to "&r█ Deuces&r"
+	set {{@ID}.const::record::name::3} to "&r█ Threes&r"
+	set {{@ID}.const::record::name::4} to "&r█ Fours&r"
+	set {{@ID}.const::record::name::5} to "&r█ Fives&r"
+	set {{@ID}.const::record::name::6} to "&r█ Sixes&r"
+	set {{@ID}.const::record::name::7} to "&r█ Choice&r"
+	set {{@ID}.const::record::name::8} to "&r█ 4 of a Kind&r"
+	set {{@ID}.const::record::name::9} to "&r█ Full House&r"
+	set {{@ID}.const::record::name::10} to "&r█ Small Straight&r"
+	set {{@ID}.const::record::name::11} to "&r█ Big Straight&r"
+	set {{@ID}.const::record::name::12} to "&r█ YACHT&r"
+	
+	set {{@ID}.const::slot::crafting} to 13
+	set {{@ID}.const::slot::player::*} to 12 and 14
+	set {{@ID}.const::slot::record::1::*} to 0 and 9, 18, 27, 36, 45, 1, 10, 19, 28, 37, 46
+	set {{@ID}.const::slot::record::2::*} to 7 and 16, 25, 34, 43, 52, 8, 17, 26, 35, 44, 53
+	set {{@ID}.const::slot::loot::*} to 29 and 30, 31, 32, 33 
+	set {{@ID}.const::slot::pick::*} to 38 and 39, 40, 41, 42
+
+	send "{@PREFIX} loaded variables." to console
+
+#> 게임의 GUI를 반환
+#> @param title 게임 이름
+#> @return 게임 GUI
+#> ***
+#> @invisible
+function casinoYacht_getGUI(title:text) :: inventory:
+	return {{@ID}::play::%{_title}%::gui}
+
+#> 게임에서 플레이어의 팀 번호를 반환
+#> @param title 게임 이름
+#> @param p 플레이어
+#> @return 팀 번호
+#> ***
+#> @invisible
+function casinoYacht_getTeamIndex(title:text,p:player) :: integer:
+	loop {{@ID}::play::%{_title}%::player::*}:
+		loop-value is {_p}
+		return ( loop-index parsed as integer )
+
+#> 1은 2, 2는 1을 반환
+#> @param team 팀 번호
+#> @return 상대 팀 번호
+#> ***
+#> @invisible
+function casinoYacht_getOtherTeamIndex(team:integer) :: integer:
+	return 1 if {_team} is 2
+	return 2 if {_team} is 1
+
+#> 24번째 라운드까지 게임 진행
+#> @param title 게임 이름
+#> @return 플레이 중 이면 true, 아니면 false
+#> ***
+#> @invisible
+function casinoYacht_isPlay(title:text) :: boolean:
+	if {{@ID}::play::%{_title}%::round} < 25:
+		return true
+	else:
+		return false
+
+#> 게임의 모든 값을 초기화
+#> @param title 게임 이름
+#> ***
+#> @invisible
+function casinoYacht_resetData(title:text):
+	delete {{@ID}::play::%{_title}%::chance}
+	delete {{@ID}::play::%{_title}%::round}
+	delete {{@ID}::play::%{_title}%::turn}
+	delete {{@ID}::play::%{_title}%::1::*}
+	delete {{@ID}::play::%{_title}%::2::*}
+	set {{@ID}::play::%{_title}%::pause} to 0
+
+#> 게임에 플레이어를 추가
+#> @param title 게임 이름
+#> @param p 플레이어
+#> @return 게임에 참가 되면 true, 아니면 false
+#> ***
+#> @invisible
+function casinoYacht_join(title:text,p:player) :: boolean:
+	if {{@ID}::play::%{_title}%::player::*} is set:
+		set {_amount} to number of {{@ID}::play::%{_title}%::player::*}
+		if {_amount} > 1:
+			send "[&a{@ID}&r] &7{@EN_NOT_ENOUGH_SPACE}" to {_p}
+			return false
+
+	if {{@ID}::play::%{_title}%::gui} is not set:
+		set {{@ID}::play::%{_title}%::gui} to casinoYacht_newGUI( {_title} )
+		set {{@ID}::play::%{_title}%::pause} to 0
+	set {_gui} to {{@ID}::play::%{_title}%::gui}
+	
+	add {_p} to {{@ID}::play::%{_title}%::player::*}
+	
+	set {_team} to casinoYacht_getTeamIndex( {_title}, {_p} )
+	set {_icon} to skull of {_p} named "&r%{_p}% [{@EN_WAIT}]"
+	set slot {{@ID}.const::slot::player::%{_team}%} of {_gui} to {_icon}
+	
+	# User Data
+	set {{@ID}.user::%{_p}%::title} to {_title}
+	set {{@ID}.user::%{_p}%::team} to {_team}
+	play sound "{@SOUND_JOIN}" with volume 0.5 to {{@ID}::play::%{_title}%::player::*}
+	open {_gui} to {_p}
+	return true
+
+#> 게임 GUI 생성 및 반환
+#> @param title 게임 이름
+#> @return 게임 GUI
+#> ***
+#> @invisible
+function casinoYacht_newGUI(title:text) :: inventory:
+	set {_inv} to chest inventory with 6 rows named "{@PREFIX}&r %{_title}%"
+	set {_inv::13} to {{@ID}.const::icon::crafting}
+	loop indexes of {{@ID}.const::slot::record::*}:
+		loop {{@ID}.const::slot::record::%loop-value-1%::*}:
+			set {_inv::%loop-value-2%} to {{@ID}.const::icon::unrecord} named {{@ID}.const::record::name::%loop-index%}
+	loop {{@ID}.const::slot::loot::*}:
+		set {_inv::%loop-value%} to {{@ID}.const::icon::stick}
+	loop {{@ID}.const::slot::pick::*}:
+		set {_inv::%loop-value%} to air
+	loop {{@ID}.const::slot::player::*}:
+		set {_inv::%loop-value%} to {{@ID}.const::icon::player}
+	loop integers from 0 to 53:
+		if {_inv::%loop-integer%} is set:
+			set slot loop-integer of {_inv} to {_inv::%loop-integer%}
+		else:
+			set slot loop-integer of {_inv} to {{@ID}.const::icon::frame}
+	return {_inv}
+
+#> 게임의 턴을 넘김
+#> @param title 게임 이름
+#> ***
+#> @invisible
+function casinoYacht_nextTurn(title:text):
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	if {{@ID}::play::%{_title}%::turn} is not set:
+		set {_next} to 2
+		set {_this} to 1
+	else:
+		set {_next} to {{@ID}::play::%{_title}%::turn}
+		set {_this} to casinoYacht_getOtherTeamIndex( {_next} )
+	
+	# 이번 턴 플레이어 데이터 세팅
+	set {{@ID}::play::%{_title}%::turn} to {_this}
+	set {{@ID}::play::%{_title}%::chance} to {@CHANCE}
+	add 1 to {{@ID}::play::%{_title}%::round}
+	
+	# 이전 턴 플레이어 점수 갱신
+	loop integers from 1 to 12:
+		set {_slot} to slot {{@ID}.const::slot::record::%{_next}%::%loop-integer%} of {_gui}
+		set {_amount} to item amount of {_slot}
+		minecraft name of {_slot} is minecraft name of {{@ID}.const::icon::record::%{_next}%}
+		add {_amount} to {_total}
+
+		# Aces / Deuces / Threes / Fours / Fives / Sixes 보너스 점수 : 63점 이상 +35점
+		if loop-value <= 6:
+			add {_amount} to {_bonus}
+
+	if {_bonus} > 62:
+		add 35 to {_total} 
+	set {{@ID}::play::%{_title}%::%{_next}%::score} to {_total}
+
+	# 각 플레이어의 총점(total), 이름(name), 아이콘(icon)을 갱신하여 플레이어 슬롯에 세팅
+	loop "this" and "next":
+		set {_%loop-value%.total} to {{@ID}::play::%{_title}%::%{_%loop-value%}%::score} otherwise 0
+		set {_%loop-value%.name} to name of {{@ID}::play::%{_title}%::player::%{_%loop-value%}%}
+		# set {_%loop-value%.icon} to {{@ID}.const::icon::team::%{_%loop-value%}%} named join "&r" and {_%loop-value%.name}
+		set {_%loop-value%.icon} to skull of {{@ID}::play::%{_title}%::player::%{_%loop-value%}%} named join "&r" and {_%loop-value%.name}
+		set lore of {_%loop-value%.icon} to "&7 총합 : &r%{_%loop-value%.total}%"
+		set slot {{@ID}.const::slot::player::%{_%loop-value%}%} of {_gui} to {_%loop-value%.icon} 
+	
+	if casinoYacht_isPlay( {_title} ) is true:
+		set lore of slot {{@ID}.const::slot::crafting} of {_gui} to "&7 %{_this.name}%님의 차례입니다.%nl% &r{@CHANCE}&7번 굴릴 수 있습니다."
+		
+	else:
+		set lore of slot {{@ID}.const::slot::crafting} of {_gui} to "&7 The End."
+		
+		if {_next.total} > {_this.total}:
+			casinoYachtHelperEnd({_next.name}, {_this.name})
+			# set {_msg} to ": %{_next.name}% 승리!!"
+		else if {_next.total} < {_this.total}:
+			casinoYachtHelperEnd({_this.name}, {_next.name})
+			# set {_msg} to ": %{_this.name}% 승리!!"
+		else:
+			casinoYachtHelperDraw({_this.name}, {_next.name})
+			# set {_msg} to ": 무승부"
+		stop
+		# play sound "{@SOUND_END}" with volume 0.5 to {{@ID}::play::%{_title}%::player::*}
+		# set name of {_gui} to join ( name of {_gui} ) and {_msg} with " "
+
+#> 루팅 테이블을 초기화
+#> @param title 게임 이름
+#> ***
+#> @invisible
+function casinoYacht_clearLootingTable(title:text):
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	loop {{@ID}.const::slot::loot::*}:
+		set slot loop-value of {_gui} to {{@ID}.const::icon::stick}
+	loop {{@ID}.const::slot::pick::*}:
+		set slot loop-value of {_gui} to air
+
+#> 점수 테이블을 초기화
+#> @param title 게임 이름
+#> ***
+#> @invisible	
+function casinoYacht_clearScoreTable(title:text):
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	loop indexes of {{@ID}.const::slot::record::*}:
+		loop {{@ID}.const::slot::record::%loop-value-1%::*}:
+			set slot loop-value-2 of {_gui} to {{@ID}.const::icon::unrecord} named {{@ID}.const::record::name::%loop-index%}
+
+#> 해당 팀의 기록되지 않은 점수의 로어 초기화
+#> @param title 게임 이름
+#> @param turn 팀 번호
+#> ***
+#> @invisible	
+function casinoYacht_clearUnrecordScoreTable(title:text,team:integer):
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	loop {{@ID}.const::slot::record::%{_team}%::*}:
+		slot loop-value of {_gui} is {{@ID}.const::icon::unrecord}
+		delete lore of slot loop-value of {_gui}
+
+#> 슬롯 번호의 주사위를 루팅. 시간값을 사용해 애니메이션 길이 조절
+#> @param title 게임 이름
+#> @param slot 슬롯 번호
+#> @param time 시간
+#> @invisible
+function casinoYacht_loot(title:text,slot:integer,time:integer): # Loot Pickaxe
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	set {_loop} to 10 + ( {_time} * 5 ) 
+	add 1 to {{@ID}::play::%{_title}%::pause}
+	loop {_loop} times:
+		wait 2 tick
+		stop if casinoYacht_isPlay( {_title} ) is false
+		set {_loot} to random integer from 1 to 6
+		set slot {_slot} of {_gui} to {{@ID}.const::dice::item::%{_loot}%}
+	remove 1 from {{@ID}::play::%{_title}%::pause}
+	play sound "{@SOUND_LOOTEND}" with volume 0.5 to {{@ID}::play::%{_title}%::player::*}
+
+on inventory click:
+	{{@ID}.user::%player%::*} is set
+	set {_title} to {{@ID}.user::%player%::title}
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	open inventory is {_gui}
+	cancel event
+
+	click type is left mouse button
+	
+	{{@ID}::play::%{_title}%::pause} <= 0
+	
+	set {_receiver::*} to {{@ID}::play::%{_title}%::player::*}
+	
+	# 플레이어 슬롯을 클릭 한 경우
+	loop {{@ID}.const::slot::player::*}:
+		loop-value is index of event-slot
+		
+		set {_info::*} to uncolored name of clicked slot parsed as "%player% \[%text%\]"
+		if {_info::1} is player:
+
+			# 플레이어 준비
+			if {_info::2} is uncolored "{@EN_READY}":
+				play sound "{@SOUND_READY}" with volume 0.5 to {_receiver::*}
+				set name of clicked slot to "&r%player% [{@EN_WAIT}]"
+			else if {_info::2} is uncolored "{@EN_WAIT}":
+				play sound "{@SOUND_UNREADY}" with volume 0.5 to {_receiver::*}
+				set name of clicked slot to "&r%player% [{@EN_READY}]"
+				
+				# 상대도 준비 인 경우 게임 시작
+				if loop-index is "1":
+					set {_target} to 2
+				else if loop-index is "2":
+					set {_target} to 1
+				
+				set {_target.slot} to slot {{@ID}.const::slot::player::%{_target}%} of event-inventory	
+				set {_target.info::*} to uncolored name of {_target.slot} parsed as "%player% \[%text%\]"
+				if {_target.info::2} is uncolored "{@EN_READY}":
+					casinoYacht_nextTurn( {_title} )
+
+		stop
+	
+	set {_team} to {{@ID}::play::%{_title}%::turn}
+	{_team} is set
+	{{@ID}::play::%{_title}%::player::%{_team}%} is player
+	
+	# 제작대 클릭 - 루팅
+	if clicked slot is {{@ID}.const::icon::crafting}:
+		set {_chance} to {{@ID}::play::%{_title}%::chance}
+		{_chance} > 0
+		
+		# 루팅 가능 여부 확인
+		loop {{@ID}.const::slot::loot::*}:
+			slot loop-value of event-inventory is not air
+			add loop-value to {_loot::*}
+		if {_loot::*} is not set:
+			send "루팅 할 수 있는 슬롯이 없습니다." to player and console
+			stop
+		
+		# 루팅 시작 전 제작대 문구 변경
+		remove 1 from {_chance}
+		set line 2 of lore of clicked slot to "&7%player%님은 &r%{_chance}%&7번 더 굴릴 수 있습니다."
+
+		# 루팅 애니메이션
+		set {_shuffle.loot::*} to shuffled {_loot::*}
+		loop integers from 1 to number of {_shuffle.loot::*}:
+			casinoYacht_loot( {_title}, {_shuffle.loot::%loop-integer%}, loop-integer )
+
+		while {{@ID}::play::%{_title}%::pause} > 0:
+			play sound "{@SOUND_LOOTING}" with volume 0.2 to {_receiver::*}
+			wait 2 tick
+		
+		# 루팅 종료 후 제작대 문구 변경
+		if {_chance} <= 0:
+			set {_direct} to "left" if {_team} is 1
+			set {_direct} to "right" if {_team} is 2
+			set lore of clicked slot to ( join ( line 1 of lore of clicked slot ) and " All try is over." ) and "&7Record it on the %{_direct}% scoreboard."
+			
+		# 결과에 따른 스코어보드 점수 표시
+		set {_slots::*} to {{@ID}.const::slot::loot::*} and {{@ID}.const::slot::pick::*}
+		loop {_slots::*}:
+			loop 6 times:
+				slot loop-value-1 of event-inventory is {{@ID}.const::dice::item::%loop-number%}
+				add 1 to {_score::%loop-number%}
+				stop loop
+		
+		set {_score.amount} to number of {_score::*}
+		set {_record::*} to 0 and 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+		
+		loop {_score::*}: # [1~6] Ones, Twos, Threes, Fours, Fives, Sixes
+			set {_record::%loop-index%} to loop-index parsed as integer * loop-value
+		
+		loop {_score::*}: # [7] Choice
+			add loop-index parsed as integer * loop-value to {_record::7}
+		
+		if {_score.amount} is 2: # [8~9] 4 of a Kind, Full House
+			loop {_score::*}:
+				set {_record::8} to {_record::7} if loop-value is 4 
+				add loop-index parsed as integer * loop-value to {_record::9} if loop-value is 2 or 3
+		
+		if {_score.amount} is 4: # [10] Little Straight
+			set {_record::10} to 15 if {_score::1} and {_score::2} is not set
+			set {_record::10} to 15 if {_score::1} and {_score::6} is not set
+			set {_record::10} to 15 if {_score::5} and {_score::6} is not set
+		
+		if {_score.amount} is 5: # [10] Little Straight
+			loop 1 and 2, 5, 6:
+				{_score::%loop-value%} is not set
+				set {_record::10} to 15
+				stop loop
+			
+		if {_score.amount} is 5: # [11] Big Straight
+			loop 1 and 6:
+				{_score::%loop-value%} is not set
+				set {_record::11} to 30
+				stop loop
+		
+		if {_score::*} contain 5: # [12] MinePick
+			set {_record::12} to 50
+			set {_record::8} to {_record::7}
+			set {_record::9} to {_record::7}
+		
+		loop {_record::*}:
+			set {_slot} to {{@ID}.const::slot::record::%{_team}%::%loop-index%}
+			slot {_slot} of event-inventory is {{@ID}.const::icon::unrecord}
+			set lore of slot {_slot} of event-inventory to "&7 이 항목을 선택하면" and "&r %loop-value%&7점을 얻습니다."
+		
+		# 게임 데이터 세팅
+		set {{@ID}::play::%{_title}%::record::%{_team}%::*} to {_record::*}
+		set {{@ID}::play::%{_title}%::chance} to {_chance}
+		
+		stop
+	
+	# 루트 슬롯 클릭 -Loot → Pick
+	loop {{@ID}.const::slot::loot::*}:
+		loop-value is index of event-slot
+		event-slot is not {{@ID}.const::icon::stick} or air
+		set slot {{@ID}.const::slot::pick::%loop-index%} of event-inventory to event-slot
+		set event-slot to air
+		play sound "{@SOUND_PICKDOWN}" with volume 0.5 to {_receiver::*}
+		stop
+	
+	# 픽 슬롯 클릭 - Pick → Loot
+	loop {{@ID}.const::slot::pick::*}:
+		loop-value is index of event-slot
+		event-slot is not {{@ID}.const::icon::stick} or air
+		set slot {{@ID}.const::slot::loot::%loop-index%} of event-inventory to event-slot
+		set event-slot to air
+		play sound "{@SOUND_PICKUP}" with volume 0.5 to {_receiver::*}
+		stop
+	
+	# 스코어 테이블 클릭
+	if {{@ID}.const::slot::record::%{_team}%::*} contain index of clicked slot:
+		clicked slot is {{@ID}.const::icon::unrecord}
+		
+		set {_score.name} to name of clicked slot
+		loop {{@ID}.const::record::name::*}:
+			uncolored loop-value is uncolored {_score.name}
+			set {_score} to {{@ID}::play::%{_title}%::record::%{_team}%::%loop-index%}
+			stop loop
+		{_score} is set
+		
+		if {_score} is 0:
+			set clicked slot to glass named join "&r" and name of clicked slot, " &r[&a%{_score}%&r]"
+		else:
+			set clicked slot to {_score} of {{@ID}.const::icon::record::%{_team}%} named join "&r" and name of clicked slot, " &r[&a%{_score}%&r]"
+		
+		delete {{@ID}::play::%{_title}%::record::%{_team}%::*}
+		play sound "{@SOUND_RECORD}" with volume 0.5 to {_receiver::*}
+		
+		casinoYacht_clearLootingTable( {_title} )
+		casinoYacht_clearUnrecordScoreTable( {_title}, {_team} )
+		casinoYacht_nextTurn( {_title} )
+	
+command /yacht_dice <text>:
+	usage: {@ID} aa
+	executable by: player
+	trigger:
+		casinoYacht_join( arg-text, player )
+
+on inventory close:
+	{{@ID}.user::%player%::*} is set
+	set {_title} to {{@ID}.user::%player%::title}
+	set {_gui} to casinoYacht_getGUI( {_title} )
+	open inventory is {_gui}
+	
+	# 게임 시작 전 or 게임 종료 후
+	if casinoYacht_isPlay( {_title} ) is false:
+		play sound "{@SOUND_QUIT}" with volume 0.5 to {_receiver::*}
+	
+	# 게임 진행 중에 나가면 게임 초기화 진행
+	else:
+		set {_team} to {{@ID}.user::%player%::team}
+		set {_other} to casinoYacht_getOtherTeamIndex( {_team} )
+		set {_other.player} to {{@ID}::play::%{_title}%::player::%{_other}%}
+		casinoYachtHelperQuit(player, {_other.player})
+
+		# 게임 데이터 초기화
+		casinoYacht_resetData( {_title} )
+		
+		# 게임 GUI 초기화
+		set slot 13 of {_gui} to {{@ID}.const::icon::crafting}
+		casinoYacht_clearLootingTable( {_title} )
+		casinoYacht_clearScoreTable( {_title} )
+
+	# 플레이어 아이콘 세팅
+	set {_team} to {{@ID}.user::%player%::team}
+	set slot {{@ID}.const::slot::player::%{_team}%} of {_gui} to {{@ID}.const::icon::player}
+
+	# 상대 플레이어 아이콘 세팅
+	set {_other} to casinoYacht_getOtherTeamIndex( {_team} )
+	# set {_icon} to {{@ID}.const::icon::team::%{_other}%} named "&r%{{@ID}::play::%{_title}%::player::%{_other}%}% [{@EN_WAIT}]" 
+	set {_icon} to skull of {{@ID}::play::%{_title}%::player::%{_other}%} named "&r%{{@ID}::play::%{_title}%::player::%{_other}%}% [{@EN_WAIT}]" 
+	set slot {{@ID}.const::slot::player::%{_other}%} of {_gui} to {_icon}
+
+	# 게임에서 유저 제거
+	set {_receiver::*} to {{@ID}::play::%{_title}%::player::*}
+	remove player from {{@ID}::play::%{_title}%::player::*}
+
+	# 유저 데이터 제거
+	delete {{@ID}.user::%player%::*}
+		
+	
+	# 모두 나간 경우 게임 제거
+	if number of {{@ID}::play::%{_title}%::player::*} <= 0:
+		delete {{@ID}::play::%{_title}%::*}

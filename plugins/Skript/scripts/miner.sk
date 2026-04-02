@@ -1,0 +1,9 @@
+options:
+    광부: 광부
+    node: miner.user
+
+command /광부:
+    permission: {@node}
+    permission message: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        make player run command "shop open 광부-광부상점" as op

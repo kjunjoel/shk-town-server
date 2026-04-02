@@ -1,0 +1,117 @@
+options:
+    prefix: [ &6&l! &f]
+
+    dir: plugins/Skript/data/embellishment/embellishment.txt
+
+# 변수
+# {wardrobe::%uuid of player%}
+
+on rightclick:
+    if uncolored lore of player's tool contains "우클릭하여 치장 착용":
+        set {_file::*} to content of file path "{@dir}"
+        loop {_file::*}:
+            set {_data::*} to loop-value split by "::"
+            if uncolored name of player's tool is {_data::1}:
+                if player has permission "cosmeticscore.user.cosmetics.wear.%{_data::2}%":
+                    send "{@prefix} 이미 %colored name of player's tool%&f 치장 착용 권한을 가지고 있습니다."
+                    stop
+                execute console command "/lp user %player% permission set cosmeticscore.user.cosmetics.wear.%{_data::2}%"
+                remove 1 of player's tool from player's tool
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이동할 수 있습니다."
+
+command /embellishment_delete <offlineplayer>:
+    permission: op
+    trigger:
+        delete {wardrobe::%uuid of arg-1%}
+
+command /wardrobe_enter:
+    permission: wardrobe_enter.user
+    permission message: &c당신은 권한이 없습니다!
+    trigger:
+        if "%region at player%" doesn't contain "spawn":
+            send "{@prefix} 명령어를 통한 옷장 진입은 스폰에서만 가능합니다."
+            stop
+        set {_loc} to player's location
+        set {_time} to 5
+        send "{@prefix} 5초 뒤에 &e옷장&f으로 이동됩니다. 3m 이상 움직이면 이동이 취소됩니다." to player
+        loop 50 times:
+            wait 2 ticks
+            set {_dist} to taxiTeleportCalculation({_loc}, player's location)
+            if {_dist} > 3:
+                send "{@prefix} 3m 이상 움직여 이동이 취소되었습니다."
+                delete {wardrobe::%uuid of player%}
+                stop
+            if mod(loop-number, 10) is 0:
+                send action bar "&e옷장&f으로 이동까지 &6%{_time} - round down (loop-number/10)%&f초 남음" to player
+        set {wardrobe::%uuid of player%} to player's location
+        make player run command "wardrobe" as op
+
+command /wardrobe_in:
+    trigger:
+        set {_loc} to player's location
+        set {_time} to 5
+        send "{@prefix} 5초 뒤에 &e옷장&f으로 이동됩니다. 3m 이상 움직이면 이동이 취소됩니다." to player
+        loop 50 times:
+            wait 2 ticks
+            set {_dist} to taxiTeleportCalculation({_loc}, player's location)
+            if {_dist} > 3:
+                send "{@prefix} 3m 이상 움직여 이동이 취소되었습니다."
+                delete {wardrobe::%uuid of player%}
+                stop
+            if mod(loop-number, 10) is 0:
+                send action bar "&e옷장&f으로 이동까지 &6%{_time} - round down (loop-number/10)%&f초 남음" to player
+        set {wardrobe::%uuid of player%} to player's location
+        make player run command "wardrobe" as op
+
+on enter "wardrobe":
+    make player run command "wardrobe" as op
+
+on enter "back":
+    teleport player to {wardrobe::%uuid of player%}
+    delete {wardrobe::%uuid of player%}
+
+on rightclick on stone button:
+    set {_pos} to "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%"
+    if {_pos} is "763.5, 59.5, -164.5":
+        make player run command "spawn" as op
+
+on rightclick on barrier:
+    set {_pos} to "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%"
+    if {_pos} is "419.5, 48.5, -152.5" or "420.5, 48.5, -152.5" or "239.5, 48.5, -236.5" or "238.5, 48.5, -236.5" or "229.5, 48.5, -236.5" or "228.5, 48.5, -236.5" or "414.5, 48.5, -154.5" or "415.5, 48.5, -154.5" or "410.5, 49.5, -155.5" or "411.5, 49.5, -156.5" or "410.5, 50.5, -155.5" or "411.5, 50.5, -156.5":
+        execute player command "wardrobe_in"
+
+
+command /치장_지급:
+    permission: op
+    trigger:
+        set {_item} to paper named "<##99CCFF>&l학사모" with custom model data 112 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##CC3333>&l고글 일체형 자전거 헬멧" with custom model data 113 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##333399>&l여우가면" with custom model data 114 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##CCCCCC>&l뼈가면" with custom model data 115 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##0099FF>&l돌고래" with custom model data 116 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##FFFF33>&l탐험가 <##99CCFF>&l고글" with custom model data 117 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##0099FF>&l해녀 고글" with custom model data 118 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##99FFCC>&l초록 리본" with custom model data 119 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##996666>&l고슴도치 모자" with custom model data 120 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##6666FF>&l마린 모자" with custom model data 121 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##996600>&l동양 <##FFCC33>&l곰방대" with custom model data 122 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##9999CC>&l해적 모자" with custom model data 123 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##FF3333>&l바라콘" with custom model data 124 with lore "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##FFFF99>&l티아라" with custom model data 125 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+        set {_item} to paper named "<##663300>&l서양 <##660000>&l곰방대" with custom model data 126 with lore "&7우클릭하여 치장 착용" and "&7거래 및 양도가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")

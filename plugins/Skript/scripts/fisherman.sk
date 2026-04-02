@@ -1,0 +1,360 @@
+options:
+    # 접두사
+    prefix: <##67C1CA>&l[어부]&f
+
+    # 어부 GUI
+    buyGUI: &f[<##67C1CA>&l어부&f]
+    sellGUI: &f[<##67C1CA>&l어부&f]
+
+    # 어부 NPC 이름
+    buy: [&b&l어부&f] 김상원
+    sell: [&b&l어부&f] 김상원
+
+    node: fish.user
+
+
+# 변수
+# {fish.price::*}                    | 물고기 등급명
+# {fish.price::*::price}             | 물고기 등급별 가격
+# {fish.price::*}                    | 물고기가 움직이는 속도
+# {fish.price::*::min}               | 물고기가 움직이는 최소 속도
+# {fish.price::*::max}               | 물고기가 움직이는 최대 속도
+# {fish.pricerpercm::*}              | 물고기 등급별 cm당 가격
+# {fish.speed::*}                    | 물고기 움직이는 속도
+# {fish.speed::*::min}               | 물고기 움직이는 최소 속도(ticks)
+# {fish.speed::*::max}               | 물고기 움직이는 최대 속도(ticks)
+# {fish.fish.sea::*}                 | 바다물고기 목록
+# {fish.fish.sea::*::class}          | 바다물고기 등급
+# {fish.fish.sea::*::min}            | 바다물고기 최소 길이
+# {fish.fish.sea::*::max}            | 바다물고기 최대 길이
+# {fish.fish.sea::*::prob}           | 바다물고기 확률
+# {fish.fish.sea::*::item}           | 바다물고기 아이템
+# {fish.fish.sea::*::data}           | 바다물고기 커스텀 모델 데이터
+# {fish.fish.nonsea::*}              | 민물고기 목록
+# {fish.fish.nonsea::*::class}       | 민물고기 등급
+# {fish.fish.nonsea::*::min}         | 민물고기 최소 길이
+# {fish.fish.nonsea::*::max}         | 민물고기 최대 길이
+# {fish.fish.nonsea::*::prob}        | 민물고기 확률
+# {fish.fish.nonsea::*::item}        | 민물고기 아이템
+# {fish.fish.nonsea::*::data}        | 민물고기 커스텀 모델 데이터
+# {fish.%uuid of player%::*}         | 플레이어가 잡은 물고기의 이름, 등급, 길이
+# {fish.bool.%uuid of player%}       | 플레이어가 물고기를 잡았는지
+# {fish.slot.%uuid of player%}       | 현재 플레이어의 슬롯 위치
+# {fish.sell.%uuid of player%}       | 플레이어가 물고기를 팔고 있는지
+
+function caughtFish(p: player, n: number):
+    open chest inventory with 3 row named "{@prefix}" to {_p}
+    set {_blank} to white stained glass pane named "&f"
+    loop 26 times:
+        set slot (loop-number)-1 of {_p}'s current inventory to {_blank}
+    set slot 26 of {_p}'s current inventory to red stained glass pane named "&c&l포기하기"
+    set {_i} to random integer between 0 and 1
+    if {_i} is 0:
+        set {fish.slot.%uuid of {_p}%} to ({_n} - 1)
+    else:
+        set {fish.slot.%uuid of {_p}%} to ({_n} + 1)
+    if {fish.slot.%uuid of {_p}%} is 8:
+        set {fish.slot.%uuid of {_p}%} to 17
+    if {fish.slot.%uuid of {_p}%} is 18:
+        set {fish.slot.%uuid of {_p}%} to 9
+    set slot {fish.slot.%uuid of {_p}%} of {_p}'s current inventory to blue stained glass pane named "&b&l클릭"
+    loadFish("speed")
+    set {_wait} to random integer from {fish.speed::%{fish.%uuid of {_p}%::class}%::min} and {fish.speed::%{fish.%uuid of {_p}%::class}%::max}
+    deleteFish("speed")
+    wait "%{_wait}% ticks" parsed as timespan
+    wait 1 tick
+    if {fish.bool.%uuid of {_p}%} is true:
+        caughtFish({_p}, {fish.slot.%uuid of {_p}%})
+        wait 1 tick
+        set {gui.%uuid of {_p}%::fishGUI} to true
+
+function sellFish(p: player):
+    open chest inventory with 5 row named "{@sellGUI}" to {_p}
+    set {_blank} to white stained glass pane named "&f"
+    loop 9 times:
+        set slot (loop-number)-1 of {_p}'s current inventory to {_blank}
+        set slot (loop-number)+35 of {_p}'s current inventory to {_blank}
+    loop 5 times:
+        set slot 9*(loop-number)-9 of {_p}'s current inventory to {_blank}
+        set slot 9*(loop-number)-1 of {_p}'s current inventory to {_blank}
+    set slot 40 of {_p}'s current inventory to green stained glass pane named "&a&l정산하기"
+
+command /fish_reset [<player>]:
+    permission: op.user
+    trigger:
+        delete {fish.clicked.%uuid of arg-1%}
+
+# 변수 설정
+function loadFish(type: text):
+    if {_type} is "price":
+        set {_data::*} to file contents of "plugins/Skript/data/fisherman/price.txt"
+        loop {_data::*}:
+            set {_temp::*} to loop-value split by " "
+            set {fish.price::%{_temp::1}%} to {_temp::1}
+            set {fish.price::%{_temp::1}%::price} to {_temp::2} parsed as number
+        stop
+    else if {_type} is "priceFish":
+        set {_data::*} to file contents of "plugins/Skript/data/fisherman/price_fisherman.txt"
+        loop {_data::*}:
+            set {_temp::*} to loop-value split by " "
+            set {fish.price::%{_temp::1}%} to {_temp::1}
+            set {fish.price::%{_temp::1}%::price} to {_temp::2} parsed as number
+        stop
+    else if {_type} is "pricepercm":
+        set {fish.pricepercm::*} to file contents of "plugins/Skript/data/fisherman/price_per_cm.txt"
+        stop
+    else if {_type} is "speed":
+        set {_data::*} to file contents of "plugins/Skript/data/fisherman/speed.txt"
+        loop {_data::*}:
+            set {_temp::*} to loop-value split by " "
+            set {fish.speed::%{_temp::1}%} to {_temp::1}
+            set {fish.speed::%{_temp::1}%::min} to {_temp::2} parsed as number
+            set {fish.speed::%{_temp::1}%::max} to {_temp::3} parsed as number
+        stop
+    else:
+        set {_data::*} to file contents of "plugins/Skript/data/fisherman/fish/%{_type}%.txt"
+        loop {_data::*}:
+            set {_temp::*} to loop-value split by " "
+            if {_temp::1} contains "_":
+                replace all "_" in {_temp::1} with " "
+            set {fish.%{_type}%::%{_temp::1}%} to {_temp::1}
+            set {fish.%{_type}%::%{_temp::1}%::class} to {_temp::2}
+            set {fish.%{_type}%::%{_temp::1}%::min} to {_temp::3} parsed as number
+            set {fish.%{_type}%::%{_temp::1}%::max} to {_temp::4} parsed as number
+            set {fish.%{_type}%::%{_temp::1}%::prob} to {_temp::5} parsed as number
+            if {_temp::6} contains "_":
+                replace all "_" in {_temp::6} with " "
+            set {fish.%{_type}%::%{_temp::1}%::item} to {_temp::6}
+            set {fish.%{_type}%::%{_temp::1}%::data} to {_temp::7} parsed as number
+        stop
+
+function deleteFish(type: text):
+    if {_type} is "price":
+        delete {fish.price::*}
+        stop
+    else if {_type} is "priceFish":
+        delete {fish.price::*}
+        stop
+    else if {_type} is "pricepercm":
+        delete {fish.pricepercm::*}
+        stop
+    else if {_type} is "speed":
+        delete {fish.speed::*}
+        stop
+    else:
+        delete {fish.%{_type}%::*}
+        stop
+
+# 어부 NPC 클릭 시 GUI 열기
+on rightclick on entity:
+    if entity's name is "{@sell}":
+        if player's tool is paper:
+            if custom model data of player's tool is 23:
+                delete {gui.%uuid of player%::sellGUI}
+                stop
+        if player doesn't have permission "{@node}":
+            send "{@prefix} 이 NPC를 열 권한이 없습니다."
+            stop
+        sellFish(player)
+        wait 1 tick
+        set {fish.sell.%uuid of player%} to true
+        set {gui.%uuid of player%::sellGUI} to true
+        stop
+
+# 낚시 이벤트 (1)
+on fishing:
+    if fishing state is caught fish:
+        cancel event
+        {fish.clicked.%uuid of player%} isn't set
+        set {fish.bool.%uuid of player%} to true
+        set {_ind} to 0
+        if "%biome of block at location of fishing hook%" contains "ocean":
+            set {_t} to "sea"
+            set {_type} to "바닷물고기"
+        else:
+            set {_t} to "nonsea"
+            set {_type} to "민물고기"
+        loadFish({_t})
+        loop {fish.%{_t}%::*}:
+            loop {fish.%{_t}%::%loop-index%::prob}*10 times:
+                add 1 to {_ind}
+                set {_choose::%{_ind}%} to loop-value-1
+        set {_random} to a random integer between 1 and {_ind}
+        set {fish.%uuid of player%::name} to {_choose::%{_random}%}
+        set {fish.%uuid of player%::class} to {fish.%{_t}%::%{fish.%uuid of player%::name}%::class}
+        set {fish.%uuid of player%::length} to a random integer between {fish.%{_t}%::%{fish.%uuid of player%::name}%::min} and {fish.%{_t}%::%{fish.%uuid of player%::name}%::max}
+        set {fish.%uuid of player%::type} to {_type}
+        set {fish.%uuid of player%::item} to "%{fish.%{_t}%::%{fish.%uuid of player%::name}%::item}%" parsed as item with custom model data {fish.%{_t}%::%{fish.%uuid of player%::name}%::data}
+        deleteFish({_t})
+        set {_n} to random integer between 9 and 17
+        caughtFish(player, {_n})
+        wait 1 tick
+        set {gui.%uuid of player%::fishGUI} to true
+        set {fish.clicked.%uuid of player%} to true
+        wait 3 seconds
+        delete {fish.clicked.%uuid of player%}
+    
+
+# 낚시 및 판매 GUI
+on inventory click:
+    if {gui.%uuid of player%::fishGUI} is true:
+        if player's tool is fishing rod:
+            set {_a} to 1
+        else if player's offhand is fishing rod:
+            set {_a} to 2
+        if {_a} is 1:
+            if player's tool's unbreaking level isn't set:
+                set {_addtemp} to true
+            else if player's tool's unbreaking level is 1:
+                chance of 50%:
+                    set {_addtemp} to true
+            else if player's tool's unbreaking level is 2:
+                chance of 33%:
+                    set {_addtemp} to true
+            else if player's tool's unbreaking level is 3:
+                chance of 25%:
+                    set {_addtemp} to true
+            if {_addtemp} is true:
+                add 1 to durability of player's tool
+        else if {_a} is 2:
+            if player's offhand's unbreaking level isn't set:
+                set {_addtemp} to true
+            else if player's offhand's unbreaking level is 1:
+                chance of 50%:
+                    set {_addtemp} to true
+            else if player's offhand's unbreaking level is 2:
+                chance of 33%:
+                    set {_addtemp} to true
+            else if player's offhand's unbreaking level is 3:
+                chance of 25%:
+                    set {_addtemp} to true
+            if {_addtemp} is true:
+                add 1 to durability of player's offhand
+        cancel event
+        delete {fish.bool.%uuid of player%}
+        if clicked slot is {fish.slot.%uuid of player%}:
+            set {_item} to {fish.%uuid of player%::item} named "&f%colored {fish.%uuid of player%::name}%"
+            delete the lore of {_item}
+            add "&e&l등급&f: %{fish.%uuid of player%::class}%" to lore of {_item}
+            if {fish.%uuid of player%::class} is "S" or "A" or "B" or "C":
+                add "&e&l길이&f: %{fish.%uuid of player%::length}%cm" to lore of {_item}
+                add "&e&l종류&f: %{fish.%uuid of player%::type}%" to lore of {_item}
+            send "{@prefix} &e%{fish.%uuid of player%::class}%급 %uncolored {fish.%uuid of player%::name}%&f를(을) 낚았습니다!"
+            if {fish.%uuid of player%::class} is "S":
+                send "{@prefix} &6%player%&f님이 &e&lS급 %uncolored {fish.%uuid of player%::name}%&f를(을) 낚았습니다!" to all players
+            itemGive(player, {_item}, item amount of {_item}, "Fish")
+            if {fish.%uuid of player%::class} is "B":
+                execute player command "event_system_count %player% 2"
+            if {fish.%uuid of player%::class} is "A":
+                execute player command "event_system_count %player% 5"
+            if {hottime.day} is "월" or "일" or "금":
+                hottimeFish(player, {fish.%uuid of player%::name}, {fish.%uuid of player%::length})
+        else if clicked slot isn't 26:
+            send "{@prefix} 물고기를 놓쳤습니다!"
+        delete {fish.%uuid of player%::*}
+        delete {fish.slot.%uuid of player%}
+        close player's inventory
+        stop
+
+    else if event-inventory is player's inventory:
+        stop
+
+    else if {gui.%uuid of player%::sellGUI} is true:
+        if clicked slot is 40:
+            cancel event
+            set {_ind} to 0
+            set {_total} to 0
+            set {_amount.total} to 0
+            loop 21 times:
+                if loop-number is between 1 and 7:
+                    set {_item} to slot (loop-number)+9 of player's current inventory
+                else if loop-number is between 8 and 14:
+                    set {_item} to slot (loop-number)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-number)+13 of player's current inventory
+                set {_lore::*} to lore of {_item}
+                if uncolored {_lore::1} contains "등급:":
+                    set {_amount} to item amount of {_item}
+                    set {_temp.1::*} to {_lore::1} split by " "
+                    set {_class} to {_temp.1::2}
+                    if {_class} is "S" or "A" or "B" or "C":
+                        set {_temp.2::*} to {_lore::2} split by " "
+                        set {_temp.3::*} to {_temp.2::2} split by "c"
+                        set {_length} to {_temp.3::1} parsed as number
+                        set {_temp.4::*} to {_lore::3} split by " "
+                        loadFish("price")
+                        loadFish("pricepercm")
+                        set {_price} to {fish.price::%{_class}%::price}
+                        if {_temp.4::2} is "바닷물고기":
+                            set {_price.bias} to cookPrice(cod)
+                            add {_amount} to {_fish.cod}
+                            set {_cm} to {fish.pricepercm::1} parsed as number
+                        else if {_temp.4::2} is "민물고기":
+                            set {_price.bias} to cookPrice(salmon)
+                            add {_amount} to {_fish.salmon}
+                            set {_cm} to {fish.pricepercm::2} parsed as number
+                        deleteFish("price")
+                        deleteFish("pricepercm")
+                        add {_length} * {_cm} to {_price}
+                        remove {_price.bias} from {_price}
+                        add ({_price} * {_amount}) to {_total} if {_price} >= 0
+                        add {_amount} to {_ind}
+                    else:
+                        give {_item} to player
+                else:
+                    give {_item} to player
+            balanceAdd(player, {_total}, "Fish")
+            if {_ind} is 0:
+                send "{@prefix} 정산할 물고기를 넣어주세요."
+                delete {fish.sell.%uuid of player%}
+                close player's inventory
+                stop
+            else:
+                itemGive(player, cod, {_fish.cod}, "Fish") if {_fish.cod} is set
+                itemGive(player, salmon, {_fish.salmon}, "Fish") if {_fish.salmon} is set
+                send "{@prefix} &6%{_ind}%&f개를 정산해서 &e%moneyDigit({_total})%&f원을 획득했습니다."
+            delete {fish.sell.%uuid of player%}
+            close player's inventory
+        else if clicked slot is between 0 and 9:
+            cancel event
+        else if clicked slot is 17 or 18 or 26 or 27:
+            cancel event
+        else if clicked slot is between 35 and 44:
+            cancel event
+        stop
+
+on inventory close:
+    if {gui.%uuid of player%::fishGUI} is true:
+        delete {gui.%uuid of player%::fishGUI}
+    if {gui.%uuid of player%::sellFishermanGUI} is true:
+        if {fish.sell.%uuid of player%} is true:
+            loop 21 times:
+                if loop-number is between 1 and 7:
+                    set {_item} to slot (loop-number)+9 of player's current inventory
+                else if loop-number is between 8 and 14:
+                    set {_item} to slot (loop-number)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-number)+13 of player's current inventory
+                give {_item} to player
+            delete {fish.sell.%uuid of player%}
+        delete {gui.%uuid of player%::sellFishermanGUI}
+    if {gui.%uuid of player%::sellGUI} is true:
+        if {fish.sell.%uuid of player%} is true:
+            loop 21 times:
+                if loop-number is between 1 and 7:
+                    set {_item} to slot (loop-number)+9 of player's current inventory
+                else if loop-number is between 8 and 14:
+                    set {_item} to slot (loop-number)+11 of player's current inventory
+                else:
+                    set {_item} to slot (loop-number)+13 of player's current inventory
+                if {_item} isn't air:
+                    give {_item} to player
+            delete {fish.sell.%uuid of player%}
+        delete {gui.%uuid of player%::sellGUI}
+
+on quit:
+    delete {fish.%uuid of player%::*}
+    delete {fish.bool.%uuid of player%}
+    delete {fish.slot.%uuid of player%}
+    delete {fish.sell.%uuid of player%}
+    

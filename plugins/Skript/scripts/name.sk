@@ -1,0 +1,24 @@
+#Copyright 2021. 진공이 All rights reserved.
+
+options:
+	@: &6&l[ &e&lSystem &6&l]&f
+
+command /이름설정 [<text>]:
+	permission: op
+	trigger:
+		set name of player's tool to colored arg 1
+
+command /로어추가 [<text>]:
+	permission: op
+	trigger:
+		if arg 1 is not set:
+			add "" to lore of player's tool
+		else:
+			add colored arg 1 to lore of player's tool
+
+command /로어삭제:
+	permission: op
+	trigger:
+		set {_l::*} to lore of player's tool
+		set {_n} to number of {_l::*}
+		delete line {_n} of lore of player's tool

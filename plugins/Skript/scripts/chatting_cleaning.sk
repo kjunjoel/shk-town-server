@@ -1,0 +1,7 @@
+command /채팅청소:
+    permission: op.user
+    trigger:
+        loop 100 times:
+            send "" to all players
+        send "&6&l%player% &f&l님께서 채팅창을 청소하셨습니다." to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at player

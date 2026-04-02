@@ -1,0 +1,768 @@
+options:
+    prefix: [ &6&l! &f]
+
+on rightclick with gold ingot:
+    if uncolored name of event-item is "[ 계묘년 ] 코인" or "[ 계묘년 ] 코인 ⚝":
+        set {randombox.blackrabbit::%uuid of player%} to 0 if {randombox.blackrabbit::%uuid of player%} isn't set
+        set {_i} to {randombox.blackrabbit::%uuid of player%}
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        if {_n} is between 1 and 20:
+            set {_number} to round up ({_n}/5)
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.blackrabbit::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                send "{@prefix} &8&l검은 롭이어 토끼 모자 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 롭이어 토끼 모자 &f교환권" with custom model data 30 with lore "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 2:
+                send "{@prefix} &8&l검은 토끼 인형 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 토끼 인형 &7교환권" with custom model data 97 with lore "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 3:
+                send "{@prefix} &8&l검은 토끼 모자 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 토끼 모자 &7교환권" with custom model data 98 with lore "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 4:
+                send "{@prefix} &8&l검은 토끼 머리띠 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 토끼 머리띠 &7교환권" with custom model data 99 with lore "&7거래가 불가능한 아이템입니다."
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 21 and 28:
+            send "{@prefix} &6택시 &f호출권을 획득하였습니다!" to player
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 29 and 43:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 44 and 53:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 54 and 60:
+            send "{@prefix} 50,000원 3개를 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 61 and 64:
+            send "{@prefix} 50,000원 6개를 획득하였습니다!" to player
+            set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 65 and 74:
+            send "{@prefix} &f&l확성기를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 75 and 84:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 85 and 98:
+            send "{@prefix} 스테이크 10개를 획득하였습니다." to player
+            set {_item} to 10 of cooked beef
+        else if {_n} is between 99 and 100:
+            send "{@prefix} &e&l[직업] &f직업 변경권을 획득하였습니다." to player
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+on rightclick with paper:
+    if uncolored name of event-item is "Goodbye2022 랜덤 치장 뽑기권" or "[ GoodBye 2022 ] 랜덤 치장 뽑기권 ⚝":
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 32
+        if {_n} is 1:
+            send "{@prefix} [2022 새해 이벤트] &f&l호랑이 &f머리탈을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l호랑이 &f머리탈" with custom model data 13 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 2:
+            send "{@prefix} [2022 새해 이벤트] &f&l호랑이 &f장갑을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l호랑이 &f장갑" with custom model data 14 with lore "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 3:
+            send "{@prefix} [2022 새해 이벤트] 호랑이 &f&l호랑이 &f꼬리털을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l호랑이 &f꼬리털" with custom model data 15 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 4:
+            send "{@prefix} [2022 광복절 이벤트] &c&l태&9&l극&f&l기 &7&l깃발&f을 획득하였습니다!" to player
+            set {_item} to paper named "&c&l태&9&l극&f&l기 &7&l깃발" with custom model data 25 with lore "&7거래가 불가능한 아이템입니다." 
+        else if {_n} is 5:
+            send "{@prefix} [2022 광복절 이벤트] &c&l태&9&l극&f&l기 &7&l망토&f를 획득하였습니다!" to player
+            set {_item} to paper named "&c&l태&9&l극&f&l기 &7&l망토" with custom model data 26 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 6:
+            send "{@prefix} [2022 광복절 이벤트] &f&l고양이 헤드폰<##FFC0CB>&l(핑크)&f을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l고양이 헤드폰<##FFC0CB>&l(핑크)" with custom model data 27 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." 
+        else if {_n} is 7:
+            send "{@prefix} [2022 광복절 이벤트] &f&l헤드폰&8&l(블랙)&f을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l헤드폰&8&l(블랙)" with custom model data 28 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 8:
+            send "{@prefix} [2022 광복절 이벤트] <##964B00>&l곰돌이 헬멧&f을 획득하였습니다!" to player
+            set {_item} to paper named "<##964B00>&l곰돌이 헬멧" with custom model data 29 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 9:
+            send "{@prefix} [2022 광복절 이벤트] &8&l검은 롭이어 토끼 모자&f를 획득하였습니다!" to player
+            set {_item} to paper named "&8&l검은 롭이어 토끼 모자" with custom model data 30 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 10:
+            send "{@prefix} [2022 광복절 이벤트] &f&l고양이 헤드폰&9&l(블루)&f을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l고양이 헤드폰&9&l(블루)" with custom model data 31 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 11:
+            send "{@prefix} [2022 추석 이벤트] &e&l보름달&f을 획득하였습니다!" to player
+            set {_item} to paper named "&e&l보름달" with custom model data 4 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 12:
+            send "{@prefix} [2022 추석 이벤트] &a&l송&c&l편&f을 획득하였습니다!" to player
+            set {_item} to paper named "&a&l송&c&l편" with custom model data 5 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 13:
+            send "{@prefix} [2022 한글날 이벤트] <##1F5458>&l내시 &7&l모자&f을 획득하였습니다!" to player
+            set {_item} to paper named "<##1F5458>&l내시 &7&l모자" with custom model data 56 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 14:
+            send "{@prefix} [2022 한글날 이벤트] <##272727>&l대감 &7&l모자&f을 획득하였습니다!" to player
+            set {_item} to paper named "<##272727>&l대감 &7&l모자" with custom model data 57 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 15:
+            send "{@prefix} [2022 한글날 이벤트] <##0072A1>&l유생 &7&l모자&f을 획득하였습니다!" to player
+            set {_item} to paper named "<##0072a1>&l유생 &7&l모자" with custom model data 58 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 16:
+            send "{@prefix} [2022 한글날 이벤트] &e&l왕 &7&l모자&f를 획득하였습니다!" to player
+            set {_item} to paper named "&e&l왕 &7&l모자" with custom model data 59 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 17:
+            send "{@prefix} [2022 할로윈 이벤트]  &8&l박쥐 모자&f를 획득하였습니다!" to player
+            set {_item} to paper named " &8&l박쥐 모자" with custom model data 66 with lore "&7박쥐 날개가 달려있는 귀여운 모자다", "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 18:
+            send "{@prefix} [2022 할로윈 이벤트] &6&l[&e&l사탕 바구니&6&l]&f를 획득하였습니다!" to player
+            set {_item} to paper named "&6&l[&e&l사탕 바구니&6&l]" with custom model data 78 with lore "&7사탕이 가득한 호박모양 바구니다" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 19:
+            send "{@prefix} [2022 할로윈 이벤트] &5&l[&d&l할로윈 마녀의 모자&5&l]&f를 획득하였습니다!" to player
+            set {_item} to paper named "&5&l[&d&l할로윈 마녀의 모자&5&l]" with custom model data 77 with lore "&7마녀의 웃음소리가 들리는것같다..", "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 20:
+            send "{@prefix} [2022 할로윈 이벤트] &8&l[&7&l해골 모자&8&l]&f를 획득하였습니다!" to player
+            set {_item} to paper named "&8&l[&7&l해골 모자&8&l]" with custom model data 79 with lore "&7해골이 쓰고다니던 모자다...으스스하군 ....", "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 21:
+            send "{@prefix} [2022 할로윈 이벤트] &8&l[검은고양이 머리띠]&f를 획득하였습니다!" to player
+            set {_item} to paper named "&8&l[검은고양이 머리띠]" with custom model data 81 with lore "&7검은고양이 네로 ~ 네로 ~ 네로", "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 22:
+            send "{@prefix} [2022 할로윈 이벤트] &b&l[&f&l꼬마 유령 어깨 장식&b&l]&f를 획득하였습니다!" to player
+            set {_item} to paper named "&b&l[&f&l꼬마 유령 어깨 장식&b&l]" with custom model data 80 with lore "&7귀여운 꼬마 유령친구다...", "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 23:
+            send "{@prefix} [2022 크리스마스 이벤트] <##006600>&l산타 <##663300>&l머리띠를 획득하였습니다!" to player
+            set {_item} to paper named "<##006600>&l산타 <##663300>&l머리띠" with custom model data 96 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 24:
+            send "{@prefix} [2022 크리스마스 이벤트] <##FF0000>&l호랑가시 <##666666>&l뱃지&f를 획득하였습니다!" to player
+            set {_item} to paper named "<##FF0000>&l호랑가시 <##666666>&l뱃지" with custom model data 87 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 25:
+            send "{@prefix} [2022 크리스마스 이벤트] <##66360C>&l루돌프 <##E7DE79>&l머리띠&f를 획득하였습니다!" to player
+            set {_item} to paper named "<##66360C>&l루돌프 <##E7DE79>&l머리띠" with custom model data 86 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 26:
+            send "{@prefix} [2022 크리스마스 이벤트] <##FF0000>&l크리스마스 &f&l막대사탕&f을 획득하였습니다!" to player
+            set {_item} to paper named "<##FF0000>&l크리스마스 &f&l막대사탕" with custom model data 88 with lore "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 27:
+            send "{@prefix} [2022 크리스마스 이벤트] &8&l검은색 &f&l목도리&f를 획득하였습니다!" to player
+            set {_item} to paper named "&8&l검은색 &f&l목도리" with custom model data 89 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 28:
+            send "{@prefix} [2022 크리스마스 이벤트] <##B19DC9>&l보라색 &f&l목도리&f를 획득하였습니다!" to player
+            set {_item} to paper named "<##B19DC9>&l보라색 &f&l목도리" with custom model data 90 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 29:
+            send "{@prefix} [2022 크리스마스 이벤트] <##FF0000>&l빨간색 &f&l목도리&f를 획득하였습니다!" to player
+            set {_item} to paper named "<##FF0000>&l빨간색 &f&l목도리" with custom model data 91 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 30:
+            send "{@prefix} [2022 크리스마스 이벤트] &f&l산타 <##FF0000>&l모자&f를 획득하였습니다!" to player
+            set {_item} to paper named "&f&l산타 <##FF0000>&l모자" with custom model data 93 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 31:
+            send "{@prefix} [2022 크리스마스 이벤트] &f&l눈구름&f을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l눈구름" with custom model data 94 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is 32:
+            send "{@prefix} [2022 크리스마스 이벤트] &f&l눈사람&f을 획득하였습니다!" to player
+            set {_item} to paper named "&f&l눈사람" with custom model data 95 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "Randombox")
+
+on rightclick with gold ingot:
+    if uncolored name of event-item is "[ 임인년 ] 코인" or "[ 임인년 ] 코인 ⚝":
+        set {randombox.blacktiger::%uuid of player%} to 0 if {randombox.blacktiger::%uuid of player%} isn't set
+        set {_i} to {randombox.blacktiger::%uuid of player%}
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        if {_n} is between 1 and 20:
+            set {_number} to round up ({_n}/5)
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.blacktiger::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                send "{@prefix} &8&l검은 호랑이 탈 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 호랑이 탈 &f교환권" with custom model data 13 with lore "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 2:
+                send "{@prefix} &8&l검은 호랑이 손 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 호랑이 손 &7교환권" with custom model data 14 with lore "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 3:
+                send "{@prefix} &8&l검은 호랑이 꼬리 &7교환권&f을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은 호랑이 꼬리 &7교환권" with custom model data 15 with lore "&7거래가 불가능한 아이템입니다."
+        else if {_number} is 4:
+            send "{@prefix} &f[ &8&l임인년 &f] 코인을 획득하였습니다!" to player
+            set {_item} to gold ingot named "&f[ &8&l임인년 &f] 코인" with custom model data 19 with lore "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 21 and 28:
+            send "{@prefix} &6택시 &f호출권을 획득하였습니다!" to player
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 29 and 43:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 44 and 53:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 54 and 60:
+            send "{@prefix} 50,000원 3개를 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 61 and 64:
+            send "{@prefix} 50,000원 6개를 획득하였습니다!" to player
+            set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 65 and 74:
+            send "{@prefix} &f&l확성기를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 75 and 84:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 85 and 98:
+            send "{@prefix} 스테이크 10개를 획득하였습니다." to player
+            set {_item} to 10 of cooked beef
+        else if {_n} is between 99 and 100:
+            send "{@prefix} &e&l[직업] &f직업 변경권을 획득하였습니다." to player
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+on rightclick with gold ingot:
+    if uncolored name of event-item is "[ 샤크스마스 ] 코인 10개 압축" or "[ 샤크스마스 ] 코인 ⚝":
+        set {randombox.christmas::%uuid of player%} to 0 if {randombox.christmas::%uuid of player%} isn't set
+        set {_i} to {randombox.christmas::%uuid of player%}
+        if item amount of player's tool < 2:
+            send "{@prefix} 코인 2개를 손에 들고 우클릭해주세요."
+            stop
+        remove 2 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        set {_br} to round down ({_i}/(2^({_n}-1)))
+        if {_n} is between 1 and 15:
+            if mod({_br}, 2) is 0:
+                add 2^({_n}-1) to {randombox.christmas::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_n} is 1:
+                send "{@prefix} <##006600>&l산타 <##663300>&l머리띠&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##006600>&l산타 <##663300>&l머리띠&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 2:
+                send "{@prefix} <##FF0000>&l호랑가시 <##666666>&l뱃지&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##FF0000>&l호랑가시 <##666666>&l뱃지&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 3:
+                send "{@prefix} <##66360C>&l루돌프 <##E7DE79>&l머리띠&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##66360C>&l루돌프 <##E7DE79>&l머리띠&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 4:
+                send "{@prefix} <##FF0000>&l크리스마스 &f&l막대사탕&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##FF0000>&l크리스마스 &f&l막대사탕&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 5:
+                send "{@prefix} &8&l검은색 &f&l목도리&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&8&l검은색 &f&l목도리&f 교환권" with lore "&7거래가 불가능한 아이템입니다." 
+            else if {_n} is 6:
+                send "{@prefix} <##B19DC9>&l보라색 &f&l목도리&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##B19DC9>&l보라색 &f&l목도리&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 7:
+                send "{@prefix} <##FF0000>&l빨간색 &f&l목도리&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "<##FF0000>&l빨간색 &f&l목도리&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 8:
+                send "{@prefix} &f&l산타 <##FF0000>&l모자&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f&l산타 <##FF0000>&l모자&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 9:
+                send "{@prefix} &f&l눈구름&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f&l눈구름&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 10:
+                send "{@prefix} &f&l눈사람&f 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f&l눈사람&f 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 11:
+                send "{@prefix} &f루돌프 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f루돌프 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 12:
+                send "{@prefix} &f瑞雪 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f瑞雪 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 13:
+                send "{@prefix} &f눈송이 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f눈송이 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 14:
+                send "{@prefix} &f산타클로스 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f산타클로스 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 15:
+                send "{@prefix} &f한적한 겨울 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f한적한 겨울 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 16 and 31:
+            send "{@prefix} &6택시 &f호출권을 획득하였습니다!" to player
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 32 and 38:
+            send "{@prefix} &b&l샤&9&l크&b&l스&9&l마&b&l스 &f신속의 물약을 획득하였습니다!" to player
+            set {_item} to potion of speed named "&b&l샤&9&l크&b&l스&9&l마&b&l스 &f신속의 물약" with lore "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 39 and 68:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 69 and 88:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 89 and 102:
+            send "{@prefix} 50,000원 3개를 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 103 and 112:
+            send "{@prefix} 50,000원 6개를 획득하였습니다!" to player
+            set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 113 and 136:
+            send "{@prefix} &f&l확성기를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 137 and 160:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 161 and 196:
+            send "{@prefix} 스테이크 10개를 획득하였습니다." to player
+            set {_item} to 10 of cooked beef
+        else if {_n} is between 197 and 200:
+            send "{@prefix} &e&l[직업] &f직업 변경권을 획득하였습니다." to player
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+on rightclick with gold ingot:
+    if uncolored name of event-item is "[ 설날 ] 코인" or "[ 설날 ] 코인 ⚝":
+        set {randombox.seollal::%uuid of player%} to 0 if {randombox.seollal::%uuid of player%} isn't set
+        set {_i} to {randombox.seollal::%uuid of player%}
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        if {_n} is between 1 and 20:
+            set {_number} to round up ({_n}/5)
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.seollal::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                send "{@prefix} &f[ <##FFFFCC>&l설날 &f] 배씨댕기&f을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ <##FFFFCC>&l설날 &f] 배씨댕기" with custom model data 101 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." and "&f" and "&f 세상에서 제일 &d예쁜 &f내 머리?"
+            else if {_number} is 2:
+                send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &6&l추&c&l석&f의 &4&l연&f을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ <##FFFFCC>&l설날 &f] &6&l추&c&l석&f의 &4&l연" with custom model data 102 with lore "&7거래가 불가능한 아이템입니다." and "&f" and "&f 들고 있으면 &b날아&f갈 것만 같다."
+            else if {_number} is 3:
+                send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &d&l복&f주머니&f을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ <##FFFFCC>&l설날 &f] &d&l복&f주머니" with custom model data 103 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." and "&f" and "&f 행복한 &6추석&f의 기운을 담아서!"
+            else if {_number} is 4:
+                send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &7&l까&8&l치&f을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ <##FFFFCC>&l설날 &f] &7&l까&8&l치" with custom model data 104 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다." and "&f" and "&f 행운과 희소식의 &d전령사&f!"
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 21 and 24:
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &e&l떡&f&l국" to player
+            set {_item} to 10 of paper named "&f[ <##FFFFCC>&l설날 &f] &e&l떡&f&l국" with custom model data 105 with lore "&e 떡&f국을 먹으면 다음의 효과가?" and "&9&l♤ &6포만감&f(I) 15:00" and "&9&l♤ &d재생&f(I) 5:00"
+        else if {_n} is between 25 and 28:
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &d&l구&f&l절&e&l판" to player
+            set {_item} to 10 of paper named "&f[ <##FFFFCC>&l설날 &f] &d&l구&f&l절&e&l판" with custom model data 54 with lore "&d 구&f절&e판&f을 먹으면 다음의 효과가?" and "&9&l♤ &6포만감&f(I) 15:00" and "&9&l♤ &e성급함&f(II) 5:00"
+        else if {_n} is between 29 and 32:
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &2&l송&a&l편" to player
+            set {_item} to 10 of paper named "&f[ <##FFFFCC>&l설날 &f] &2&l송&a&l편" with custom model data 53 with lore "&2 송&a편&f을 먹으면 다음의 효과가?" and "&9&l♤ &6포만감&f(I) 5:00" and "&9&l♤ &c즉시치유&f(III) 0:01"
+        else if {_n} is between 33 and 36:
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &e&l전" to player
+            set {_item} to 10 of paper named "&f[ <##FFFFCC>&l설날 &f] &e&l전" with custom model data 55 with lore "&e 전&f을 먹으면 다음의 효과가?" and "&9&l♤ &6포만감&f(I) 5:00" and "&9&l♤ &9저항&f(I) 5:00" and "&9&l♤ &a행운&f(I) 5:00"
+        else if {_n} is between 37 and 43:
+            send "{@prefix} &6택시 &f호출권을 획득하였습니다!" to player
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 44 and 50:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 50 and 57:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 58 and 64:
+            send "{@prefix} 50,000원 3개를 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 65 and 72:
+            send "{@prefix} 50,000원 6개를 획득하였습니다!" to player
+            set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 73 and 79:
+            send "{@prefix} &f&l확성기를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 80 and 86:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 87 and 93:
+            send "{@prefix} 스테이크 10개를 획득하였습니다." to player
+            set {_item} to 10 of cooked beef
+        else if {_n} is between 94 and 95:
+            send "{@prefix} &e&l[직업] &f직업 변경권을 획득하였습니다." to player
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+on rightclick with stick:
+    if uncolored name of event-item is "[ 봄이온 3·1절 ] 코인":
+        set {randombox.Independence_Movement_Day::%uuid of player%} to 0 if {randombox.Independence_Movement_Day::%uuid of player%} isn't set
+        set {_i} to {randombox.Independence_Movement_Day::%uuid of player%}
+        if item amount of player's tool < 2:
+            send "{@prefix} 코인 2개를 손에 들고 우클릭해주세요."
+            stop
+        remove 2 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        set {_br} to round down ({_i}/(2^({_n}-1)))
+        if {_n} is between 1 and 16:
+            if mod({_br}, 2) is 0:
+                add 2^({_n}-1) to {randombox.Independence_Movement_Day::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_n} is between 1 and 4:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.flowercrown"
+                send "{@prefix} &a&l화관&f을 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+            else if {_n} is 5:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.oriental_windows"
+                send "{@prefix} &d&l동양 &f&l창문&f을 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+            else if {_n} is between 6 and 8:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.roseofsharon"
+                send "{@prefix} &d&l무궁화 &f&l머리핀&f을 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+            else if {_n} is 9:
+                send "{@prefix} &f&l양산&f을 획득하였습니다!" to player
+                set {_item} to paper named "&f&l양산" with custom model data 111 with lore "&7손에 들어서 치장 착용 가능합니다." and "&7거래가 불가능한 아이템입니다."
+
+            else if {_n} is between 10 and 11:
+                send "{@prefix} &f[ 지사 ] 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 지사 ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 12:
+                send "{@prefix} &f[ 열사 ] 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 열사  ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 13:
+                send "{@prefix} &f[ 大韓民國 ] 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 大韓民國 ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 14:
+                send "{@prefix} &f[ 개화 ] 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 개화 ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 15:
+                send "{@prefix} &f[ 立春 ] 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 立春 ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+            else if {_n} is 16:
+                send "{@prefix} &f[ 벚꽃엔딩 ] 칭호 교환권을 획득하였습니다!" to player
+                set {_item} to paper named "&f[ 벚꽃엔딩 ] 칭호 교환권" with lore "&7거래가 불가능한 아이템입니다."
+
+        else if {_n} is between 17 and 37:
+            send "{@prefix} &6택시 &f호출권을 획득하였습니다!" to player
+            set {_item} to paper named "&6택시 &f호출권" with lore "&7스마트폰에서 택시를 호출할 수 있습니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 38 and 68:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 69 and 88:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 89 and 102:
+            send "{@prefix} 50,000원 3개를 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 103 and 112:
+            send "{@prefix} 50,000원 6개를 획득하였습니다!" to player
+            set {_item} to 6 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 113 and 136:
+            send "{@prefix} &f&l확성기를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 137 and 160:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 161 and 196:
+            send "{@prefix} 스테이크 10개를 획득하였습니다." to player
+            set {_item} to 10 of cooked beef
+        else if {_n} is between 197 and 200:
+            send "{@prefix} &e&l[직업] &f직업 변경권을 획득하였습니다." to player
+            set {_item} to paper named "&e&l[직업] &f직업 변경권" with lore "&7중앙광장 지하에서 사용 가능" and "&7거래가 불가능한 아이템입니다."
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+
+
+command /randombox_reset <offlineplayer>:
+    permission: op.user
+    trigger:
+        delete {randombox.christmas::%uuid of arg-1%}
+        delete {randombox.blackrabbit::%uuid of arg-1%}
+        delete {randombox.blacktiger::%uuid of arg-1%}
+        delete {randombox.seollal::%uuid of arg-1%}
+        delete {randombox.Independence_Movement_Day::%uuid of arg-1%}
+        delete {randombox.halloween::%uuid of arg-1%}
+        delete {randombox.ppaeppaero::%uuid of arg-1%}
+        send "deleted record of %arg-1%'s randombox(christmas)."
+        send "deleted record of %arg-1%'s randombox(black rabbit)."
+        send "deleted record of %arg-1%'s randombox(black tiger)."
+        send "deleted record of %arg-1%'s randombox(seollal)."
+        send "deleted record of %arg-1%'s randombox(Independence_Movement_Day)."
+        send "deleted record of %arg-1%'s randombox(halloween)."
+        send "deleted record of %arg-1%'s randombox(ppaeppaero)."
+
+
+
+command /randombox_get <offlineplayer>:
+    permission: op.user
+    trigger:
+        set {_i} to {randombox.christmas::%uuid of arg-1%}
+        loop 15 times:
+            set {_n} to loop-number
+            set {_br} to round down ({_i}/(2^(loop-number -1)))
+            if mod({_br}, 2) isn't 0:
+                send "{@prefix} 이 아이템은 못 얻었습니다!" to player
+            if {_n} is 1:
+                send "{@prefix} <##006600>&l산타 <##663300>&l머리띠&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 2:
+                send "{@prefix} <##FF0000>&l호랑가시 <##666666>&l뱃지&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 3:
+                send "{@prefix} <##66360C>&l루돌프 <##E7DE79>&l머리띠&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 4:
+                send "{@prefix} <##FF0000>&l크리스마스 &f&l막대사탕&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 5:
+                send "{@prefix} &8&l검은색 &f&l목도리&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 6:
+                send "{@prefix} <##B19DC9>&l보라색 &f&l목도리&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 7:
+                send "{@prefix} <##FF0000>&l빨간색 &f&l목도리&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 8:
+                send "{@prefix} &f&l산타 <##FF0000>&l모자&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 9:
+                send "{@prefix} &f&l눈구름&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 10:
+                send "{@prefix} &f&l눈사람&f를 획득한 기록이 있습니다" to player
+            else if {_n} is 11:
+                send "{@prefix} &f루돌프 칭호를 획득한 기록이 있습니다" to player
+            else if {_n} is 12:
+                send "{@prefix} &f瑞雪 칭호를 획득한 기록이 있습니다" to player
+            else if {_n} is 13:
+                send "{@prefix} &f눈송이 칭호를 획득한 기록이 있습니다" to player
+            else if {_n} is 14:
+                send "{@prefix} &f산타클로스 칭호를 획득한 기록이 있습니다" to player
+            else if {_n} is 15:
+                send "{@prefix} &f한적한 겨울 칭호를 획득한 기록이 있습니다" to player
+
+
+command /코인받기 [<int>]:
+    permission: op
+    permission message: &c권한이 없습니다.
+    trigger:
+        if arg-1 isn't set:
+            send "&f"
+            send "{@prefix} /코인받기 [int]"
+            send "&cint는 커스텀 모델 아이디입니다."
+            send "&f"
+            stop
+        send "{@prefix} %arg-1%번 아이템 지급 완료" to player
+        set {_item} to gold ingot with custom model data arg-1 named "&f%arg-1%번" with lore "&7보기용"
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+
+on rightclick:
+    if uncolored name of player's tool is "[ 여름여행 코인 ]":
+        if item amount of player's tool < 3:
+            send "{@prefix} &f[&b&l여름&a&l여행&f] &f코인 &f3개를 손에 들고 우클릭해주세요."
+            stop
+        set {randombox.halloween::%uuid of player%} to 0 if {randombox.halloween::%uuid of player%} isn't set
+        set {_i} to {randombox.halloween::%uuid of player%}
+        remove 3 of player's tool from player's tool
+        set {_n} to random integer between 1 and 250
+        if {_n} is between 1 and 100:
+            set {_number} to round up ({_n}/5) # 1에서 20 랜덤으로 뽑음
+            set {_br} to round down ({_i}/(2^({_number}-1))) # {_br} = {_i} << ({_number} - 1)
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.halloween::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.camera"
+                send "{@prefix} &8&l사진기 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 2:
+                set {_item} to paper with custom model data 154 named "&b&l손선풍기" with lore "&7손에 들어 착용이 가능한 치장입니다." and "&7거래가 불가능한 아이템입니다."
+                send "{@prefix} &b&l손선풍기 &f를 뽑았습니다!" to player
+                send "{@prefix} 손에 드는 아이템입니다! &c옷장에서 착용이 &n불가능&f합니다."
+            else if {_number} is 3:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.ocean"
+                send "{@prefix} &e&l여름 &b&l바다 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 4:
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.straw_hat"
+                send "{@prefix} &6&l밀짚모자 &f를 뽑았습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+            else if {_number} is 5:
+                send "{@prefix} &f[ <##72e9ff>&l立<##3cd1ec>&l夏 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.entersummer}
+            else if {_number} is 6:
+                send "{@prefix} &f[ <##e77379>&l수<##979c45>&l박<##e77379>&l바 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.watermelonbar}
+            else if {_number} is 7:
+                send "{@prefix} &f[ <##398872>&l트<##fcf076>&l로<##ff7796>&l피<##b9efd8>&l컬 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.tropical}
+            else if {_number} is 8:
+                send "{@prefix} &f[ <##01add5>&l시원한 바다 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to {prefix.coolsea}
+            else:
+                send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 101 and 120:
+            send "{@prefix} &f&l확성기 &f3개를 획득하였습니다!" to player
+            set {_item} to 3 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 121 and 150:
+            send "{@prefix} &a&l10,000원&f을 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 151 and 180:
+            send "{@prefix} &2&l30,000원&f을 획득하였습니다!" to player
+            set {_item} to 3 of gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 181 and 200:
+            send "{@prefix} &5&l50,000원&f을 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 201 and 210:
+            send "{@prefix} &6&l100,000원&f을 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 211 and 230:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e3개&f를 획득하였습니다!" to player
+            set {_item} to 3 of {travel.coin}
+        else if {_n} is between 231 and 240:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e15개&f를 획득하였습니다!" to player
+            set {_item} to 15 of {travel.coin}
+        else if {_n} is between 241 and 245:
+            send "{@prefix} &f[ &b&l여름&a&l여행 &f] 코인 &e30개&f를 획득하였습니다!" to player
+            set {_item} to 30 of {travel.coin}
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "HalloweenBox")
+
+command /halloween_coin_give [<offlineplayer>] [<number>]:
+    permission: op.user
+    trigger:
+        send "&f[ &6&l&o! &f] &e%arg-1%&f님에게 &f[&e&l할로윈&f] &f사탕 &c%arg-2%&f개를 주었습니다." to player
+        set {_item} to paper with custom model data 82 named "&f[&e&l할로윈&f] &f사탕"
+        itemGive(arg-1, {_item}, arg-2, "EventCoinGive")
+
+command /halloween_coin_set:
+    permission: op.user
+    trigger:
+        set {halloween.coin} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &f[&e&l할로윈&f] 코인으로 지정되었습니다."
+        stop
+
+command /event_prefix_set [<text>]:
+    permission: op.user
+    trigger:
+        set {prefix.%arg-1%} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &e%arg-1% &f칭호로 지정되었습니다."
+        stop
+
+command /travel_coin_set:
+    permission: op.user
+    trigger:
+        set {travel.coin} to player's tool
+        send "{@prefix} 당신이 들고 있는 아이템이 &f&l[ &b&l여름&a&l여행 &f&l코인 &f&l]&f으로 지정되었습니다."
+        stop
+
+command /halloween_randombox_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {randombox.halloween::%uuid of arg-1%}
+        send "deleted record of %arg-1%'s randombox(halloween)."
+        stop
+
+command /event_coin_reset:
+    permission: op.user
+    trigger:
+        delete {randombox.ppaeppaero::*}
+
+command /event_coin:
+    permission: op.user
+    trigger:
+        set {coin.ppaeppaero} to player's tool
+        send "{@prefix} %name of player's tool%&f이 빼빼로 뽑기권으로 설정되었습니다."
+
+on right click with paper:
+    if uncolored name of event-item is "[ 빼빼로 뽑기권 ]":
+        set {randombox.ppaeppaero::%uuid of player%} to 0 if {randombox.ppaeppaero::%uuid of player%} isn't set
+        set {_i} to {randombox.ppaeppaero::%uuid of player%}
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 200
+        if {_n} is between 1 and 12:
+            set {_number} to round up ({_n}/3)
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.ppaeppaero::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 1:
+                send "{@prefix} <##663333>&l초코맛 <##FF6666>&l하트 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##663333>&l초코맛 <##FF6666>&l하트 <##CC9966>&l빼빼로" with custom model data 188 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.heart_pepero"
+            else if {_number} is 2:
+                send "{@prefix} <##FF3333>&l딸기맛 <##FF6666>&l하트 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##FF3333>&l딸기맛 <##FF6666>&l하트 <##CC9966>&l빼빼로" with custom model data 189 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.heart_pepero_pink"
+            else if {_number} is 3:
+                send "{@prefix} <##663333>&l초코맛 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##663333>&l초코맛 <##CC9966>&l빼빼로" with custom model data 190 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.pepero_choco"
+            else if {_number} is 4:
+                send "{@prefix} <##FF3333>&l딸기맛 <##CC9966>&l빼빼로&f를 획득하였습니다!" to player
+                send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다." to player
+                send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다." to player
+                # set {_item} to paper named "<##FF3333>&l딸기맛 <##CC9966>&l빼빼로" with custom model data 191 with lore "&7우클릭하여 치장 착용" and "&7거래가 불가능한 아이템입니다."
+                execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.pepero_pink"
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+        else if {_n} is between 13 and 20:
+            set {_number} to round up ({_n}/4) + 1
+            set {_br} to round down ({_i}/(2^({_number}-1)))
+            if mod({_br}, 2) is 0:
+                add 2^({_number}-1) to {randombox.ppaeppaero::%uuid of player%}
+            else:
+                send "{@prefix} 안타깝게도 중복된 아이템이 나와서 &c&l꽝&f입니다!" to player
+                stop
+            if {_number} is 5:
+                send "{@prefix} &f[ <##663333>&l초코맛 <##CC9966>&l빼빼로 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to book named "&f[ <##663333>&l초코맛 <##CC9966>&l빼빼로 &f]" with lore "&7우클릭하여 칭호를 획득합니다." and "&7거래가 불가능한 아이템입니다."
+            else if {_number} is 6:
+                send "{@prefix} &f[ <##FF3333>&l딸기맛 <##CC9966>&l빼빼로 &f] &e칭호&f를 획득하였습니다!" to player
+                set {_item} to book named "&f[ <##FF3333>&l딸기맛 <##CC9966>&l빼빼로 &f]" with lore "&7우클릭하여 칭호를 획득합니다." and "&7거래가 불가능한 아이템입니다."
+        else if {_n} is between 21 and 40:
+            send "{@prefix} %name of {coin.ppaeppaero}%&f 1개를 획득하였습니다!" to player
+            set {_item} to 1 of {coin.ppaeppaero}
+        else if {_n} is between 41 and 56:
+            send "{@prefix} 10,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 3 named "&f10,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 57 and 66:
+            send "{@prefix} 50,000원 1개를 획득하였습니다!" to player
+            set {_item} to gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 67 and 72:
+            send "{@prefix} 50,000원 2개를 획득하였습니다!" to player
+            set {_item} to 2 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 73 and 74:
+            send "{@prefix} 50,000원 10개를 획득하였습니다!" to player
+            set {_item} to 10 of gold ingot with custom model data 4 named "&f50,000원" with lore "&f[<##F77E21>상어은행&f]"
+        else if {_n} is between 75 and 94:
+            send "{@prefix} &f&l확성기&f 1개를 획득하였습니다!" to player
+            set {_item} to paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 95 and 108:
+            send "{@prefix} &f&l확성기&f 2개를 획득하였습니다!" to player
+            set {_item} to 2 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 109 and 114:
+            send "{@prefix} &f&l확성기&f 3개를 획득하였습니다!" to player
+            set {_item} to 3 of paper with custom model data 9 named "&f&l확성기"
+        else if {_n} is between 115 and 120:
+            send "{@prefix} &f[ &6&l뚝배기 &e&l밧줄 &f]을 획득하였습니다!" to player
+            set {_item} to lead named "&f[ &6&l뚝배기 &e&l밧줄 &f]"
+        else if {_n} is between 121 and 130:
+            send "{@prefix} 스테이크 10개를 획득하였습니다!" to player
+            set {_item} to 10 of cooked beef
+        else:
+            send "{@prefix} 안타깝게도 &c&l꽝&f입니다!" to player
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")

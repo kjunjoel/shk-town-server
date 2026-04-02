@@ -1,0 +1,56 @@
+﻿# 이 스크립트는 알수없음(Lantum)이 제작했으며 저작권은 알수없음(Lantum)에게 있습니다.
+# 스크립트 수정 및 배포는 금지입니다
+
+# Blog : https://blog.naver.com/az1768az
+# Discord : ( 알수없음 )#5349
+
+# 메세지를 제거 및 수정 할 경우 책임은 본인에게 있습니다.
+
+options:
+	말머리: &f[ &6&l! &f]
+
+on command "/전체지급":
+	if player or sender is not op or console:
+		cancel event
+		message "&c이 명령어는 관리자 권한이 필요합니다."
+		
+command /전체지급 [<integer>]:
+	permission: op.user
+	trigger:
+		if arg 1 is not set:
+			send "{@말머리} &f지급할 아이템의 개수를 적어주시기 바랍니다."
+			stop
+		if arg 1 is set:
+			if player's tool is air:
+				send "{@말머리} &f지급할 아이템을 들어주시기 바랍니다."
+				stop
+			loop all players:
+				itemGive(loop-player, tool of player, arg-1, "GiveAll")
+			if name of player's tool is not set:
+				send "{@말머리} &e&l%player%&f님께서 모두에게 %tool's type% &f%arg 1%개를 지급하였습니다." to all players
+				stop
+			if name of player's tool is set:
+				send "{@말머리} &e&l%player%&f님께서 모두에게 %tool's name% &f%arg 1%개를 지급하였습니다." to all players
+				stop
+
+command /추천지급 [<integer>]:
+	permission: op.user
+	trigger:
+		if arg 1 is not set:
+			send "{@말머리} 지급할 아이템의 개수를 적어주시기 바랍니다."
+			stop
+		if player's tool is air:
+			send "{@말머리} 지급할 아이템을 들어주시기 바랍니다."
+			stop
+		loop all players:
+			set {_temp} to true
+			set {_temp} to false if dailyquestCheck(loop-player, 1) is false
+			set {_temp} to false if dailyquestCheck(loop-player, 2) is false
+			if {_temp} is true:
+				itemGive(loop-player, tool of player, arg-1, "GiveRecommend")
+		if name of player's tool is not set:
+			send "{@말머리} &e&l%player%&f님께서 추천자에게 %tool's type% &f%arg 1%개를 지급하였습니다." to all players
+			stop
+		if name of player's tool is set:
+			send "{@말머리} &e&l%player%&f님께서 추천자에게 %tool's name% &f%arg 1%개를 지급하였습니다." to all players
+			stop

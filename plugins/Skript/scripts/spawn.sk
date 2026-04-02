@@ -1,0 +1,13 @@
+on right click on entity:
+    if entity's name is "Lantum":
+        execute player command "서버이동"
+        
+Command /서버이동:
+    permission: server.move.user
+    trigger:
+        {quit2::%player%} isn't set
+        set {quit2::%player%} to true
+        connect player to "testserver"
+
+on quit:
+    delete {quit2::%player%}

@@ -1,0 +1,277 @@
+options:
+    dir: plugins/Skript/data/bus
+    number: 6
+    waitTime: 7
+    price: 1250
+
+# 변수
+# {bus.%player%}
+# {bus.location.%busNo%.%number%}  | busNo호선의 number호차의 위치
+# {bus.state.%busNo%.%number%}     | busNo호선의 number호차의 현재 상태
+# {bus.second.%busNo%.%number%}    | busNo호선의 number호차의 남은 시간
+# {bus.player.%busNo%.%number%::*} | busNo호선의 number호차를 탄 사람
+# {bus.in.%busNo%.%stopNumber%::*}
+# {bus.inbus.%busNo%.stopNumber%::*}
+# {bus.out.%busNo%.%number%::*}
+# {bus.outbus.%busNo%.%number%::*}
+
+on load:
+    set {bus::*} to file contents of "{@dir}/name.txt"
+    loop {bus::*}:
+        set {_size} to size of file contents of "{@dir}/%loop-value%.txt"
+        set {_list::*} to file contents of "{@dir}/start.txt"
+        loop {_list::*}:
+            set {_value::*} to loop-value-2 split by "::"
+            if {_value::1} is loop-value-1:
+                set {bus.number.%loop-value-1%} to size of {_value::*} -1
+    loop {bus::*}:
+        set {bus.name.%loop-value%::*} to file contents of "{@dir}/%loop-value%.txt"
+    set {bus.location::*} to file contents of "{@dir}/location.txt"
+
+on unload:
+    loop {bus::*}:
+        delete {bus.name.%loop-value%::*}
+    delete {bus.location::*}
+    delete {bus::*}
+
+on join:
+    if {temp.bus.player::%uuid of player%} is set:
+        delete {temp.bus.player::%uuid of player%}
+        make player run command "warp spawn" as op
+
+command /bus [<text>]:
+    permission: op.user
+    trigger:
+        if arg-1 is "reload":
+            loop {bus::*}:
+                set {_size} to size of {bus.name.%loop-value%::*}
+                loop {bus.number.%loop-value%} times:
+                    loop {bus.player.%loop-value-1%.%loop-value-2%::*}:
+                        remove bossbar "bus.%loop-value-1%.%loop-value-2%.%loop-value-3%"
+                        if loop-value-3 is offline:
+                            set {temp.bus.player::%uuid of loop-value-3%} to true
+                    delete {bus.location.%loop-value-1%.%loop-number%}
+                    delete {bus.state.%loop-value-1%.%loop-number%}
+                    delete {bus.second.%loop-value-1%.%loop-number%}
+                    delete {bus.player.%loop-value-1%.%loop-number%::*}
+                    delete {bus.out.%loop-value-1%.%loop-number%::*}
+                    loop {_size} times:
+                        delete {bus.in.%loop-value-1%.%loop-value-3%::*}
+            loop {bus::*}:
+                set {_size} to size of {bus.name.%loop-value%::*}
+                set {_list::*} to file contents of "{@dir}/start.txt"
+                loop {_list::*}:
+                    set {_value::*} to loop-value-2 split by "::"
+                    if {_value::1} is loop-value-1:
+                        loop {bus.number.%loop-value-1%} times:
+                            set {bus.location.%loop-value-1%.%loop-number%} to {_value::%loop-number + 1%} parsed as integer
+                            set {bus.state.%loop-value-1%.%loop-number%} to "waiting"
+                            set {bus.second.%loop-value-1%.%loop-number%} to {@waitTime}
+                        exit 1 loop
+
+        else if arg-1 is "debug":
+            loop {bus::*}:
+                set {_size} to size of {bus.name.%loop-value%::*}
+                loop {bus.number.%loop-value-1%} times:
+                    loop {bus.player.%loop-value-1%.%loop-value-2%::*}:
+                        if "%region at loop-value-3%" doesn't contain "bus":
+                            remove loop-value-3 from {bus.player.%loop-value-1%.%loop-value-2%::*}
+                            remove bossbar "bus.%loop-value-1%.%loop-value-2%.%loop-value-3%"
+                    loop {bus.in.%loop-value-1%.%loop-value-2%::*}:
+                        if "%location at loop-value-3%" doesn't contain "bus-in-%loop-value-1%-%loop-value-2%":
+                            remove loop-value-3 from {bus.in.%loop-value-1%.%loop-value-2%::*}
+
+        else:
+            send "/bus reload"
+            send "/bus debug"
+
+function busName(line: text, location: number) :: text:
+    set {_list::*} to {bus.name.%{_line}%::%{_location}%} split by "::"
+    return {_list::2}
+
+function busTime(line: text, location: number) :: number:
+    set {_list::*} to {bus.name.%{_line}%::%{_location}%} split by "::"
+    return {_list::3} parsed as number
+
+function busCheckRegion(line: text, number: number) :: boolean:
+    set {_location} to {bus.location.%{_line}%.%{_number}%}
+    return true if size of {bus.in.%{_line}%.%{_location}%::*} > 0
+    return true if size of {bus.out.%{_line}%.%{_number}%::*} > 0
+    return false
+
+function busInCoordinate(line: text, number: number) :: location:
+    loop {bus.location::*}:
+        if loop-value contains "%{_line}%::%{_number}%":
+            set {_list::*} to loop-value split by "::"
+            return location({_list::3} parsed as number, {_list::4} parsed as number, {_list::5} parsed as number, "island")
+
+function busOutCoordinate(line: text, location: number) :: location:
+    set {_list::*} to {bus.name.%{_line}%::%{_location}%} split by "::"
+    return location({_list::4} parsed as number, {_list::5} parsed as number, {_list::6} parsed as number, "island")
+
+function busMove(line: text):
+    loop {bus.number.%{_line}%} times:
+        set {_name} to busName({_line}, {bus.location.%{_line}%.%loop-number%})
+        set {_time} to busTime({_line}, {bus.location.%{_line}%.%loop-number%})
+
+        if {bus.state.%{_line}%.%loop-value-1%} is "waiting":
+            loop {bus.player.%{_line}%.%loop-value-1%::*}:
+                if {bus.second.%{_line}%.%loop-number%} is {@waitTime}:
+                    send loop-value-2 title "&3『&b%{_name}%&3』" with subtitle "&e내리실 문은 뒷문입니다." for 1.8 second and 0.9 second and 0.9 second
+                    play sound "entity.experience_orb.pickup" with volume 1 and pitch 1 at loop-value-2 for loop-value-2
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" color to blue
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" title to "&b출발까지 남은 시간 &3%{bus.second.%{_line}%.%loop-number%}%&b초"
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" progress to {bus.second.%{_line}%.%loop-number%}/{@waitTime}*100
+                send action bar "&3[정차 중] &b현재 정류소 &f(%{bus.location.%{_line}%.%loop-number%}%) %{_name}%" to loop-value-2
+            # loop {bus.in.%{_line}%.%{bus.location.%{_line}%.%loop-number%}%::*}:
+                # if {bus.second.%{_line}%.%loop-number%} is {@waitTime}:
+                    # send loop-value-2 title "&b%{_line}%번" with subtitle "&e버스가 도착했습니다." for 1.8 second and 0.9 second and 0.9 second
+                    # play sound "entity.experience_orb.pickup" with volume 1 and pitch 1 at loop-value-2 for loop-value-2
+            if {bus.second.%{_line}%.%loop-number%} > 0:
+                remove 1 from {bus.second.%{_line}%.%loop-number%}
+            else if {bus.second.%{_line}%.%loop-number%} is 0:
+                set {bus.state.%{_line}%.%loop-number%} to "moving"
+                set {_file::*} to file contents of "{@dir}/%{_line}%.txt"
+                if {bus.location.%{_line}%.%loop-number%} is size of {_file::*}:
+                    set {bus.location.%{_line}%.%loop-number%} to 1
+                else:
+                    add 1 to {bus.location.%{_line}%.%loop-number%}
+                set {_temp} to busTime({_line}, {bus.location.%{_line}%.%loop-number%})
+                set {bus.second.%{_line}%.%loop-number%} to {_temp}
+                busHologram({_line})
+
+        else if {bus.state.%{_line}%.%loop-value-1%} is "moving":
+            loop {bus.player.%{_line}%.%loop-value-1%::*}:
+                set {_name} to busName({_line}, {bus.location.%{_line}%.%loop-number%})
+                set {_time} to busTime({_line}, {bus.location.%{_line}%.%loop-number%})
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" color to yellow
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" title to "&e도착까지 남은 시간 &6%{bus.second.%{_line}%.%loop-number%}%&e초"
+                set bossbar "bus.%{_line}%.%loop-number%.%loop-value-2%" progress to {bus.second.%{_line}%.%loop-number%}/{_time}*100
+                send action bar "&6[운행 중] &e다음 정류소 &f(%{bus.location.%{_line}%.%loop-number%}%) %{_name}%" to loop-value-2
+                if {bus.second.%{_line}%.%loop-number%} is busTime({_line}, {bus.location.%{_line}%.%loop-number%}):
+                    play sound "bus.bus_%{_line}%_%{bus.location.%{_line}%.%loop-number%}%" with volume 2 and pitch 1 at loop-value-2 for loop-value-2
+            if {bus.second.%{_line}%.%loop-number%} > 0:
+                remove 1 from {bus.second.%{_line}%.%loop-number%}
+            else if {bus.second.%{_line}%.%loop-number%} is 0:
+                set {_temp} to busCheckRegion({_line}, loop-value-1)
+                if {_temp} is true:
+                    set {bus.state.%{_line}%.%loop-number%} to "waiting"
+                    set {bus.second.%{_line}%.%loop-number%} to {@waitTime}
+                else:
+                    loop {bus.player.%{_line}%.%loop-number%::*}:
+                        send loop-value-2 title "&3『&b%{_name}%&3』" with subtitle "&e내리려는 사람이 없어 무정차 통과합니다." for 1.8 second and 0.9 second and 0.9 second
+                    set {_file::*} to file contents of "{@dir}/%{_line}%.txt"
+                    if {bus.location.%{_line}%.%loop-number%} is size of {_file::*}:
+                        set {bus.location.%{_line}%.%loop-number%} to 1
+                    else:
+                        add 1 to {bus.location.%{_line}%.%loop-number%}
+                    set {_tempTime} to busTime({_line}, {bus.location.%{_line}%.%loop-number%})
+                    set {bus.second.%{_line}%.%loop-number%} to {_tempTime}
+                busHologram({_line})
+
+function busHologram(line: text):
+    loop size of {bus.name.%{_line}%::*} times:
+        loop {bus.number.%{_line}%} times:
+            set {_temp} to busName({_line}, {bus.location.%{_line}%.%loop-number-2%})
+            if {bus.state.%{_line}%.%loop-number-2%} is "waiting":
+                set {_name::%loop-number-2%} to "&a%{_temp}% &f&l정차 중"
+            else if {bus.state.%{_line}%.%loop-number-2%} is "moving":
+                set {_name::%loop-number-2%} to "&a%{_temp}% &f&l진입 중"
+            set {_number::%loop-number-2%} to mod(size of {bus.name.%{_line}%::*}- {bus.location.%{_line}%.%loop-number-2%} + loop-number-1, size of {bus.name.%{_line}%::*})
+        set {_min} to {_number::1}
+        set {_name} to {_name::1}
+        loop {bus.number.%{_line}%} times:
+            if {_number::%loop-number-2%} < {_min}:
+                set {_min} to {_number::%loop-number-2%} 
+                set {_name} to {_name::%loop-number-2%}
+        execute console command "hologram setline bus-%{_line}%-%loop-number-1% 6 &a%{_name}% &d(%{_min}%정류소 전)"
+
+on enter region:
+    if "%event-region%" contains "bus":
+        set {_region} to "%event-region%"
+        replace all " in world island" with "" in {_region}
+        set {_list::*} to {_region} split by "-"
+        {_list::2} is set
+        if {_list::2} is "out":
+            add player to {bus.out.%{_list::3}%.%{_list::4}%::*}
+        else if {_list::2} is "in":
+            add player to {bus.in.%{_list::3}%.%{_list::4}%::*}
+        else if {_list::2} is "inbus":
+            loop {bus.number.%{_list::3}%} times:
+                if {bus.location.%{_list::3}%.%loop-number%} is {_list::4} parsed as number:
+                    if {bus.state.%{_list::3}%.%loop-number%} is "waiting":
+                        set {_temp} to loop-number
+                        exit 1 loop
+            if {_temp} is set:
+                set {_location} to busInCoordinate({_list::3}, {_temp})
+                if player's balance < {@price}:
+                    send "[ &6&l! &f] 잔액이 부족하여 버스에 탑승하실 수 없습니다."
+                    cancel event
+                else if group of player is "현상수배":
+                    send "[ &6&l! &f] 현상수배는 버스에 탑승하실 수 없습니다."
+                    cancel event
+                else if group of player is "수감자":
+                    send "[ &6&l! &f] 수감자는 버스에 탑승하실 수 없습니다."
+                    cancel event
+                else if group of player is "죄수":
+                    send "[ &6&l! &f] 죄수는 버스에 탑승하실 수 없습니다."
+                    cancel event
+                else:
+                    set {bus.%player%} to true
+                    add player to {bus.player.%{_list::3}%.%{_temp}%::*}
+                    create bossbar titled "Loading" and id "bus.%{_list::3}%.%{_temp}%.%player%" for player with progress 100 with colors red with style segmented 10
+                    balanceRemove(player, {@price}, "Bus")
+                    teleport player to {_location}
+                    send "[ &6&l! &f] &e%moneyDigit({@price})%원&f이 지불되었습니다."
+            else:
+                cancel event
+                send "[ &6&l! &f] 버스가 정류소에 도착하지 않았습니다."
+        else if {_list::2} is "outbus":
+            {bus.state.%{_list::3}%.%{_list::4}%} is "waiting"
+            set {_location} to busOutCoordinate({_list::3}, {bus.location.%{_list::3}%.%{_list::4}%})
+            remove player from {bus.player.%{_list::3}%.%{_list::4}%::*}
+            delete {bus.%player%}
+            remove bossbar "bus.%{_list::3}%.%{_list::4}%.%player%"
+            teleport player to {_location}
+
+on leave region:
+    if "%event-region%" contains "bus":
+        set {_region} to "%event-region%"
+        replace all " in world island" with "" in {_region}
+        set {_list::*} to {_region} split by "-"
+        {_list::2} is set
+        if {_list::2} is "out":
+            remove player from {bus.out.%{_list::3}%.%{_list::4}%::*}
+        else if {_list::2} is "in":
+            remove player from {bus.in.%{_list::3}%.%{_list::4}%::*}
+
+every 1 second:
+    loop {bus::*}:
+        busMove(loop-value)
+    if now formatted as "HH:mm:ss" is "04:54:30":
+        send "" to all players
+        send "[ &6&l! &f] 5분 뒤 버스 배차 간격 조정을 위해 버스가 리셋됩니다." to all players
+        send "" to all players
+    else if now formatted as "HH:mm:ss" is "04:57:30":
+        send "" to all players
+        send "[ &6&l! &f] 3분 뒤 버스 배차 간격 조정을 위해 버스가 리셋됩니다." to all players
+        send "" to all players
+    else if now formatted as "HH:mm:ss" is "04:59:30":
+        send "" to all players
+        send "[ &6&l! &f] 1분 뒤 버스 배차 간격 조정을 위해 버스가 리셋됩니다." to all players
+        send "" to all players
+    else if now formatted as "HH:mm:ss" is "05:00:30":
+        execute console command "bus reload"
+        send "" to all players
+        send "[ &6&l! &f] 버스 시스템이 리셋되었습니다." to all players
+        send "" to all players
+
+command /bus_set [<number>]:
+    permission: op.user
+    trigger:
+        execute player command "hologram create bus-401-%arg-1% &e&l[ 버스운행정보 ]"
+        execute player command "hologram addline bus-401-%arg-1% &f"
+        execute player command "hologram addline bus-401-%arg-1% &0401번"
+        execute player command "hologram addline bus-401-%arg-1% &f"
+        execute player command "hologram addline bus-401-%arg-1% &e&l현재 위치"
+        execute player command "hologram addline bus-401-%arg-1% &a정보 없음"

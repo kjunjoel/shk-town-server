@@ -1,0 +1,112 @@
+options:
+    # 접두사
+    prefix: <##ff5757>&l[헌법재판소]&f
+
+    # 럭펌 그룹명
+    헌법재판소장: 헌법재판소장
+    헌법재판관: 헌법재판관
+
+    # 럭펌 노드명
+    ccourtAdmin: ccourt.admin # 헌법재판소장
+    ccourtUser: ccourt.user # 헌법재판관
+
+# 변수
+# {ccourt.user::*}                           | 재판관 목록
+# {ccourt.user.%uuid of player%.class}       | 재판관 직급 목록
+
+command /헌법재판소 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@ccourtAdmin}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {ccourt.user::*} is not set:
+                send "{@prefix} 헌법재판소 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@prefix} 헌법재판소 소속 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {ccourt.user::*}
+            loop "{@헌법재판소장}", "{@헌법재판관}":
+                loop {_list::*}:
+                    if {ccourt.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@prefix} %{_ind}%. %loop-value-2% (%{ccourt.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {ccourt.user::*}:
+                if loop-value is arg-2:
+                    send "{@prefix} 해당 플레이어는 이미 헌법재판소에 소속되어 있습니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@prefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg 3 is not set:
+                send "{@prefix} 직급을 입력해주세요."
+                stop
+            if arg 3 is "{@헌법재판소장}" or "{@헌법재판관}":
+                if group of player is "{@헌법재판소장}":
+                    if arg 3 is "{@헌법재판소장}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@헌법재판관}":
+                    if arg 3 is "{@헌법재판소장}" or "{@헌법재판관}":
+                        send "{@prefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {ccourt.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                send "{@prefix} &6%arg-2%&f님이 헌법재판소 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                set {ccourt.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else:
+                send "{@prefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@prefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {ccourt.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@prefix} 해당 플레이어는 헌법재판소 소속이 공무원이 아닙니다."
+                stop
+            if group of player is "{@헌법재판소장}":
+                if {ccourt.user.%uuid of arg-2%.class} is "{@헌법재판소장}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            else if group of player is "{@헌법재판관}":
+                if {ccourt.user.%uuid of arg-2%.class} is "{@헌법재판소장}" or "{@헌법재판관}":
+                    send "{@prefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {ccourt.user::*}
+            execute console command "lp user %arg-2% parent remove %{ccourt.user.%uuid of arg-2%.class}%"
+            delete {ccourt.user.%uuid of arg-2%.class}
+            send "{@prefix} &6%arg-2%&f님이 헌법재판소 소속 공무원에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@prefix} /헌법재판소 목록 &8&l| &f헌법재판소 재판관 목록을 확인합니다."
+            send "{@prefix} /헌법재판소 채용 [플레이어명] [직급] &8&l| &f플레이어를 [직급]으로 채용합니다."
+            send "{@prefix} /헌법재판소 해임 [플레이어명] &8&l| &f플레이어를 헌법재판관에서 해임합니다."
+            send "{@prefix} /헌법재판소공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+
+command /헌법재판소공지 [<text>]:
+    permission: {@ccourtUser}
+    permission message: {@prefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@prefix} 공지 내용을 입력해주세요."
+            stop
+        send "" to all players
+        send "{@prefix} &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop

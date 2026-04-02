@@ -1,0 +1,372 @@
+options:
+    prefix: [ &c&l핫타임 &f]
+
+# 변수
+# {hottime.day} | 핫타임 진행일
+# {hottime.fish::%player%} | 플레이어가 잡은 물고기의 길이
+
+function hottimeFish(p: offlineplayer, name: text, length: number):
+    set {_max} to 0
+    loop {hottime.fish::*}:
+        if loop-value > {_max}:
+            set {_max} to loop-value
+    if {hottime.fish::%{_p}%} isn't set:
+        set {hottime.fish::%{_p}%} to {_length}
+    else if {_length} > {hottime.fish::%{_p}%}:
+        set {hottime.fish::%{_p}%} to {_length}
+    if {_length} > {_max}:
+        send "{@prefix} &e%{_p}%님&f이 &6%moneyDigit({_length})%cm %{_name}%&f를(을) 낚아 1등이 되었습니다!" to all players
+        stop
+
+function hottimeMiner(p: offlineplayer, count: number):
+    set {_max} to 0
+    loop {hottime.miner::*}:
+        if loop-value > {_max}:
+            set {_max} to loop-value
+            set {_maxplayer} to loop-index parsed as offlineplayer
+    if {hottime.miner::%{_p}%} isn't set:
+        set {hottime.miner::%{_p}%} to {_count}
+    else:
+        add {_count} to {hottime.miner::%{_p}%}
+    if {_count} > {_max}:
+        if {_maxplayer} isn't {_p}:
+            send "{@prefix} &e%{_p}%님&f이 &e선두&f를 달리고 있습니다!" to all players
+            stop
+
+function hottimeButcher(p: offlineplayer, count: number):
+    set {_max} to 0
+    loop {hottime.butcher::*}:
+        if loop-value > {_max}:
+            set {_max} to loop-value
+            set {_maxplayer} to loop-index parsed as offlineplayer
+    if {hottime.butcher::%{_p}%} isn't set:
+        set {hottime.butcher::%{_p}%} to {_count}
+    else:
+        add {_count} to {hottime.butcher::%{_p}%}
+    if {_count} > {_max}:
+        if {_maxplayer} isn't {_p}:
+            send "{@prefix} &e%{_p}%님&f이 &e선두&f를 달리고 있습니다!" to all players
+            stop
+
+function hottimeBurf(type: text):
+    loop all offline players:
+        set {hottime.burf::%loop-offlineplayer%} to {_type}
+        make loop-offlineplayer run command "effect give %loop-offlineplayer% %{_type}% 1000000 1 true" as op if loop-offlineplayer is online
+
+on join:
+    if {hottime.burf.offline::%uuid of player%} is set:
+        make player run command "effect clear %player% speed" as op 
+        delete {hottime.burf.offline::%uuid of player%}
+                
+on death:
+    wait 1 second
+    if {hottime.burf::%victim%} is set:
+        make victim run command "effect give %victim% %{hottime.burf::%victim%}% 1000000 1 true" as op
+
+command /버프해제:
+    trigger:
+        if {hottime.burf::%player%} is set:
+            send "{@prefix} 죽으면 다시 버프가 부여됩니다."
+            make player run command "effect clear %player% %{hottime.burf::%player%}%" as op
+
+command /핫타임 [<text>]:
+    trigger:
+        if {hottime.day} is "월" or "일" or "금":
+            set {_number} to 0
+            loop {hottime.fish::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            send "{@prefix} &b천하제일낚시대회 &f순위"
+            set {_award::*} to 5000000, 3000000, 1000000, 0, 0
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            loop {_value::*}:
+                if {_rank} >= 6:
+                    stop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%cm) | 보상 %moneyDigit({_award::%{_rank}%})%원"
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원"
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+        else if {hottime.day} is "수":
+            set {_number} to 0
+            loop {hottime.butcher::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            send "{@prefix} &b천하제일도축대회 &f순위"
+            set {_award::*} to 5000000, 3000000, 1000000, 0, 0
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            loop {_value::*}:
+                if {_rank} >= 6:
+                    stop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%개) | 보상 %moneyDigit({_award::%{_rank}%})%원"
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원"
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+
+    
+every 1 second:
+    if now formatted as "HH:mm:ss" is "20:30:10":
+        set {hottime.day} to now formatted as "E"
+        if {hottime.day} is "월" or "일" or "금":
+            delete {hottime.fish::*}
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일낚시대회&f가 시작되었습니다!" to all players
+            send "{@prefix} 1시간 동안 &e길이가 긴 물고기&f를 낚은 사람에게 보상이 지급됩니다!" to all players
+        else if {hottime.day} is "수":
+            delete {hottime.butcher::*}
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일도축대회&f가 시작되었습니다!" to all players
+            send "{@prefix} 1시간 동안 &e가장 많은 토끼고기&f를 잡은 사람에게 보상이 지급됩니다!" to all players
+        else if {hottime.day} is "화" or "목" or "토":
+            hottimeBurf("speed")
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b신속 &f버프가 지급되었습니다!" to all players
+    else if now formatted as "HH:mm:ss" is "21:30:10":
+        if {hottime.day} is "월" or "일" or "금":
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일낚시대회&f가 종료되었습니다!" to all players
+            set {_number} to 0
+            loop {hottime.fish::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            set {_award::*} to 5000000, 3000000, 1000000
+            loop {_value::*}:
+                if {_rank} >= 4:
+                    exit 1 loop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%cm) | 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%cm) | 보상 %moneyDigit({_award::%{_ind}%})%원" to console 
+                    send "{@prefix} &6%moneyDigit({_award::%{_ind}%})%원&f이 입금되었습니다." to {_name::%{_rank}%} parsed as offlineplayer if {_name::%{_ind}%} parsed as offlineplayer is online
+                    balanceAdd({_name::%{_ind}%} parsed as offlineplayer, {_award::%{_rank}%}, "Hottime")
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+            delete {hottime.fish::*}
+        else if {hottime.day} is "수":
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일도축대회&f가 종료되었습니다!" to all players
+            set {_number} to 0
+            loop {hottime.butcher::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            set {_award::*} to 5000000, 3000000, 1000000
+            loop {_value::*}:
+                if {_rank} >= 4:
+                    exit 1 loop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%개) | 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%개) | 보상 %moneyDigit({_award::%{_ind}%})%원" to console 
+                    send "{@prefix} &6%moneyDigit({_award::%{_ind}%})%원&f이 입금되었습니다." to {_name::%{_rank}%} parsed as offlineplayer if {_name::%{_ind}%} parsed as offlineplayer is online
+                    balanceAdd({_name::%{_ind}%} parsed as offlineplayer, {_award::%{_rank}%}, "Hottime")
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+            delete {hottime.butcher::*}
+        else if {hottime.day} is "화" or "목" or "토":
+            loop all offline players:
+                delete {hottime.burf::%loop-offlineplayer%}
+                if loop-offlineplayer is online:
+                    make loop-offlineplayer run command "effect clear %loop-offlineplayer% speed" as op 
+                else:
+                    set {hottime.burf.offline::%uuid of loop-offlineplayer%} to true
+        delete {hottime.day}
+
+command /hottime_diamond_friday [<player>]:
+    trigger:
+        stop
+        if {hottime.day} is "금":
+            hottimeMiner(arg-1, 1)
+
+command /hottime_op:
+    permission: op.user
+    trigger:
+        if player is op:
+            loop all offline players:
+                delete {hottime.burf::%loop-offlineplayer%}
+                make loop-offlineplayer run command "effect clear %loop-offlineplayer% speed" as op if loop-offlineplayer is online 
+
+on consume:
+    if uncolored name of event-item is "아름님이 시킨 아이템":
+        make player run command "effect give %player% saturation 3600 0 true" as op
+
+command /hottime_end:
+    permission: op.user
+    trigger:
+        if {hottime.day} is "월" or "일" or "금":
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일낚시대회&f가 종료되었습니다!" to all players
+            set {_number} to 0
+            loop {hottime.fish::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            set {_award::*} to 5000000, 3000000, 1000000
+            loop {_value::*}:
+                if {_rank} >= 4:
+                    stop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%cm) | 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%cm) | 보상 %moneyDigit({_award::%{_ind}%})%원" to console 
+                    send "{@prefix} &6%moneyDigit({_award::%{_ind}%})%원&f이 입금되었습니다." to {_name::%{_rank}%} parsed as offlineplayer if {_name::%{_ind}%} parsed as offlineplayer is online
+                    balanceAdd({_name::%{_ind}%} parsed as offlineplayer, {_award::%{_rank}%}, "Hottime")
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+            delete {hottime.fish::*}
+        else if {hottime.day} is "수":
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.4 to all players
+            send "{@prefix} &b천하제일도축대회&f가 종료되었습니다!" to all players
+            set {_number} to 0
+            loop {hottime.butcher::*}:
+                add 1 to {_number}
+                set {_name::%{_number}%} to loop-index
+                set {_value::%{_number}%} to loop-value
+            loop size of {_value::*} times:
+                set {_min} to loop-number
+                loop (size of {_value::*}) - {_min} times:
+                    set {_j} to loop-number-1 + loop-number-2
+                    set {_min} to {_j} if {_value::%{_j}%} > {_value::%{_min}%}
+                set {_temp.1} to {_value::%{_min}%}
+                set {_temp.2} to {_name::%{_min}%}
+                set {_value::%{_min}%} to {_value::%loop-number%}
+                set {_name::%{_min}%} to {_name::%loop-number%}
+                set {_value::%loop-number%} to {_temp.1}
+                set {_name::%loop-number%} to {_temp.2}
+            set {_ind} to 1
+            set {_rank} to 1
+            set {_temp} to 1
+            set {_award::*} to 5000000, 3000000, 1000000
+            loop {_value::*}:
+                if {_rank} >= 4:
+                    stop
+                if {_value::%{_ind}%} is set:
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%개) | 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                    send "{@prefix} &e%{_rank}%등&f: &6%{_name::%{_ind}%} parsed as offlineplayer% &7(%moneyDigit({_value::%{_ind}%})%개) | 보상 %moneyDigit({_award::%{_ind}%})%원" to console 
+                    send "{@prefix} &6%moneyDigit({_award::%{_ind}%})%원&f이 입금되었습니다." to {_name::%{_rank}%} parsed as offlineplayer if {_name::%{_ind}%} parsed as offlineplayer is online
+                    balanceAdd({_name::%{_ind}%} parsed as offlineplayer, {_award::%{_rank}%}, "Hottime")
+                else:
+                    send "{@prefix} &e%{_rank}%등&f: &6없음 &7| 보상 %moneyDigit({_award::%{_rank}%})%원" to all players
+                if {_value::%{_ind}+1%} is {_value::%{_ind}%}:
+                    add 1 to {_temp}
+                else:
+                    add {_temp} to {_rank}
+                    set {_temp} to 1
+                add 1 to {_ind}
+            delete {hottime.butcher::*}
+        else if {hottime.day} is "화" or "목" or "토":
+            loop all offline players:
+                delete {hottime.burf::%loop-offlineplayer%}
+                if loop-offlineplayer is online:
+                    make loop-offlineplayer run command "effect clear %loop-offlineplayer% speed" as op 
+                else:
+                    set {hottime.burf.offline::%uuid of loop-offlineplayer%} to true
+        delete {hottime.day}
+
+command /hottime_del:
+    permission: op.user
+    trigger:
+        loop all offline players:
+            delete {hottime.burf::%loop-offlineplayer%}
+            if loop-offlineplayer is online:
+                make loop-offlineplayer run command "effect clear %loop-offlineplayer% speed" as op 
+            else:
+                set {hottime.burf.offline::%uuid of loop-offlineplayer%} to true
+        delete {hottime.day}

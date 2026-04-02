@@ -1,0 +1,139 @@
+command /test <integer>:
+	trigger:
+		set custom model data of player's tool to arg-1
+
+
+command /cmd:
+	permission: op
+	trigger:
+		send "custom model data is %custom model data of player's tool%"
+
+command /item_type:
+	permission: op
+	trigger:
+		send "item type is %type of player's tool%"
+
+command /player_name:
+	permission: op
+	trigger:
+		if type of player's tool is player head item:
+			send tag "tag;SkullOwner;Name" of nbt compound from player's tool
+
+command /pos:
+	permission: op
+	trigger:
+		send "%x coord of target entity%, %y coord of target entity%, %z coord of target entity%"
+
+command /date:
+	permission: op.user
+	trigger:
+		send "이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+command /groups [<player>]:
+	trigger:
+		set {_p} to arg-1
+		set {_p} to player if {_p} isn't set
+		send "%groups of {_p}%"
+
+command /shkchat [<text>]:
+    permission: op.user
+    permission message: 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "내용을 입력해주세요."
+            stop
+        send "&f[&b&lDEV&f] 샤크월드 : %arg-1%" to all players
+        stop
+	
+command /ip_check [<offlineplayer>]:
+	permission: op
+	trigger:
+		send ip of arg-1
+
+command /패치노트 [<text>]:
+	permission: op.user
+	permission message: 해당 명령어를 사용할 권한이 없습니다.
+	trigger:
+		if arg 1 is not set:
+			send "내용을 입력해주세요."
+			stop
+		send "&f" to all players
+		send "&2[ &e&l패치노트 &2] &d&l%arg-1%" to all players
+		send "&f" to all players
+		stop
+
+command /럭펌 [<offlineplayer>]:
+	permission: op.user
+	trigger:
+		if arg 1 isn't set:
+			send "내용을 입력해주세요."
+			stop
+		execute console command "lp user %arg-1% permission set VIP.user"
+
+command /npcd:
+	permission: op.user
+	trigger:
+		make player run command "npc select" as op
+		wait 0.1 second
+		make player run command "npc remove" as op
+		send "완료!" to player
+		stop
+
+options:
+	교수: 교수
+	조교수: 조교수
+	전임교원: 전임교원
+
+command /univ_set:
+    permission: op.user
+    trigger:
+        loop {univ.user::*}:
+            loop "{@교수}", "{@조교수}":
+                if {univ.user.%uuid of loop-value-1%.class} is loop-value-2:
+                    execute player command "lp user %loop-value-1% parent add %loop-value-2%"
+                    wait 20 ticks
+
+on first join:
+    set {firstJoin.%uuid of player%} to now
+
+command /joindate [<offlineplayer>]:
+    trigger:
+        if arg-1 is set:
+            if player is op:
+                send "%arg-1% first joined the server on %{firstJoin.%uuid of arg-1%}%." to player
+        else:
+            send "You first joined the server on %{firstJoin.%uuid of player%}%." to player
+
+options:
+	# 경찰
+    경찰청장: 경찰청장
+    치안정감: 치안정감
+    치안감: 치안감
+    경무관: 경무관
+    총경: 총경
+    경정: 경정
+    경감: 경감
+    경위: 경위
+    경사: 경사
+    경장: 경장
+    순경: 순경
+    가이드: 가이드
+    ADMIN: ceo
+    DEV: DEV
+
+on rightclick with Clock:
+	if uncolored name of player's tool is "시계":
+		if group of player is "{@경찰청장}" or "{@치안정감}" or "{@치안감}" or "{@경무관}" or "{@총경}" or "{@경정}" or "{@경감}" or "{@경위}" or "{@경사}" or "{@경장}" or "{@순경}" or "{@가이드}" or "{@ADMIN}" or "{@DEV}":
+			send "&d&l[시계] &f20%now% &f(공무수행)" to player
+			stop
+		else:
+			remove 1 of player's tool from player's tool
+			send "&d&l[시계] &f당신은 시계를 사용할 권한이 없습니다!"
+			stop
+
+
+
+command /gui_test:
+    trigger:
+        if player is op:
+            open chest with 6 rows named "&f𠔻𪚥" to player

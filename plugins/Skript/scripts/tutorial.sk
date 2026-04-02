@@ -1,0 +1,104 @@
+options:
+    학생: 학생
+    튜토리얼: 튜토리얼
+    dir: plugins/Skript/data/logs/join.txt
+    prefix: &f[ &6&l&o! &f]
+
+on join:
+    if {server.firstjoin.%uuid of player%} isn't set:
+        wait 1 second
+        remove all items from player
+        execute console command "lp user %player% parent add {@튜토리얼}"
+        execute console command "warp tutorial %player%"
+        set {server.firstjoin.%uuid of player%} to true
+        delete {playtime.%uuid of player%.day::*}
+        delete {playtime.%uuid of player%.week::*}
+        set {playtime.%uuid of player%} to "0 seconds" parsed as timespan
+        set player's time played to "0 seconds" parsed as timespan
+        loop 5 times:
+            delete {playtime.%uuid of player%.day::%loop-number%}
+            delete {playtime.%uuid of player%.week::%loop-number%}
+
+command /tutorial_reset [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {server.firstjoin.%uuid of arg-1%}
+        send "tutorial reset."
+
+on rightclick on player head:
+    if "%location at target block%" contains "x: -48.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-1" as op
+        loop {list.guide::*}:
+            send "" to loop-value parsed as offlineplayer
+            send "{@prefix} 신규유저 &e%player%&f(이)가 튜토리얼 1번을 끝냈습니다." to loop-value parsed as offlineplayer
+            send "{@prefix} &7 └ 뉴비분을 맞이 해주세요!" to loop-value parsed as offlineplayer
+            send "" to loop-value parsed as offlineplayer
+        loop {list.tempguide::*}:
+            send "" to loop-value parsed as offlineplayer
+            send "{@prefix} 신규유저 &e%player%&f(이)가 튜토리얼 1번을 끝냈습니다." to loop-value parsed as offlineplayer
+            send "{@prefix} &7 └ 뉴비분을 맞이 해주세요!" to loop-value parsed as offlineplayer
+            send "" to loop-value parsed as offlineplayer
+    else if "%location at target block%" contains "x: -65.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial" as op
+    else if "%location at target block%" contains "x: -66.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-2" as op
+    else if "%location at target block%" contains "x: -83.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-1" as op
+    else if "%location at target block%" contains "x: -84.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-3" as op
+    else if "%location at target block%" contains "x: -101.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-2" as op
+    else if "%location at target block%" contains "x: -102.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-4" as op
+    else if "%location at target block%" contains "x: -119.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-3" as op
+    else if "%location at target block%" contains "x: -120.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-5" as op
+    else if "%location at target block%" contains "x: -137.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-4" as op
+    else if "%location at target block%" contains "x: -138.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-6" as op
+    else if "%location at target block%" contains "x: -155.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-5" as op
+    else if "%location of target block%" contains "x: -156.5, y: 13.5, z: 25.5" and "city":
+        make player run command "warp tutorial-7" as op
+    else if "%location at target block%" contains "x: -173.5, y: 13.5, z: 26.5" and "city":
+        make player run command "warp tutorial-6" as op
+    else if "%location of target block%" contains "x: -174.5, y: 13.5, z: 25.5" and "city":
+        make player run command "spawn" as op
+        if group of player is "{@튜토리얼}":
+            execute console command "lp user %player% parent remove {@튜토리얼}"
+            execute console command "lp user %player% parent add {@학생}"
+            write "[%now%] %player%" at line (size of file contents of "{@dir}")+1 to file "{@dir}"
+            wait 1 second
+            send "{@prefix} 화살표를 따라 &e상어고등학교&f로 이동하시기 바랍니다."
+            send title "{@prefix}" with subtitle "&f화살표를 따라 &e상어고등학교&f로 이동하시기 바랍니다." to player for 5 seconds
+            make player run command "gps start 상어고등학교" as op
+            balanceAdd(player, 500000, "Tutorial")
+            make player run command "iaget bacon_sandwich 64" as op
+            set {newbie::%uuid of player%} to 0
+
+command /newbie_delete [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        delete {newbie::%uuid of arg-1%}
+        delete {newbie.temp::%uuid of player%}
+
+command /뉴비보호해제:
+    trigger:
+        if {newbie.temp::%player%} is set:
+            send "{@prefix} 뉴비 보호가 해제되었습니다. 이제 다른 플레이어와 상호작용할 수 있습니다."
+            delete {newbie::%uuid of player%}
+            delete {newbie.temp::%player%}
+        else if {newbie::%uuid of player%} is set:
+            send "{@prefix} 뉴비 보호를 해제하면 &c다른 플레이어에게 피해&f를 입히거나, &c다른 플레이어로부터 피해&f를 받을 수 있습니다. 뉴비 보호를 해제하려면 20초 내로 &a/뉴비보호해제&f를 다시 입력해주세요."
+            set {newbie.temp::%player%} to true
+            wait 20 seconds
+            delete {newbie.temp::%player%}
+
+every 1 second:
+    loop all players:
+        if {newbie::%uuid of loop-player%} is set:
+            add 1 to {newbie::%uuid of loop-player%}
+            if {newbie::%uuid of loop-player%} is 86400:
+                delete {newbie::%uuid of loop-player%}

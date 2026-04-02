@@ -1,0 +1,101 @@
+options:
+    pre: <##6CEEFF>&l[확성기]&f
+    block: paper with custom model data 9
+    
+
+command /확성기 [<text>]:
+    trigger:
+        if arg-1 isn't set:
+            send "{@pre} /확성기 [내용]"
+        else:
+            if {mute.user.%uuid of player%} is true:
+                send "{@pre} 당신은 현재 채팅금지 상태입니다."
+                send "         &7└ 채팅금지 해제까지 &f%{mute.user.%uuid of player%.time}%&7분 남았습니다."
+                stop
+
+            if {speaker.cooldown::%uuid of player%} isn't set:
+                if {speaker.interdict} isn't set:
+                    if {speaker.infinite::%uuid of player%} isn't set:
+                        if player has {speaker.items}:
+                            remove {speaker.items} from player's inventory
+                        else:
+                            send "{@pre} 확성기 아이템&7을 소유하고 있지 않습니다."
+                            stop
+                        send "쀇" to all players
+                        send "     <##c4d6e4>%player% &7: &f&l%uncolored argument%" to all players
+                        send "" to all players
+                        play sound "entity.experience_orb.pickup" with volume 2 and pitch 1 at all players for all players
+                        set {speaker.cooldown::%uuid of player%} to {speaker.cooldown}
+                        loop {speaker.cooldown} times:
+                            remove 1 from {speaker.cooldown::%uuid of player%}
+                            wait a second
+                        delete {speaker.cooldown::%uuid of player%}
+                else:
+                    send "{@pre} 현재 확성기 사용이 금지 되었습니다."
+                    stop
+            else:
+                send "{@pre} 확성기 사용 쿨타임입니다. &6%{speaker.cooldown::%uuid of player%}%&f초 남았습니다."
+                stop
+
+            
+command /speaker [<text>] [<text>]:
+    permission: op.user
+    permission message: {@pre}  명령어를 사용할 권한이 없습니다.
+    trigger:
+        if player is non-op:
+            stop
+        if arg-1 isn't set:
+            send "{@pre} /speaker get [개수]"
+            send "{@pre} /speaker infinity [플레이어]"
+            send "{@pre} /speaker ban [시간(분)]"
+            send "{@pre} /speaker cooltime [시간(초)]"
+            send "{@pre} /speaker item"
+            send "{@pre} /speaker reset [플레이어]"
+            stop
+        if arg-1 is "get":
+            if arg-2 parsed as int is int:
+                give (arg-2 parsed as int) of {speaker.items} named "&f&l확성기" to player
+                send "{@pre} 확성기 아이템 %arg-2%개를 지급 받았습니다."
+            else:
+                send "{@pre} 지급 받을 개수를 정수로 입력하세요."
+        if arg-1 is "infinity":
+            if arg-2 parsed as offlineplayer is set:
+                if {speaker.infinite::%uuid of arg-2%} isn't set:
+                    set {speaker.infinite::%uuid of arg-2%} to true
+                    send "{@pre} %arg-2%님에게 확성기 무제한 권한이 적용 되었습니다."
+                else:
+                    send "{@pre} %arg-2%님은 이미 확성기 무제한 권한이 적용 되었습니다."
+            else:
+                send "{@pre} 확성기 무제한 권한을 적용할 플레이어를 입력하세요."
+        if arg-1 is "ban":
+            if arg-2 parsed as int is int:
+                set {speaker.interdict} to arg-2 parsed as int
+                send "{@pre} 확성기 사용을 %arg-2%분 동안 금지 하였습니다."
+            else:
+                send "{@pre} 확성기 사용 금지 시간(분)을 정수로 입력하세요."
+        if arg-1 is "cooltime":
+            if arg-2 parsed as int is int:
+                set {speaker.cooldown} to arg-2 parsed as int
+                send "{@pre} 확성기 사용 쿨타임을 %arg-2%초로 설정 하였습니다."
+            else:
+                send "{@pre} 확성기 사용 쿨타임 시간(초)을 정수로 입력하세요."
+
+        if arg 1 is "item":
+            set {speaker.items} to player's tool
+            send "{@pre} 확성기 아이템이 설정되었습니다."
+
+        if arg-1 is "reset":
+            if arg-2 isn't set:
+                send "{@pre} &e플레이어명&f을 입력하여 주세요."
+                stop
+            else:
+                delete {speaker.cooldown::%uuid of arg-2%}
+                send "{@pre} &e%arg-2%님&f에 대한 &6확성기 쿨타임 초기화 &f완료!"
+                stop
+
+
+every a minute:
+    if {speaker.interdict} > 0:
+        remove 1 from {speaker.interdict}
+        if {speaker.interdict} = 0:
+            delete {speaker.interdict}

@@ -1,0 +1,21 @@
+on rightclick with player head:
+    if {camera.%player%} is set:
+        send "[ &6&l! &f] 카메라 사용 쿨타임입니다."
+        stop
+    if uncolored name of event-item is "Camera":
+        cancel event
+        loop player's inventory:
+            if type of loop-value is piece of paper:
+                if custom model data of loop-value is 0:
+                    if uncolored name of loop-value contains "필름":
+                        remove 1 of loop-value from player's inventory
+                        make player run command "takepicture" as op
+                        set {camera.%player%} to true
+                        wait 3 seconds
+                        delete {camera.%player%}
+                        stop
+        send "[ &6&l! &f] 필름이 없습니다!"
+        stop
+
+on quit:
+    delete {camera.%player%}

@@ -1,0 +1,4 @@
+command /경매:
+	trigger:
+		dailyquestSound(player, 7)
+		stop

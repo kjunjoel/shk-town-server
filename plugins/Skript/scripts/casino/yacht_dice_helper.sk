@@ -1,0 +1,124 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    npc: 요트
+
+# 변수
+# {casino.yachthelper.%player%.price} | 플레이어가 배팅한 금액
+
+function casinoYachtHelperItem(t: text) :: item:
+    if {_t} is "$10":
+        return 1 of book with custom model data 56 named "&e&l[CASINO]&f $10 Chip"
+    else if {_t} is "$50":
+        return 2 of book with custom model data 57 named "&e&l[CASINO]&f $25 Chip"
+    else if {_t} is "$100":
+        return 1 of book with custom model data 58 named "&e&l[CASINO]&f $100 Chip"
+    else if {_t} is "$500":
+        return 5 of book with custom model data 58 named "&e&l[CASINO]&f $100 Chip"
+    else if {_t} is "$1000":
+        return 10 of book with custom model data 58 named "&e&l[CASINO]&f $100 Chip"
+    else if {_t} is "$2500":
+        return 25 of book with custom model data 58 named "&e&l[CASINO]&f $100 Chip"
+    else if {_t} is "$5000":
+        return 50 of book with custom model data 58 named "&e&l[CASINO]&f $100 Chip"
+
+function casinoYachtHelperName(t: text) :: text:
+    if {_t} is "$10":
+        return moneyDigit(10000)
+    else if {_t} is "$50":
+        return moneyDigit(50000)
+    else if {_t} is "$100":
+        return moneyDigit(100000)
+    else if {_t} is "$500":
+        return moneyDigit(500000)
+    else if {_t} is "$1000":
+        return moneyDigit(1000000)
+    else if {_t} is "$2500":
+        return moneyDigit(2500000)
+    else if {_t} is "$5000":
+        return moneyDigit(5000000)
+
+function casinoYachtHelperDraw(p1: text, p2: text):
+    close {_p1} parsed as player's inventory
+    close {_p2} parsed as player's inventory
+    send "{@prefix} &e%{_p2}%&f님과의 요트에서 무승부하였습니다." to {_p1} parsed as player
+    send "{@prefix} &e%{_p1}%&f님과의 요트에서 무승부하였습니다." to {_p2} parsed as player
+    delete {casino.yachthelper.%{_p1} parsed as player%.price}
+    delete {casino.yachthelper.%{_p2} parsed as player%.price}
+
+function casinoYachtHelperEnd(win: text, lose: text):
+    set {_winner} to {_win} parsed as player
+    set {_loser} to {_lose} parsed as player
+    close {_winner}'s inventory
+    close {_loser}'s inventory
+    set {_item} to casinoYachtHelperItem({casino.yachthelper.%{_winner}%.price})
+    add {_item} to {_winner}
+    remove {_item} from {_loser}
+    set {_price} to casinoYachtHelperName({casino.yachthelper.%{_winner}%.price})
+    send "{@prefix} &e%{_loser}%&f님과의 요트에서 승리하여 &6%{_price}%원&f을 얻었습니다." to {_winner}
+    send "{@prefix} &e%{_winner}%&f님과의 요트에서 패배하여 &6%{_price}%원&f을 잃었습니다." to {_loser}
+    delete {casino.yachthelper.%{_winner}%.price}
+    delete {casino.yachthelper.%{_loser}%.price}
+
+function casinoYachtHelperQuit(p1: player, p2: player):
+    set {_item} to casinoYachtHelperItem({casino.yachthelper.%{_p1}%.price})
+    remove {_item} from {_p1}
+    add {_item} to {_p2}
+    set {_price} to casinoYachtHelperName({casino.yachthelper.%{_p1}%.price})
+    send "{@prefix} 게임 중 이탈하여 &6%{_price}%원&f을 잃었습니다." to {_p1}
+    send "{@prefix} &e%{_p1}%&f님이 게임 중 이탈하여 &6%{_price}%원&f을 얻었습니다." to {_p2}
+    delete {casino.yachthelper.%{_p1}%.price}
+
+function casinoYachtHelperGUI(p: player):
+    set {_inv} to chest inventory with 3 rows named "&0&l[ CASINO YACHT DICE ]"
+    loop 27 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 10 of {_inv} to 1 of book with custom model data 56 named "&e&l$10 &fYACHT"
+    set slot 11 of {_inv} to 2 of book with custom model data 57 named "&e&l$50 &fYACHT"
+    set slot 12 of {_inv} to 1 of book with custom model data 58 named "&e&l$100 &fYACHT"
+    set slot 13 of {_inv} to 5 of book with custom model data 58 named "&e&l$500 &fYACHT"
+    set slot 14 of {_inv} to 10 of book with custom model data 58 named "&e&l$1000 &fYACHT"
+    set slot 15 of {_inv} to 25 of book with custom model data 58 named "&e&l$2500 &fYACHT"
+    set slot 16 of {_inv} to 50 of book with custom model data 58 named "&e&l$5000 &fYACHT"
+    open {_inv} to {_p}
+
+on rightclick on entity:
+    if entity's name is "{@npc}":
+        casinoYachtHelperGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::casinoYachtHelperGUI} to true
+        stop
+    
+on inventory click:
+    if {gui.%uuid of player%::casinoYachtHelperGUI} is true:
+        cancel event
+        if index of clicked slot is between 10 and 16:
+            set {_amount} to item amount of clicked item 
+            set {_custom} to custom model data of clicked item
+            loop all items of player's inventory:
+                if custom model data of loop-item is {_custom}:
+                    if item amount of loop-item >= {_amount}:
+                        set {_temp} to true
+                        exit 1 loop
+            set {_name} to uncolored name of clicked item
+            set {_list::*} to {_name} split by " "
+            if {_temp} is true:
+                loop 10 times:
+                    if number of {casino.yacht::play::%{_list::1}%-Room%loop-number%::player::*} isn't 2:
+                        close player's inventory
+                        execute player command "yacht_dice %{_list::1}%-Room%loop-number%"
+                        set {casino.yachthelper.%player%.price} to {_list::1}
+                        stop
+            else:
+                send "{@prefix} 소유하고 계신 칩이 부족합니다."
+                stop
+            close player's inventory
+            send "{@prefix} 남은 방이 없습니다. 잠시 후 다시 시도해주세요."
+            stop
+        stop
+
+on inventory close:
+    if {gui.%uuid of player%::casinoYachtHelperGUI} is true:
+        delete {gui.%uuid of player%::casinoYachtHelperGUI}
+
+on quit:
+    delete {casino.yachthelper.%player%.price}

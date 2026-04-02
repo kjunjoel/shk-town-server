@@ -1,0 +1,72 @@
+options:
+	prefix: &7[&a&l✔&7]&f
+	@prefix: &7[&c&l❌&7]&f
+	permission: &7[ &b&lStaff &7]&f
+
+on load:
+	create file path "plugins/Skript/data/filter/list.txt" if file path "plugins/Skript/data/filter/list.txt" isn't available
+	set {filterchat::*} to content of file path "plugins/Skript/data/filter/list.txt"	
+
+on unload:
+	delete {filterchat::*}
+
+command /필터 [<text>] [<text>]:
+	permission: op
+	trigger:
+		if arg-1 is "추가":
+			if arg-2 is set:
+				if {filterchat::*} does not contain arg-2:
+					add arg-2 to {filterchat::*}
+					send "&f"
+					send "{@prefix} &e%arg-2%&f을(를) 필터에 &a&f추가하였습니다."
+					send "&f"
+					sync append arg-2 to file path "plugins/Skript/data/filter/list.txt"
+					stop
+				else:
+					send "&f"
+					send "{@@prefix} &e%arg-2%&f은(는) 이미 필터링되고 있습니다."
+					send "&f"
+					stop
+			else:
+				send "&f"
+				send "{@@prefix} &b필터&f에 &a추가&f할 내용을 작성하세요."
+				send "&f"
+				stop
+		else if arg-1 is "삭제":
+			if arg-2 is set:
+				loop {filterchat::*}:
+					if loop-value is arg-2:
+						set {_line} to loop-index
+						remove arg-2 from {filterchat::*}
+						send "&f"
+						send "{@prefix} &e%arg-2%&f(이)가 &b필터&f에서 &c제외&f되었습니다."
+						send "&f"
+						set line {_line} of file path "plugins/Skript/data/filter/list.txt" to ""
+						stop
+				if {_line} isn't set:
+					send "&f"
+					send "{@prefix} &e%arg-2%&f은(는) &b필터&f에 &c&n추가되지 않은 내용&f입니다."
+					send "&f"
+					stop
+			else:
+				send "&f"
+				send "{@prefix} &b필터&f에서 &c삭제&f할 내용을 작성하세요."
+				send "&f"
+				stop
+		else if arg-1 is "목록":
+			send "{@prefix} &f다음의 단어들이 필터링 되고 있습니다."
+			set {_n} to arg-2 parsed as number
+			set {_n} to 1 if {_n} isn't set
+			set {_ind} to 1
+			loop {filterchat::*}:
+				if {_ind} is between ({_n}-1)*10+1 and ({_n}*10):
+					send "{@prefix} %{_ind}%. %loop-value%"
+				add 1 to {_ind}
+			set {_max} to round up (size of {_list::*} / 10)
+			send "&c/필터 목록 %{_page}+1%&6을(를) 입력하여 다음 페이지를 읽으세요." if {_n} < {_max}
+		else:
+			send "{@permission} 다음의 명령어를 사용할 수 있습니다."
+			send "&f"
+			send "{@prefix} /필터 추가 [내용]"
+			send "{@prefix} /필터 삭제 [내용]"
+			send "{@prefix} /필터 목록"

@@ -1,0 +1,20 @@
+function jobCheck(p: player) :: text:
+    set {_group::*} to groups of {_p}
+    remove "수감자" from {_group::*}
+    remove "죄수" from {_group::*}
+    remove "현상수배" from {_group::*}
+    remove "default" from {_group::*}
+    set {_text} to ""
+    loop {_group::*}:
+        set {_text} to "%loop-value%, %{_text}%"
+    set {_size} to length of {_text} - 2
+    return first {_size} characters of {_text}
+
+options:
+	prefix: &f[ &6&l!&f ]
+
+command /직업확인 [<offlineplayer>]:
+	trigger:
+		send "&f"
+		send "{@prefix} &e%arg-1%&f님의 직업은 아래와 같습니다."
+		make player run command "lp user %arg-1% parent info" as op

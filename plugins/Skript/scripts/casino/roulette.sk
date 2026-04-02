@@ -1,0 +1,285 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    npc: 룰렛
+    max: 10000000
+
+    SOUND_LOOTING: BLOCK_NOTE_BLOCK_HAT
+    SOUND_LOOTEND: ENTITY_PLAYER_LEVELUP
+    WIN_SOUND: UI_TOAST_CHALLENGE_COMPLETE
+    LOSE_SOUND: ITEM_SHIELD_BREAK
+
+# 변수
+# {casino.roulette.%player%.chips::*} | 플레이어가 배팅한 칩
+# {Casino.roulette.%player%.select}   | 플레이어가 선택한 배팅
+
+function casinoRouletteItem(n: number, state: boolean) :: item:
+    if {_n} is 37:
+        if {_state} is true:
+            return green shulker box named "&a&l0"
+        else:
+            return green stained glass named "&a&l0"
+    else if {_n} is 38:
+        if {_state} is true:
+            return green shulker box named "&a&l00"
+        else:
+            return green stained glass named "&a&l00"
+    else if {_n} is 1 or 3 or 5 or 7 or 9 or 12 or 14 or 16 or 18 or 19 or 21 or 23 or 25 or 27 or 30 or 32 or 34 or 36:
+        if {_state} is true:
+            return red shulker box named "&c&l%{_n}%"
+        else:
+            return red stained glass named "&c&l%{_n}%"
+    else:
+        if {_state} is true:
+            return black shulker box named "&f&l%{_n}%"
+        else:
+            return black stained glass named "&f&l%{_n}%"
+
+function casinoRouletteSelectGUI(p: player):
+    set {_inv} to chest inventory with 6 rows named "&0&l[ CASINO ROULETTE ]"
+    loop 36 times:
+        if loop-number is 1 or 3 or 5 or 7 or 9 or 12 or 14 or 16 or 18 or 19 or 21 or 23 or 25 or 27 or 30 or 32 or 34 or 36:
+            set slot (loop-number)-1 of {_inv} to red stained glass pane named "&c&l%loop-number%" with lore "&7배당률 36배"
+        else:
+            set slot (loop-number)-1 of {_inv} to black stained glass pane named "&f&l%loop-number%" with lore "&7배당률 36배"
+    set slot 36, 44, 45, and 53 of {_inv} to white stained glass pane named "&f"
+    set slot 37 of {_inv} to blue stained glass pane named "&b&l1st 12" with lore "&f1에서 12" and "&7배당률 3배"
+    set slot 38 of {_inv} to blue stained glass pane named "&b&l2nd 12" with lore "&f13에서 24" and "&7배당률 3배"
+    set slot 39 of {_inv} to blue stained glass pane named "&b&l3rd 12" with lore "&f25에서 36" and "&7배당률 3배"
+    set slot 40 of {_inv} to magenta stained glass pane named "&d&l1-18" with lore "&f1에서 18" and "&7배당률 2배"
+    set slot 41 of {_inv} to orange stained glass pane named "&6&lEven" with lore "&f짝수" and "&7배당률 2배"
+    set slot 42 of {_inv} to black stained glass pane named "&f&lBlack" with lore "&f검정" and "&7배당률 2배"
+    set slot 43 of {_inv} to green stained glass pane named "&a&l0" with lore "&7배당률 36배"
+    set slot 46 of {_inv} to blue stained glass pane named "&b&l1st 2 to 1" with lore "&f1, 4, 7, ..., 34" and "&7배당률 3배"
+    set slot 47 of {_inv} to blue stained glass pane named "&b&l2nd 2 to 1" with lore "&f2, 5, 8, ..., 35" and "&7배당률 3배"
+    set slot 48 of {_inv} to blue stained glass pane named "&b&l3rd 2 to 1" with lore "&f3, 6, 9, ..., 36" and "&7배당률 3배"
+    set slot 49 of {_inv} to magenta stained glass pane named "&d&l19-36" with lore "&f19에서 36" and "&7배당률 2배"
+    set slot 50 of {_inv} to orange stained glass pane named "&6&lOdd" with lore "&f홀수" and "&7배당률 2배"
+    set slot 51 of {_inv} to red stained glass pane named "&c&lRed" with lore "&f빨강" and "&7배당률 2배"
+    set slot 52 of {_inv} to green stained glass pane named "&a&l00" with lore "&7배당률 36배"
+    open {_inv} to {_p}
+
+function casinoRouletteGUI(p: player, state: text, n: number):
+    set {_inv} to chest inventory with 5 rows named "&0&l[ CASINO ROULETTE ]"
+    loop 7 times:
+        set slot (loop-number)+18 of {_inv} to white stained glass pane named "&f"
+    if {_state} is "start":
+        set slot 22 of {_inv} to blue stained glass pane named "&b&l굴리기"
+    loop 36 times:
+        if loop-number is between 1 and 18:
+            if loop-number is {_n}:
+                set slot (loop-number)-1 of {_inv} to casinoRouletteItem(loop-number, true)
+            else:
+                set slot (loop-number)-1 of {_inv} to casinoRouletteItem(loop-number, false)
+        else:
+            if loop-number is {_n}:
+                set slot (loop-number)+8 of {_inv} to casinoRouletteItem(loop-number, true)
+            else:
+                set slot (loop-number)+8 of {_inv} to casinoRouletteItem(loop-number, false)
+    if {_n} is 37:
+        set slot 18 of {_inv} to casinoRouletteItem(37, true)
+    else:
+        set slot 18 of {_inv} to casinoRouletteItem(37, false)
+    if {_n} is 38:
+        set slot 26 of {_inv} to casinoRouletteItem(38, true)
+    else:
+        set slot 26 of {_inv} to casinoRouletteItem(38, false)
+    open {_inv} to {_p}
+    
+function casinoRouletteStart(p: player, select: text):
+    send "{@prefix} &6%{_select}%&f에 배팅하였습니다." to {_p}
+    casinoRouletteGUI({_p}, "start", 0)
+    set {gui.%uuid of {_p}%::casinoRouletteStartGUI} to true
+    set {casino.roulette.%{_p}%.select} to {_select}
+
+function casinoRouletteEnd(p: player, select: text):
+    delete {gui.%uuid of {_p}%::casinoRouletteStartGUI}
+    set {gui.%uuid of {_p}%::casinoRouletteEndGUI} to true    
+    loop 40 times:
+        set {_rand} to random integer between 1 and 38
+        casinoRouletteGUI({_p}, "end", {_rand})
+        play sound "{@SOUND_LOOTING}" with volume 0.4 to {_p}
+        wait 2 ticks
+    loop 11 times:
+        set {_rand} to random integer between 1 and 38
+        casinoRouletteGUI({_p}, "end", {_rand})
+        if loop-value isn't 11:
+            play sound "{@SOUND_LOOTING}" with volume 0.4 to {_p}
+        else:
+            play sound "{@SOUND_LOOTEND}" with volume 0.4 to {_p}
+        wait 1 tick
+        set {_tick} to 2*loop-number - 1
+        wait "%{_tick}% ticks" parsed as timespan
+    wait 1 second
+    casinoRouletteAward({_p}, {_rand}, {_select})
+    delete {gui.%uuid of {_p}%::casinoRouletteEndGUI}
+
+function casinoRouletteAward(p: player, n: number, select: text):
+    close {_p}'s inventory
+    if {_n} is 37:
+        send "{@prefix} 룰렛의 숫자는 &a&l0&f입니다." to {_p}
+    else if {_n} is 38:
+        send "{@prefix} 룰렛의 숫자는 &a&l00&f입니다." to {_p}
+    else if {_n} is 1 or 3 or 5 or 7 or 9 or 12 or 14 or 16 or 18 or 19 or 21 or 23 or 25 or 27 or 30 or 32 or 34 or 36:
+        send "{@prefix} 룰렛의 숫자는 &c&l%{_n}%&f입니다." to {_p}
+    else if {_n} is 2 or 4 or 6 or 8 or 10 or 11 or 13 or 15 or 17 or 20 or 22 or 24 or 26 or 28 or 29 or 31 or 33 or 35:
+        send "{@prefix} 룰렛의 숫자는 &f&l%{_n}%&f입니다." to {_p}
+    if {_select} is "0":
+        if {_n} is 37:
+            set {_state} to true
+            set {_mul} to 36
+    else if {_select} is "00":
+        if {_n} is 38:
+            set {_state} to true
+            set {_mul} to 36
+    else if {_select} parsed as number is {_n}:
+        set {_state} to true
+        set {_mul} to 36
+    else if {_select} is "1st 12":
+        if {_n} is between 1 and 12:
+            set {_state} to true
+            set {_mul} to 3
+    else if {_select} is "2nd 12":
+        if {_n} is between 13 and 24:
+            set {_state} to true
+            set {_mul} to 3
+    else if {_select} is "3rd 12":
+        if {_n} is between 25 and 36:
+            set {_state} to true
+            set {_mul} to 3
+    else if {_select} is "1st 2 to 1":
+        if {_n} is between 1 and 36:
+            if mod({_n}, 3) is 1:
+                set {_state} to true
+                set {_mul} to 3
+    else if {_select} is "2nd 2 to 1":
+        if {_n} is between 1 and 36:
+            if mod({_n}, 3) is 2:
+                set {_state} to true
+                set {_mul} to 3
+    else if {_select} is "3rd 2 to 1":
+        if {_n} is between 1 and 36:
+            if mod({_n}, 3) is 0:
+                set {_state} to true
+                set {_mul} to 3
+    else if {_select} is "1-18":
+        if {_n} is between 1 and 18:
+            set {_state} to true
+            set {_mul} to 2
+    else if {_select} is "19-36":
+        if {_n} is between 19 and 36:
+            set {_state} to true
+            set {_mul} to 2
+    else if {_select} is "Even":
+        if {_n} is between 1 and 36:
+            if mod({_n}, 2) is 0:
+                set {_state} to true
+                set {_mul} to 2
+    else if {_select} is "Odd":
+        if {_n} is between 1 and 36:
+            if mod({_n}, 2) is 1:
+                set {_state} to true
+                set {_mul} to 2
+    else if {_select} is "Black":
+        if {_n} is 2 or 4 or 6 or 8 or 10 or 11 or 13 or 15 or 17 or 20 or 22 or 24 or 26 or 28 or 29 or 31 or 33 or 35:
+            set {_state} to true
+            set {_mul} to 2
+    else if {_select} is "Red":
+        if {_n} is 1 or 3 or 5 or 7 or 9 or 12 or 14 or 16 or 18 or 19 or 21 or 23 or 25 or 27 or 30 or 32 or 34 or 36:
+            set {_state} to true
+            set {_mul} to 2
+    if {_state} is true:
+        loop {casino.roulette.%{_p}%.chips::*}:
+            set {casino.roulette.%{_p}%.chips::%loop-index%} to {_mul}*loop-value
+        set {_price} to casinoChipGive({_p}, {casino.roulette.%{_p}%.chips::*}, "Roulette")
+        play sound "{@WIN_SOUND}" with volume 0.4 to {_p}
+        send title "&a&l성공!" with subtitle "배팅액의 %{_mul}%배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+        send "{@prefix} 예측에 성공하여 배팅액의 %{_mul}%배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+    else:
+        loop {casino.roulette.%{_p}%.chips::*}:
+            set {casino.roulette.%{_p}%.chips::%loop-index%} to 0
+        set {_price} to casinoChipGive({_p}, {casino.roulette.%{_p}%.chips::*}, "Roulette")
+        play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+        send title "&c&l실패!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+        send "{@prefix} 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    delete {casino.roulette.%{_p}%.chips::*}
+    stop
+
+on rightclick on entity:
+    if entity's name is "{@npc}":    
+        delete {casino.dice.%player%.chips::*}
+        send "{@prefix} 다음 창에 배팅할 칩을 넣어주세요." to player
+        wait 10 ticks
+        casinoChipGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::casinoRouletteChipGUI} to true
+        
+on inventory click:
+    if event-inventory is player's inventory:
+        stop
+
+    else if {gui.%uuid of player%::casinoRouletteChipGUI} is true:
+        if clicked slot is 22:
+            cancel event
+            set {_chips::*} to casinoChipCount(player, event-inventory, "Roulette")
+            if {_chips::*} is false:
+                send "{@prefix} 배팅할 칩을 넣어주시기 바랍니다."
+                stop
+            else if {_chips::*} is true:
+                send "{@prefix} &6%moneyDigit({@max})%원&f 이상은 배팅하실 수 없습니다."
+                stop
+            set {casino.roulette.%player%.chips::*} to {_chips::*}
+            delete {gui.%uuid of player%::casinoRouletteChipGUI}
+            close player's inventory
+            wait 1 tick
+            casinoRouletteSelectGUI(player)
+            wait 1 tick
+            set {gui.%uuid of player%::casinoRouletteSelectGUI} to true
+        else if clicked slot is between 0 and 10:
+            cancel event
+        else if clicked slot is between 16 and 26:
+            cancel event
+        stop
+
+    else if {gui.%uuid of player%::casinoRouletteSelectGUI} is true:
+        cancel event
+        if index of clicked slot is 36 or 44 or 45 or 53:
+            stop
+        set {_select} to uncolored name of clicked item
+        if {_select} is "11":
+            send "{@prefix} 11은 현재 버그로 선택할 수 없습니다."
+            stop
+        delete {gui.%uuid of player%::casinoRouletteSelectGUI}
+        close player's inventory
+        casinoRouletteStart(player, {_select})
+        stop
+    
+    else if {gui.%uuid of player%::casinoRouletteStartGUI} is true:
+        cancel event
+        if clicked slot is 22:
+            set {_select} to {casino.roulette.%player%.select}
+            casinoRouletteEnd(player, {_select})
+        stop
+    
+    else if {gui.%uuid of player%::casinoRouletteEndGUI} is true:
+        cancel event
+        stop
+
+on inventory close:
+    if {gui.%uuid of player%::casinoRouletteChipGUI} is true:
+        loop 5 times:
+            set {_item} to slot (loop-number)+10 of player's current inventory
+            give {_item} to player
+        delete {gui.%uuid of player%::casinoRouletteChipGUI}
+    if {gui.%uuid of player%::casinoRouletteSelectGUI} is true:
+        delete {gui.%uuid of player%::casinoRouletteSelectGUI}
+        casinoChipGive(player, {casino.roulette.%player%.chips::*}, "RouletteSurrender")
+        delete {casino.roulette.%player%.chips::*}
+    if {gui.%uuid of player%::casinoRouletteStartGUI} is true:
+        delete {gui.%uuid of player%::casinoRouletteStartGUI}
+        casinoChipGive(player, {casino.roulette.%player%.chips::*}, "RouletteSurrender")
+        delete {casino.roulette.%player%.chips::*}
+    if {casino.roulette.%player%.select} is set:
+        delete {casino.roulette.%player%.select}
+
+on quit:
+    delete {casino.roulette.%player%.chips::*}

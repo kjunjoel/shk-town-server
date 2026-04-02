@@ -1,0 +1,420 @@
+options:
+    prefix: [ &c&l! &f]
+    item: &f[ &b&l마약 &c탐지 키트 &f]
+
+# 변수
+# {drug.pick::%player%}
+# {drug.drug::%player%}
+
+on rightclick on player:
+    if name of player's tool is "{@item}":
+        if target has potion Nausea:
+            send "&f[ &6&l&o! &f] &e%target%&f님은 현재 마약을 &c&l복용중&f입니다!" to player
+        else:
+            send "&f[ &6&l&o! &f] &e%target%&f님에게서 마약이 검출되지 않았습니다!" to player
+        remove 1 of player's tool from player's tool
+
+on rightclick:
+    x coord of location at player < -170
+    if {drug.pick::%player%} is set:
+        stop
+    if "%type of event-block%" is "top-half double tall grass" or "double tall grass" or "short grass":
+        set {_temp} to true
+        set {_item} to green dye named "&a대마초 &f가루"
+    else if "%type of event-block%" is "poppy":
+        set {_temp} to true
+        set {_item} to red dye named "&c양귀비 &f가루"
+    else if "%type of event-block%" is "dandelion":
+        set {_temp} to true
+        set {_item} to sugar named "&7합성유기물 &f가루"
+    if {_temp} is true:
+        delete {_temp}
+        set {_block} to type of event-block
+        set block at location at event-block to air
+        set {drug.pick::%player%} to 6
+        set {drug.drug::%player%} to {_item}
+        set {drug.position::%player%} to player's location
+        wait 10 seconds
+        set block at location at event-block to {_block}
+
+command /drug_set:
+    permission: op.user
+    trigger:
+        set {_item} to paper named "&f[&c&l마약&f] 첫번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+        set {_item} to paper named "&f[&c&l마약&f] 두번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+        set {_item} to paper named "&f[&c&l마약&f] 세번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+        set {_item} to paper named "&f[&c&l마약&f] 네번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+        set {_item} to paper named "&f[&c&l마약&f] 다섯번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+        set {_item} to paper named "&f[&c&l마약&f] 여섯번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "DrugInvite")
+
+command /bullet_set:
+    permission: op.user
+    trigger:
+        set {_item} to paper named "&f[&c&l총기&f] 첫번째 초대장 교환권" with lore "&f우클릭하여 사용" and "&7거래가 불가능한 아이템입니다."
+        itemGive(player, {_item}, 1, "BulletInvite")
+
+on rightclick holding paper:
+    if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 첫번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 첫번째 초대장" with lore "&f카지노에서 ???을 찾으세요", "&7주소 | 상어시 동부로 66" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 두번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 두번째 초대장" with lore "&f병원 5층 휴게실에서 ????을 찾으세요", "&7주소 | 상어시 중앙로 15" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 세번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 세번째 초대장" with lore "&f상어무역회사 1층에서 ?????을 찾으세요", "&7주소 | 상어시 동부로 66" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 네번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 네번째 초대장" with lore "&f원룸촌 제4원룸 503호에서 ??을 찾으세요", "&7주소 | 상어시 상어대로111번길 8-2" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 다섯번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 다섯번째 초대장" with lore "&f상가 4동 202호에서 ■■■을 찾으세요", "&7주소 | 상어시 중앙상가로 2" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l마약&f] 여섯번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l마약&f] 여섯번째 초대장" with lore "&f시청 우측의 검은 건물에서 ■■■■을 찾으세요", "&7주소 | 상어시 중앙상가로 23" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "DrugInvite")
+    else if uncolored name of player's tool contains uncolored "&f[&c&l총기&f] 첫번째 초대장 교환권":
+        remove 1 of player's tool from player's tool
+        set {_item} to paper named "&f[&c&l총기&f] 첫번째 초대장" with lore "&f코스트코 1층에서 총기상점1을 찾으세요", "&7주소 | 상어시 국회로 7" and "&7%player% 귀중"
+        itemGive(player, {_item}, 1, "BulletInvite")
+    else if uncolored name of event-item is "불법 총기상자":
+        remove 1 of player's tool from player's tool
+        set {_n} to random integer between 1 and 4
+        if {_n} is 1:
+            send "[ &c&l! &f] M1A1 Thompson 총열을 획득하였습니다!"
+            set {_item} to stick with custom model data 1001 named "&fM1A1 Thompson 총열"
+        else if {_n} is 2:
+            send "[ &c&l! &f] M1A1 Thompson 본체를 획득하였습니다!"
+            set {_item} to stick with custom model data 1002 named "&fM1A1 Thompson 본체"
+        else if {_n} is 3:
+            send "[ &c&l! &f] M1A1 Thompson 개머리판을 획득하였습니다!"
+            set {_item} to stick with custom model data 1003 named "&fM1A1 Thompson 개머리판"
+        else if {_n} is 4:
+            send "[ &c&l! &f] M1A1 Thompson 탄창을 획득하였습니다!"
+            set {_item} to stick with custom model data 1004 named "&fM1A1 Thompson 탄창"
+        itemGive(player, {_item}, item amount of {_item}, "BulletGive")
+
+on rightclick holding gold ingot:
+    custom model data of player's tool is 9
+    if uncolored name of player's tool contains "치료도구":
+        stop
+    if uncolored name of player's tool contains "(0/1)":
+        stop
+    if uncolored name of player's tool contains "(0/3)":
+        stop
+    if {drug.cool::%player%} is set:
+        send "{@prefix} %name of player's tool%&f 사용 쿨타임입니다. 쿨타임 해제까지 &e%{drug.cool::%player%}%&f초 남았습니다." to player
+        stop
+    if uncolored name of player's tool contains "대마초":
+        set {_name} to "&f대마초"
+        set {_lore::*} to "&7효과: &f즉시 회복 2", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:instant_health 1 1" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+        set {drug.cool::%player%} to 10
+    else if uncolored name of player's tool contains "코카인":
+        set {_name} to "&f코카인"
+        set {_lore::*} to "&7효과: &f신속 (3분)", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:speed 180 0 true" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+    else if uncolored name of player's tool contains "모르핀":
+        set {_name} to "&f모르핀"
+        set {_lore::*} to "&7효과: &f생명력 강화 (3분)", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:health_boost 180 0 true" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+    else if uncolored name of player's tool contains "헤로인":
+        set {_name} to "&f헤로인"
+        set {_lore::*} to "&7효과: &f힘 (3분)", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:strength 180 0 true" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+    else if uncolored name of player's tool contains "암페타민":
+        set {_name} to "&f암페타민"
+        set {_lore::*} to "&7효과: &f재생 (3분)", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:regeneration 180 0 true" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+    else if uncolored name of player's tool contains "졸피뎀":
+        set {_name} to "&f졸피뎀"
+        set {_lore::*} to "&7효과: &f저항 (3분)", "&7우클릭하여 사용", and "&7사용 시 설정 - 비디오 설정 - 왜곡효과 꺼짐으로 할 것"
+        make player run command "effect give %player% minecraft:resistance 180 0 true" as op
+        make player run command "effect give %player% minecraft:nausea 180 0 true" as op
+    if uncolored name of player's tool contains "(3/3)":
+        set {_name} to "%{_name}% &7(2/3)"
+    else if uncolored name of player's tool contains "(2/3)":
+        set {_name} to "%{_name}% &7(1/3)"
+    else if uncolored name of player's tool contains "(1/3)":
+        set {_name} to "%{_name}% &7(0/3)"
+    else if uncolored name of player's tool contains "(1/1)":
+        set {_name} to "%{_name}% &7(0/1)"
+    set {_item} to gold ingot with custom model data 9 named {_name} with lore {_lore::*}
+    remove 1 of player's tool from player's tool
+    itemGive(player, {_item}, 1, "Drug")
+
+every 1 second:
+    loop {drug.cool::*}:
+        remove 1 from {drug.cool::%loop-index%}
+        if {drug.cool::%loop-index%} <= 0:
+            delete {drug.cool::%loop-index%}
+
+on rightclick on button:
+    if "%location at event-block%" contains "x: 869.5, y: 87.5, z: -314.5":
+        make player run command "warp drugback-1" as op
+    else if "%location at event-block%" contains "x: 288.5, y: 31.5, z: 122.5":
+        make player run command "warp drugback-2" as op
+    else if "%location at event-block%" contains "x: 880.5, y: 38.5, z: 229.5":
+        make player run command "warp drugback-3" as op
+    else if "%location at event-block%" contains "x: 587.5, y: 33.5, z: -843.5":
+        make player run command "warp drugback-4" as op
+    else if "%location at event-block%" contains "x: 764.5, y: 28.5, z: -138.5":
+        make player run command "warp drugback-5" as op
+    else if "%location at event-block%" contains "x: 623.5, y: 21.5, z: -103.5":
+        make player run command "warp drugback-6" as op
+    else if "%location at event-block%" contains "x: 210.5, y: 73.5, z: -249.5":
+        make player run command "warp bulletback-1" as op
+
+on rightclick on entity:
+    if uncolored event-entity's name is "???":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 첫번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-1" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "????":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 두번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-2" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "?????":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 세번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-3" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "??":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 네번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-4" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "■■■":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 다섯번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-5" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "■■■■":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l마약&f] 여섯번째 초대장":
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            make player run command "warp drug-6" as op
+        else:
+            send "{@prefix} 올바른 아이템을 손에 들고 우클릭해주세요." to player
+    else if uncolored event-entity's name is "총기상점1":
+        set {_name} to uncolored name of player's tool
+        if {_name} doesn't contain uncolored "&f[&c&l총기&f] 첫번째 초대장":
+            stop
+        set {_lore::*} to lore of player's tool
+        if {_lore::3} contains "&7%player% 귀중":
+            remove 1 of player's tool from player's tool
+            wait 10 ticks
+            make player run command "warp bullet-1" as op
+            wait 10 ticks
+            close player's inventory
+        
+every 2 ticks:
+    loop {drug.pick::*}:
+        set {_dist} to taxiTeleportCalculation({drug.position::%loop-index%}, loop-index parsed as player's location)
+        if {_dist} > 3:
+            send "{@prefix} 3m 이상 움직여 채집이 취소되었습니다." to loop-index parsed as player
+            delete {drug.pick::%loop-index%}
+            delete {drug.drug::%loop-index%}
+            delete {drug.position::%loop-index%}
+            continue
+        if loop-value > 0:
+            remove 1 from {drug.pick::%loop-index%}
+        else if loop-value is 0:
+            delete {drug.pick::%loop-index%}
+            chance of 40%:
+                itemGive(loop-index parsed as player, {drug.drug::%loop-index%}, 1, "Drug")
+                send "{@prefix} 채집에 &a성공&f했습니다." to loop-index parsed as player
+            else:
+                send "{@prefix} 채집에 &c실패&f했습니다." to loop-index parsed as player
+            delete {drug.drug::%loop-index%}
+            delete {drug.position::%loop-index%}
+
+on quit:
+    delete {drug.pick::%player%}
+    delete {drug.drug::%player%}
+    delete {drug.position::%player%}
+
+on rightclick with paper:
+    stop
+    if uncolored name of player's tool contains ".45 ACP 10발 상자":
+        remove 1 of player's tool from player's tool
+        set {_item} to music disc 13 named "&f.45 ACP" with lore "&7장탄수: &f7발"
+        add "&f" to lore of {_item}
+        add "&7사용 가능 무기" to lore of {_item}
+        add "&fM1911" to lore of {_item}
+        itemGive(player, {_item}, 10, "Gun")
+    else if uncolored name of player's tool contains ".45 ACP(7발) 10개 상자":
+        remove 1 of player's tool from player's tool
+        set {_item} to music disc 13 named "&f.45 ACP" with lore "&7장탄수: &f7발"
+        add "&f" to lore of {_item}
+        add "&7사용 가능 무기" to lore of {_item}
+        add "&fM1911" to lore of {_item}
+        itemGive(player, {_item}, 10, "Gun")
+    else if uncolored name of player's tool contains ".45 ACP(30발) 10개 상자":
+        remove 1 of player's tool from player's tool
+        set {_item} to music disc blocks named "&f.45 ACP" with lore "&7장탄수: &f30발"
+        add "&f" to lore of {_item}
+        add "&7사용 가능 무기" to lore of {_item}
+        add "&fM1A1 Thompson" to lore of {_item}
+        itemGive(player, {_item}, 10, "Gun")
+    else if uncolored name of player's tool contains "5.56mm 10개 상자":
+        remove 1 of player's tool from player's tool
+        set {_item} to music disc cat named "&f5.56mm" with lore "&7경찰공무원만 사용 가능" and "&7장탄수: &f30발"
+        add "&f" to lore of {_item}
+        add "&7사용 가능 무기" to lore of {_item}
+        add "&fM1A1 Thompson" to lore of {_item}
+        itemGive(player, {_item}, 10, "Gun")
+    else if uncolored name of player's tool contains ".357 Magnum 10개 상자":
+        send "true" to player
+        remove 1 of player's tool from player's tool
+        set {_item} to music disc chirp named "&f.357 Magnum" with lore "&7경찰공무원만 사용 가능" and "&7장탄수: &f5발"
+        add "&f" to lore of {_item}
+        add "&7사용 가능 무기" to lore of {_item}
+        add "&fM60 REVOLVER" to lore of {_item}
+        itemGive(player, {_item}, 10, "Gun")
+
+on rightclick with stick:
+    if uncolored name of player's tool is "M1911 탄창 10개 상자":
+        remove 1 of player's tool from player's tool
+        loop 10 times:
+            execute console command "wm giveammo %player% M1911 pistols true 1"
+    else if uncolored name of player's tool is "M1A1 Thompson 탄창 10개 상자":
+        remove 1 of player's tool from player's tool
+        loop 10 times:
+            execute console command "wm giveammo %player% M1A1_Thompson sub_machine_guns true 1"
+    else if uncolored name of player's tool is "M4A1 탄창 10개 상자":
+        remove 1 of player's tool from player's tool
+        loop 10 times:
+            execute console command "wm giveammo %player% M4A1 assault_rifles true 1"
+    else if uncolored name of player's tool is "Uzi 탄창 10개 상자":
+        remove 1 of player's tool from player's tool
+        loop 10 times:
+            execute console command "wm giveammo %player% Uzi sub_machine_guns1 true 1"
+    else if uncolored name of player's tool is "AK-47 탄창 10개 상자":
+        remove 1 of player's tool from player's tool
+        loop 10 times:
+            execute console command "wm giveammo %player% AK-47 assault_rifles2 true 1"
+    else if uncolored name of player's tool is ".357 Magnum 탄약 50발 상자":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% SW_M60 pistols1 false 50"
+    
+on rightclick with diamond horse armor:
+    if uncolored name of player's tool is "M1911 탄창":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% M1911 pistols false 7"
+    else if uncolored name of player's tool is "M1A1 Thompson 탄창":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% M1A1_Thompson sub_machine_guns false 30"
+    else if uncolored name of player's tool is "M4A1 탄창":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% M4A1 assault_rifles false 30"
+    else if uncolored name of player's tool is "Uzi 탄창":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% Uzi sub_machine_guns1 false 32"
+    else if uncolored name of player's tool is "AK-47 탄창":
+        remove 1 of player's tool from player's tool
+        execute console command "wm giveammo %player% AK-47 assault_rifles2 false 30"
+
+command /bullet_calculate:
+    permission: op.user
+    permission: &c명령어를 사용할 권한이 없습니다.
+    trigger:
+        set {_45ACP} to 0
+        set {_5.56mm} to 0
+        set {_file::*} to files in dir "plugins/Skript/data/logs/economy/"
+        loop {_file::*}:
+            if "%loop-value%" contains "economy_":
+                set {_name::*} to "%loop-value%" split by "-"
+                replace all ".txt" with "" in {_name::3}
+                if {_name::2} parsed as integer < 9:
+                    continue
+                else if {_name::2} parsed as integer is 9:
+                    if {_name::3} parsed as integer < 13:
+                        continue
+                set {_value::*} to file contents of loop-value
+                loop {_value::*}:
+                    loop "Lantum", "GyeongRye", "Lae_Dev", "__Vector", "Donnie10707", and "Ogonghart":
+                        set {_temp} to false if loop-value-2 contains loop-value-3
+                    set {_list::*} to loop-value-2 split by " "
+                    if {_temp} isn't set:
+                        if {_list::6} is "Shop":
+                            if {_list::7} is "MoneyRemove":
+                                if {_list::9} is "3500000":
+                                    add 1 to {_M1911}
+                                else if {_list::9} is "4200":
+                                    add 7 to {_45ACP}
+                                else if {_list::9} is "8400":
+                                    add 7 to {_45ACP}
+                                else if {_list::9} is "126000":
+                                    add 70 to {_45ACP}
+                                else if {_list::9} is "9000":
+                                    add 30 to {_5.56mm}
+                                else if {_list::9} is "18000":
+                                    add 30 to {_5.56mm}
+                    delete {_temp}
+        set {_temp.0} to {_M1911} * 3500000
+        set {_temp.1} to {_45ACP} * 600
+        set {_temp.2} to {_5.56mm} * 300
+        set {_last::*} to file contents of "plugins/Skript/data/logs/bullet_0.txt"
+        add {_last::1} parsed as integer to {_M1911}
+        add {_last::2} parsed as integer to {_temp.0}
+        add {_last::3} parsed as integer to {_45ACP}
+        add {_last::4} parsed as integer to {_temp.1}
+        add {_last::5} parsed as integer to {_5.56mm}
+        add {_last::6} parsed as integer to {_temp.2}
+        send "&6M1911 구매 개수&f: &e%moneyDigit({_M1911})%개&f, &a%moneyDigit({_temp.0})%원"
+        send "&6.45 ACP 구매 개수&f: &e%moneyDigit({_45ACP})%개&f, &a%moneyDigit({_temp.1})%원"
+        send "&65.56 mm 구매 개수&f: &e%moneyDigit({_5.56mm})%개&f, &a%moneyDigit({_temp.2})%원"
+        send "&6총합&f: &a%moneyDigit({_temp.0} + {_temp.1} + {_temp.2})%원"

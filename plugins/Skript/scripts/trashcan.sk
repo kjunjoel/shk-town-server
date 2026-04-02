@@ -1,0 +1,33 @@
+Options:
+	GUI: &a[ &f&l쓰 레 기 통 &a]
+	perm: VIP.user
+	perm message: &b[ &f&lSHK WORLD &b] &e당신은 이 명령어를 사용할 권한이 없습니다. &7&n&o(VIP 전용)
+
+function TrashGUI(p: player):
+	set {_inv} to chest inventory with 6 rows named "{@GUI}"
+	set slot 49 of {_inv} to red stained glass pane named "&6클릭하여 쓰레기통을 비웁니다."
+	open {_inv} to {_p}
+
+command /쓰레기통:
+	aliases: 도움말, 명령어목록, commands, 도움
+	permission: {@perm}
+	permission message: {@perm message}
+	trigger:
+		TrashGUI(player)
+
+on inventory click:
+	if name of event-inventory is "{@GUI}":
+		if index of event-slot = 49:
+			cancel event
+			send "&f"
+			send "&b[ &f&lSHK WORLD &b] &f쓰레기통이 비워졌습니다! &e&l&o77ㅓ억~" to player
+			send "&f"
+			close player's inventory
+			stop
+			
+on rightclick on Carved Pumpkin:
+	set {_pos} to "%x coord of event-block%, %y coord of event-block%, %z coord of event-block%"
+	set {_file::*} to content of file path "plugins/Skript/data/TrashBin/TrashBin.txt"
+	loop {_file::*}:
+		if {_pos} is loop-value:
+			TrashGUI(player)

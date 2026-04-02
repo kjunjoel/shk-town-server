@@ -1,0 +1,644 @@
+﻿options:
+    # 접두사
+    policePrefix: &b&l[경찰청]&f
+    wantedPrefix: &c&l[현상수배]&f
+    prisonPrefix: &c&l[감옥]&f
+
+    # 럭펌 노드명
+    치안총감: 치안총감
+    치안정감: 치안정감
+    치안감: 치안감
+    경무관: 경무관
+    총경: 총경
+    경정: 경정
+    경감: 경감
+    경위: 경위
+    경사: 경사
+    경장: 경장
+    순경: 순경
+    현상수배: 현상수배
+    수감자: 수감자
+
+    # 럭펌 노드
+    polAdmin: police.admin    # 치안총감~치안정감
+    polUser: police.user      # 치안총감~순경
+    jailUser: jail.user       # 현상수배 권한자
+    criUser: criminal.user    # 현상수배범
+    priUser: prisoner.user    # 수감자
+
+# 변수
+# {police.user::*}                           | 경찰관 목록
+# {police.user.%uuid of player%.class}       | 경찰관 직급
+# {police.criminal::*}                       | 현상수배범 목록
+# {police.prisoner::*}                       | 수감자 목록
+# {police.catching::%player%}                | 체포한 플레이어
+# {police.caught::%player%}                  | 체포당한 플레이어
+# {police.prisoner.%uuid of player%.during}  | 수감자의 남은 구금 시간
+# {police.criminal.%uuid of player%}         | 플레이어가 현상수배범인지 (boolean)
+# {police.criminal.%uuid of player%.banarea} | 플레이어가 금지 구역에 들어갔는지 (boolean)
+# {police.prisoner.%uuid of player%}         | 플레이어가 수감자인지 (boolean)
+# {police.banarea::*}                        | 금지 구역 리스트
+# {locate::%player%}
+# {locate.max::%player%}
+# {locate.time::%player%}
+
+function locateDistance(p1: player, p2: player) :: number:
+    set {_x.1} to round x coord of location at {_p1}
+    set {_y.1} to round y coord of location at {_p1}
+    set {_z.1} to round z coord of location at {_p1}
+    set {_x.2} to round x coord of location at {_p2}
+    set {_y.2} to round y coord of location at {_p2}
+    set {_z.2} to round z coord of location at {_p2}
+    set {_distance} to abs({_x.1} - {_x.2}) + abs({_y.1} - {_y.2}) + abs({_z.1} - {_z.2})
+    return {_distance}
+
+on load:
+    set {police.banarea::*} to file contents of "plugins/Skript/data/police/ban_area.txt"
+    stop
+    
+on unload:
+    delete {police.banarea::*}
+
+command /criminal_remove [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if {police.criminal::*} contains arg-1:
+            remove arg-1 from {police.criminal::*}
+            send "deleted %arg-1% from criminals' list"
+
+command /prisoner_remove [<offlineplayer>]:
+    permission: op.user
+    trigger:
+        if {police.prisoner::*} contains arg-1:
+            remove arg-1 from {police.prisoner::*}
+            delete {police.prisoner.%uuid of arg-1%.during}
+            delete {police.prisoner.%uuid of arg-1%.time}
+            send "deleted %arg-1% from prisoners' list"
+
+command /경찰 [<text>] [<offlineplayer>] [<number>]:
+    permission: {@polUser}
+    permission message: &b&l[경찰]&f 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "집행":
+            if arg-2 isn't set:
+                send "&b&l[경찰]&f 집행할 플레이어를 입력해주시기 바랍니다."
+                stop
+            else if {police.prisoner::*} doesn't contain arg-2:
+                send "&b&l[경찰]&f 수감자가 아닌 사람에 대해 집행할 수 없습니다."
+                stop
+            else if arg-3 isn't set:
+                send "&b&l[경찰]&f 구금 분 수를 입력해주세요."
+                stop
+            else if arg-3 <= 0:
+                send "&b&l[경찰]&f 올바른 값을 입력해주세요."
+                stop
+            set {police.prisoner.%uuid of arg-2%.during} to arg-3 * 60
+            set {police.prisoner.%uuid of arg-2%.time} to now
+            send "&b&l[경찰]&f &e%arg-2%님&f에 대한 집행을 시작했습니다. &a/감옥&f으로 남은 형기를 볼 수 있습니다."
+            send "&b&l[경찰]&f 집행이 시작됐습니다. &7(담당자 | %player%)" to arg-2
+
+        else if arg 1 is "석방":
+            if arg-2 isn't set:
+                send "&b&l[경찰]&f 석방할 플레이어를 입력해주시기 바랍니다."
+                stop
+            if {police.prisoner::*} doesn't contain arg-2:
+                send "&b&l[경찰]&f 해당 플레이어는 수감자가 아닙니다."
+                stop
+            if arg-2 is offline:
+                send "&b&l[경찰]&f 오프라인인 플레이어는 석방할 수 없습니다."
+                stop
+            send "&b&l[경찰]&f &e%arg-2%님&f을 석방하였습니다."
+            send "&b&l[경찰]&f 석방됐습니다. &7(담당자 | %player%)" to arg-2
+            execute console command "lp user %arg-2% parent remove {@수감자}"
+            execute console command "effect clear %arg-2% minecraft:glowing"
+            if "%region at arg-2%" contains "police_jail2":
+                make arg-2 run command "warp police_office2" as op
+            else:
+                make arg-2 run command "warp police_office" as op
+            remove arg-2 from {police.prisoner::*}
+            delete {police.prisoner.%uuid of arg-2%}
+            delete {police.prisoner.%uuid of arg-2%.time}
+            delete {police.prisoner.%uuid of arg-2%.during}
+
+        else if arg 1 is "위치추적":
+            if groups of arg-2 contains "현상수배" or "죄수" or "수감자":
+                set {_temp} to true
+            if {_temp} isn't set:
+                send "&b&l[경찰]&f 현상수배, 죄수, 수감자가 아닌 사람은 위치추적할 수 없습니다."
+                stop
+            delete {_temp}
+            loop 36 times:
+                if uncolored name of slot (loop-number)-1 of arg-2's inventory contains "SHK Smartphone":
+                    set {_temp} to true
+                    exit 1 loop
+            set {_temp} to true if uncolored name of arg-2's offhand contains "SHK Smartphone"
+            if {_temp} is set:
+                send "&b&l[경찰]&f &e%arg-2%&f님에 대한 위치추적이 시작되었습니다."
+                send "&b&l[경찰]&f &e%player%&f님이 당신에 대한 위치추적을 시작했습니다." to arg-2
+                set {_x} to round x coord of location at arg-2
+                set {_y} to round y coord of location at arg-2
+                set {_z} to round z coord of location at arg-2
+                set {_distance} to locateDistance(player, arg-2)
+                set {locate::%player%} to arg-2
+                set {locate.max::%player%} to {_distance}
+                create bossbar titled "&6%arg-1%&f: %{_x}%, %{_y}%, %{_z}% &7(%{_distance}%m)" and id "locate.%player%" for player with progress 100 with colors green with style segmented 20
+            else:
+                send "&b&l[경찰]&f &e%arg-2%&f님은 휴대폰을 가지고 있지 않아 위치를 추적할 수 없습니다."
+
+        else if arg 1 is "추적정지":
+            if {locate::%player%} isn't set:
+                send "&b&l[경찰]&f 추적 중인 플레이어가 없습니다."
+                stop
+            send "&b&l[경찰]&f &e%{locate::%player%}%&f님으로의 위치추적이 끊겼습니다."
+            send "&b&l[경찰]&f &e%player%&f님으로부터의 위치추적이 끊겼습니다." to {locate::%player%}
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to {locate::%player%}
+            delete {locate::%player%}
+            delete {locate.max::%player%}
+            remove bossbar "locate.%player%"
+            stop
+    
+        else:
+            send "&b&l[경찰]&f /경찰 집행 [닉네임] <시간> &8&l| &f플레이어에 대한 집행을 시작합니다."
+            send "&b&l[경찰]&f /경찰 석방 [닉네임] &8&l| &f플레이어를 석방합니다."
+            send "&b&l[경찰]&f /경찰 위치추적 [닉네임] &8&l| &f플레이어를 위치추적합니다."
+            send "&b&l[경찰]&f /경찰 추적정지 &8&l| &f위치추적을 정지합니다."
+            stop
+
+every 1 second:
+    loop {police.prisoner::*}:
+        if {police.prisoner.%uuid of loop-value%.time} is set:
+            if {police.prisoner.%uuid of loop-value%.during} is 0:
+                send "&b&l[경찰]&f 석방됐습니다." to loop-value
+                execute console command "lp user %loop-value% parent remove {@수감자}"
+                execute console command "effect clear %loop-value% minecraft:glowing"
+                if "%region at loop-value%" contains "police_jail2":
+                    make loop-value run command "warp police_office2" as op
+                else:
+                    make loop-value run command "warp police_office" as op
+                delete {police.prisoner.%uuid of loop-value%.during}
+                remove loop-value from {police.prisoner::*}
+                delete {police.prisoner.%uuid of loop-value%}
+                delete {police.prisoner.%uuid of loop-value%.time}
+                delete {police.prisoner.%uuid of loop-value%.during}
+
+            if loop-value is offline:
+                continue
+            remove 1 from {police.prisoner.%uuid of loop-value%.during}
+    loop {locate::*}:
+        set {_x} to round x coord of location at loop-value
+        set {_y} to round y coord of location at loop-value
+        set {_z} to round z coord of location at loop-value
+        set {_distance} to locateDistance(loop-index parsed as player, loop-value)
+        set bossbar "locate.%loop-index parsed as player%" title to "&6%loop-value%&f: %{_x}%, %{_y}%, %{_z}% &7(%{_distance}%m)"
+        if {_distance} > {locate.max::%loop-index%}:
+            set {locate.max::%loop-index%} to {_distance}
+        set {_progress} to {_distance} / {locate.max::%loop-index%}
+        set bossbar "locate.%loop-index parsed as player%" progress to {_progress}*100
+
+every 1 second:
+    loop {locate::*}:
+        loop 36 times:
+            if uncolored name of slot (loop-number)-1 of loop-value-1's inventory contains "SHK Smartphone v1.0":
+                set {_temp} to true
+                exit 1 loop
+        set {_temp} to true if uncolored name of loop-value's offhand contains "SHK Smartphone v1.0"
+        if {_temp} isn't set:
+            execute loop-index parsed as player command "경찰 추적정지"
+            send "&b&l[경찰]&f &7(사유 | 상대방이 휴대폰을 소지하고 있지 않아 위치추적이 끊김)" to loop-index parsed as player
+
+on quit:
+    loop {locate::*}:
+        if loop-index is "%player%":
+            delete {locate::%loop-index%}
+            delete {locate.max::%loop-index%}
+            send "&b&l[경찰]&f &e%loop-index%&f님이 퇴장하여 위치추적이 정지되었습니다." to loop-value
+            remove bossbar "locate.%player%"
+        else if loop-value is player:
+            delete {locate::%loop-index%}
+            delete {locate.max::%loop-index%}
+            send "&b&l[경찰]&f &e%player%&f님이 퇴장하여 위치추적이 정지되었습니다." to loop-index parsed as player
+            remove bossbar "locate.%loop-index%"
+
+every 1 minute:
+    if now formatted as "HH:mm" contains "00:00":
+        loop {police.user::*}:
+            set {police.bullet.%loop-value%} to 0
+
+command /police_set:
+    permission: op.user
+    trigger:
+        loop {police.banarea::*}:
+            make player run command "rg flag %loop-value% pvp" as op
+            make player run command "rg removemember %loop-value% -a" as op
+            wait 1 tick
+
+command /테러관리 [<text>] [<offlineplayer>]:
+    permission: {@polAdmin}
+    permission message: {@policePrefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {terror.user::*} is not set:
+                send "{@policePrefix} 테러 대응팀 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@policePrefix} 테러 대응팀 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            loop {terror.user::*}:
+                send "{@policePrefix} %{_ind}%. %loop-value%"
+                add 1 to {_ind}
+
+        else if arg 1 is "추가":
+            if size of {terror.user::*} >= 10:
+                send "{@policePrefix} 테러 대응팀 최대 인원은 10명입니다."
+                stop
+            if arg 2 is not set:
+                send "{@policePrefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            if {terror.user::*} contains arg-2:
+                send "{@policePrefix} 해당 플레이어는 이미 테러 대응팀에 소속되어 있습니다."
+                stop
+            add arg-2 to {terror.user::*}
+            send "{@policePrefix} &6%arg-2%&f님이 테러 대응팀에 추가되었습니다. &7(담당자 | %player%)"
+            send "{@policePrefix} &6%arg-2%&f님이 테러 대응팀에 추가되었습니다. &7(담당자 | %player%)" to arg-2
+        
+        else if arg 1 is "삭제":
+            if arg 2 is not set:
+                send "{@policePrefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            if {terror.user::*} doesn't contain arg-2:
+                send "{@policePrefix} 해당 플레이어는 테러 대응팀에 소속되어 있지 않습니다."
+                stop
+            remove arg-2 from {terror.user::*}
+            send "{@policePrefix} &6%arg-2%&f님이 테러 대응팀에서 삭제되었습니다. &7(담당자 | %player%)"
+            send "{@policePrefix} &6%arg-2%&f님이 테러 대응팀에서 삭제되었습니다. &7(담당자 | %player%)" to arg-2
+
+        else:
+            send "{@policePrefix} /테러관리 목록"
+            send "{@policePrefix} /테러관리 추가 닉네임"
+            send "{@policePrefix} /테러관리 삭제 닉네임"
+            stop
+
+command /경찰청 [<text>] [<offlineplayer>] [<text>]:
+    permission: {@polAdmin}
+    permission message: {@policePrefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "목록":
+            if {police.user::*} is not set:
+                send "{@policePrefix} 경찰청 소속 공무원이 존재하지 않습니다."
+                stop
+            send "{@policePrefix} 경찰청 소속 공무원 목록은 아래와 같습니다."
+            set {_ind} to 1
+            set {_list::*} to {police.user::*}
+            loop "{@치안총감}", "{@치안정감}", "{@치안감}", "{@경무관}", "{@총경}", "{@경정}", "{@경감}", "{@경위}", "{@경사}", "{@경장}", "{@순경}":
+                loop {_list::*}:
+                    if {police.user.%uuid of loop-value-2%.class} is loop-value-1:
+                        send "{@policePrefix} %{_ind}%. %loop-value-2% (%{police.user.%uuid of loop-value-2%.class}%, %{bank.account::%uuid of loop-value-2%}%)"
+                        add 1 to {_ind}
+        
+        else if arg 1 is "채용":
+            if arg 2 is not set:
+                send "{@policePrefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            loop {police.user::*}:
+                if loop-value is arg-2:
+                    send "{@policePrefix} 해당 플레이어는 이미 경찰청에 소속되어 있습니다."
+                    stop
+            if arg-2 has permission "farmer.user":
+                if farmPrice(arg-2) > 0:
+                    send "{@policePrefix} &f농부는 농지 판매 후 채용할 수 있습니다." to player
+                    stop
+            if arg-2 has permission "cook.user":
+                if cookShopCalculate(player) > 0:
+                    send "{@policePrefix} &f요리사는 요리사 상가 판매 후 직업을 변경할 수 있습니다." to player
+                    stop
+            if arg-3 is not set:
+                send "{@policePrefix} 직급을 입력해주세요."
+                stop
+            if arg-3 is "{@경감}" or "{@경정}" or "{@경위}" or "{@경사}" or "{@경장}" or "{@순경}":
+                if group of player is "{@치안총감}":
+                    if arg 3 is "{@치안총감}":
+                        send "{@policePrefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@치안정감}":
+                    if arg 3 is "{@치안총감}" or "{@치안정감}":
+                        send "{@policePrefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {police.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                send "{@policePrefix} &6%arg-2%&f님이 경찰청 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                set {police.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else if arg-3 is "{@치안총감}" or "{@치안정감}" or "{@치안감}" or "{@경무관}" or "{@총경}":
+                if group of player is "{@치안총감}":
+                    if arg 3 is "{@치안총감}":
+                        send "{@policePrefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                else if group of player is "{@치안정감}":
+                    if arg 3 is "{@치안총감}" or "{@치안정감}":
+                        send "{@policePrefix} 자신과 같거나 상위 직급은 채용할 수 없습니다."
+                        stop
+                add arg-2 to {police.user::*}
+                execute console command "lp user %arg-2% parent set default"
+                execute console command "lp user %arg-2% parent add %arg-3%"
+                execute console command "lp user %arg-2% permission set cosmeticscore.user.cosmetics.wear.police_hat1"
+                execute console command "lp user %arg-2% permission set cosmeticscore.user.cosmetics.seeingui.police_hat1"
+                send "{@policePrefix} &6%arg-2%&f님이 경찰청 소속 &e%arg-3%&f(으)로 채용되었습니다. &7(담당자 | %player%)" to all players
+                send "{@policePrefix} &6%arg-2%&f님에게 간부 모자 권한이 지급되었습니다." to player
+                set {police.user.%uuid of arg-2%.class} to arg-3
+                stop
+            else:
+                send "{@policePrefix} 올바른 직급명을 입력해주세요."
+                stop
+        
+        else if arg 1 is "해임":
+            if arg 2 is not set:
+                send "{@policePrefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {police.user::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@policePrefix} 해당 플레이어는 경찰청 소속이 공무원이 아닙니다."
+                stop
+            if group of player is "{@치안총감}":
+                if {police.user.%uuid of arg-2%.class} is "{@치안총감}":
+                    send "{@policePrefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            else if group of player is "{@치안정감}":
+                if {police.user.%uuid of arg-2%.class} is "{@치안총감}" or "{@치안정감}":
+                    send "{@policePrefix} 자신과 같거나 상위 직급은 해임할 수 없습니다."
+                    stop
+            remove arg-2 from {police.user::*}
+            execute console command "lp user %arg-2% parent remove %{police.user.%uuid of arg-2%.class}%"
+            execute console command "lp user %arg-2% permission unset cosmeticscore.user.cosmetics.wear.police_hat1"
+            execute console command "lp user %arg-2% permission unset cosmeticscore.user.cosmetics.seeingui.police_hat1"
+            delete {police.user.%uuid of arg-2%.class}
+            send "{@policePrefix} &6%arg-2%&f님이 경찰청 소속 공무원에서 해임되었습니다. &7(담당자 | %player%)" to all players
+            stop
+        
+        else:
+            send "{@policePrefix} /경찰청 목록 &8&l| &f경찰 목록을 확인합니다."
+            send "{@policePrefix} /경찰청 채용 [플레이어명] [직급] &8&l| &f플레이어를 직급으로 채용합니다."
+            send "{@policePrefix} /경찰청 해임 [플레이어명] &8&l| &f플레이어를 경찰에서 해임합니다."
+            send "{@policePrefix} /경찰공지 [내용] &8&l| &f[내용]을 공지합니다."
+            stop
+
+
+command /경찰공지 [<text>]:
+    permission: {@polAdmin}
+    permission message: {@policePrefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is not set:
+            send "{@policePrefix} 공지 내용을 입력해주세요."
+            stop
+        send "쀆" to all players
+        send "      &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "ENTITY_PLAYER_LEVELUP" with volume 0.5 to all players
+        stop
+
+
+command /현상수배 [<text>] [<offlineplayer>] [<text>]:
+    trigger:
+        if arg-1 is "list":
+            player has permission "op.user"
+            if {police.criminal::*} is not set:
+                send "{@wantedPrefix} 현상수배범이 존재하지 않습니다."
+                stop
+            send "{@wantedPrefix} 온라인인 현상수배범 목록은 아래와 같습니다."
+            set {_ind} to 1
+            loop {police.criminal::*}:
+                send "{@wantedPrefix} %{_ind}%. %loop-value%"
+                add 1 to {_ind}
+            stop
+
+        if arg 1 is "목록":
+            if {police.criminal::*} is not set:
+                send "{@wantedPrefix} 현상수배범이 존재하지 않습니다."
+                stop
+            send "{@wantedPrefix} 온라인인 현상수배범 목록은 아래와 같습니다."
+            set {_ind} to 1
+            loop {police.criminal::*}:
+                if loop-value is online:
+                    send "{@wantedPrefix} %{_ind}%. %loop-value%"
+                    add 1 to {_ind}
+            stop
+
+        else if player does not have permission "{@polAdmin}" or "{@jailUser}":
+            send "{@wantedPrefix} 해당 명령어를 사용할 권한이 없습니다."
+            stop
+        
+        else if arg 1 is "해제":
+            if arg 2 is not set:
+                send "{@wantedPrefix} 해당 플레이어를 찾을 수 없습니다."
+                stop
+            set {_state} to false
+            loop {police.criminal::*}:
+                if loop-value is arg-2:
+                    set {_state} to true
+            if {_state} is false:
+                send "{@wantedPrefix} 해당 플레이어는 현상수배에 등록되어 있지 않습니다."
+                stop
+            remove arg-2 from {police.criminal::*}
+            set {_uuid} to arg-2's uuid
+            delete {police.criminal.%{_uuid}%}
+            delete {police.prisoner.%{_uuid}%.during}
+            execute console command "lp user %arg-2% parent remove {@현상수배}"
+            if arg 3 is not set:
+                send "{@wantedPrefix} &6%arg-2%&f님이 현상수배에서 해제되었습니다. &7(담당자 | %player%)" to all players
+            else:
+                send "{@wantedPrefix} &6%arg-2%&f님이 아래의 사유로 현상수배에서 해제되었습니다. &7(담당자 | %player%)" to all players
+                send "{@wantedPrefix} &7(사유 | %arg-3%)" to all players
+            loop {police.banarea::*}:
+                if region at arg-2 contains "%loop-value%" parsed as region:
+                    set {pvpdeny::%uuid of arg-2%} to true
+            execute console command "effect clear %arg-2% minecraft:glowing"
+            stop
+
+        else:
+            send "{@wantedPrefix} /수배 [플레이어명] <사유> &8&l| &f플레이어를 <사유>로 현상수배에 등록합니다."
+            send "{@wantedPrefix} /현상수배 목록 &8&l| &f현상수배범 목록을 확인합니다."
+            send "{@wantedPrefix} /현상수배 해제 [플레이어명] <사유> &8&l| &f플레이어를 사유로 현상수배에서 해제합니다."
+            stop
+
+command /수배 [<offlineplayer>] [<text>]:
+    permission: {@jailUser}
+    trigger:
+        if arg 1 isn't set:
+            send "{@wantedPrefix} /수배 [플레이어명] <사유> &8&l| &f플레이어를 <사유>로 현상수배에 등록합니다."
+            send "{@wantedPrefix} /현상수배 목록 &8&l| &f현상수배범 목록을 확인합니다."
+            send "{@wantedPrefix} /현상수배 해제 [플레이어명] <사유> &8&l| &f플레이어를 사유로 현상수배에서 해제합니다."
+            stop
+        if {police.criminal::*} doesn't contain arg-1:
+            if {police.prisoner::*} contains arg-1:
+                arg-1 isn't op
+                send "{@wantedPrefix} 수감자는 현상수배를 걸 수 없습니다."
+                stop
+            if {prison::*} contains arg-1:
+                arg-1 isn't op
+                send "{@wantedPrefix} 죄수는 현상수배를 걸 수 없습니다."
+                stop
+            if {mafia.hide::%arg-1%} is set:
+                stop
+            add arg-1 to {police.criminal::*}
+            set {_uuid} to uuid of arg-1
+            set {police.criminal.%{_uuid}%} to true
+            execute console command "lp user %arg-1% parent add {@현상수배}"
+            if arg 2 is not set:
+                send "{@wantedPrefix} &6%arg-1%&f님이 현상수배에 등록되었습니다. &7(담당자 | %player%)" to all players
+            else:
+                send "{@wantedPrefix} &6%arg-1%&f님이 아래의 사유로 현상수배에 등록되었습니다. &7(담당자 | %player%)" to all players
+                send "{@wantedPrefix} &7(사유 | %arg-2%)" to all players
+                set {_name::*} to file contents of "plugins/Skript/data/police/ban_area_name.txt"
+                set {_regions::*} to regions at player's location
+                loop {police.banarea::*}:
+                    loop {_regions::*}:
+                        if "%loop-value-2%" contains "%loop-value-1%":
+                            set {_areaname} to {_name::%loop-index-1%}
+                            set {_check} to true
+                            exit 2 loops
+                if {_check} is true:
+                    execute op command "%arg-1% minecraft:glowing 1000000 10 true"
+                    send "{@wantedPrefix} 금지구역에 입장하여 발광 효과가 적용됩니다." to arg-1
+                    loop {police.user::*}:
+                        send "{@wantedPrefix} &6%arg-1%&f님이 금지구역 &e%{_areaname}%&f에 있습니다." to loop-value
+            delete {pvpdeny::%uuid of arg-1%}
+        else:
+            send "{@wantedPrefix} 해당 플레이어는 이미 현상수배에 등록되어 있습니다."
+            stop
+        
+command /감옥 [<number>]:
+    permission: {@jailUser}
+    permission message: {@prisonPrefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if player does not have permission "{@polAdmin}" or "{@polUser}":
+            send "{@prisonPrefix} 해당 명령어를 사용할 권한이 없습니다."
+            stop
+        if {police.prisoner::*} is not set:
+            send "{@prisonPrefix} 수감자가 존재하지 않습니다."
+            stop
+        set {_ind} to 1
+        set {_number} to arg-1
+        set {_number} to 1 if {_number} isn't set
+        send "{@prisonPrefix} 수감자 목록은 아래와 같습니다. &7(%{_number}%/%round up (size of {police.prisoner::*}/10)%)"
+        loop {police.prisoner::*}:
+            if {_ind} is between ({_number}-1)*10+1 and {_number}*10:
+                if {police.prisoner.%uuid of loop-value%.during} isn't set:
+                    set {_temp} to true
+                else if {police.prisoner.%uuid of loop-value%.during} is -1:
+                    set {_temp} to true
+                if {_temp} is true:
+                    send "{@prisonPrefix} %{_ind}%. %loop-value% &7(집행 이전)"
+                else:
+                    send "{@prisonPrefix} %{_ind}%. %loop-value% &7(%round down {police.prisoner.%uuid of loop-value%.during}/60%분 %mod({police.prisoner.%uuid of loop-value%.during}, 60)%초 남음)"
+            add 1 to {_ind}
+            delete {_temp}
+        if size of {police.prisoner::*} >= {_number}*10:
+            send "{@prisonPrefix} &e/감옥 %{_number}+1%&f을(를) 입력하여 다음 목록 확인"
+            
+
+command /구금:
+    permission: {@priUser}
+    permission message: {@prisonPrefix} 해당 명령어를 사용할 권한이 없습니다.
+    trigger:
+        send "{@prisonPrefix} &6%player%&f님의 체포일시는 &a%{police.prisoner.%uuid of player%.time}%&f입니다."
+        if {police.prisoner.%uuid of player%.during} isn't set:
+            set {_temp} to true
+        else if {police.prisoner.%uuid of player%.during} is -1:
+            set {_temp} to true
+        if {_temp} is true:
+            send "{@prisonPrefix} 집행 이전 상태입니다."
+        else:
+            send "{@prisonPrefix} 구금 해제까지 남은 시간은 &e%round down {police.prisoner.%uuid of player%.during}/60%분 %mod({police.prisoner.%uuid of player%.during}, 60)%초&f입니다."
+        stop
+        
+
+on enter region:
+    loop {police.banarea::*}:
+        if event-region contains "%loop-value%" parsed as region:
+            send action bar "&a&lPVP 금지구역 입장" to player
+            set {_name::*} to file contents of "plugins/Skript/data/police/ban_area_name.txt"
+            set {_areaname} to {_name::%loop-index%}
+            if {mafia.terror} is set:
+                if {terror.user::*} contains player:
+                    stop
+            if groups of player contains "현상수배":
+                make player run command "effect give %player% minecraft:glowing 100000 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에 입장하여 발광 효과가 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에 들어갔습니다." to loop-value-2
+                stop
+            else if groups of player contains "수감자":
+                make player run command "effect give %player% minecraft:glowing 100000 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에 입장하여 발광 효과가 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에 들어갔습니다." to loop-value-2
+                stop
+            else if groups of player contains "죄수":
+                make player run command "effect give %player% minecraft:glowing 100000 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에 입장하여 발광 효과가 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에 들어갔습니다." to loop-value-2
+                stop
+            set {pvpdeny::%uuid of player%} to true
+            stop
+
+on leave region:
+    loop {police.banarea::*}:
+        if event-region contains "%loop-value%" parsed as region:
+            send action bar "&a&lPVP 금지구역 퇴장" to player
+            set {_name::*} to file contents of "plugins/Skript/data/police/ban_area_name.txt"
+            set {_areaname} to {_name::%loop-index%}
+            if groups of player contains "현상수배":
+                make player run command "effect clear %player% minecraft:glowing" as op
+                make player run command "effect give %player% minecraft:glowing 60 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에서 퇴장하여 발광 효과가 60초간 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에서 나왔습니다." to loop-value-2
+                stop
+            else if groups of player contains "수감자":
+                make player run command "effect clear %player% minecraft:glowing" as op
+                make player run command "effect give %player% minecraft:glowing 60 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에서 퇴장하여 발광 효과가 60초간 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에서 나왔습니다." to loop-value-2
+                stop
+            else if groups of player contains "죄수":
+                make player run command "effect clear %player% minecraft:glowing" as op
+                make player run command "effect give %player% minecraft:glowing 60 0 true" as op
+                send "{@wantedPrefix} &c금지구역&f에서 퇴장하여 발광 효과가 60초간 적용됩니다." to player
+                loop {police.user::*}:
+                    send "{@wantedPrefix} &6%player%&f님이 금지구역 &e%{_areaname}%&f에서 나왔습니다." to loop-value-2
+                stop
+            delete {pvpdeny::%uuid of player%}
+            stop
+
+command /PVP재설정:
+    trigger:
+        loop all players:
+            delete {pvpdeny::%uuid of loop-player%}
+            loop {police.banarea::*}:
+                if region at loop-player contains "%loop-value-2%" parsed as region:
+                    if groups of loop-player doesn't contain "현상수배":
+                        if groups of loop-player doesn't contain "수감자":
+                            if groups of loop-player doesn't contain "죄수":
+                                set {pvpdeny::%uuid of loop-player%} to true
+                                continue
+            # send "%loop-player%, %groups of loop-player%"
+        send "{@policePrefix} 설정 완료."
+
+
+on join:
+    if groups of player contains "현상수배":
+        loop {police.user::*}:
+            send "{@wantedPrefix} 현상수배범 &e%player%&f님이 서버에 접속했습니다." to loop-value
+            play sound "ENTITY_PLAYER_LEVELUP" with volume 1 and pitch 1 at loop-value to loop-value
+    delete {pvpdeny::%uuid of player%}
+    loop {police.banarea::*}:
+        if region at player contains "%loop-value%" parsed as region:
+            if groups of player doesn't contain "현상수배":
+                if groups of player doesn't contain "수감자":
+                    if groups of player doesn't contain "죄수":
+                        set {pvpdeny::%uuid of player%} to true
+                        continue

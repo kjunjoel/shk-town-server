@@ -1,0 +1,31 @@
+options:
+	family: plugins/Skript/data/dailyquest/family.txt
+	prefix: &d&l[가족계정]&f
+
+on load:
+	create file path "{@family}" if file path "{@family}" isn't available
+
+command /가족계정:
+	trigger:
+		loop content of file path "{@family}":
+			set {_data::*} to loop-value split by " "
+			
+			if {_data::1} is "%player%":
+				set {_family} to {_data::2} parsed as offlineplayer
+			
+			else if {_data::2} is "%player%":
+				set {_family} to {_data::1} parsed as offlineplayer
+		if {_family} isn't set:
+			send "{@prefix} 설정된 가족 계정이 없습니다. 관리자에게 문의하세요."
+			stop
+		if {dailyquest.1::%uuid of player%} isn't set:
+			if {dailyquest.2::%uuid of player%} isn't set:
+				send "{@prefix} 마인리스트 또는 마인페이지 추천 후 다시 입력해주세요."
+		if {dailyquest.1::%uuid of player%} >= 1:
+			if {dailyquest.1::%uuid of {_family}%} isn't set:
+				dailyquestSound({_family}, 1)
+				send "{@prefix} 마인리스트 가족 계정 추천이 완료되었습니다." to player
+		if {dailyquest.2::%uuid of player%} >= 1:
+			if {dailyquest.2::%uuid of {_family}%} isn't set:
+				dailyquestSound({_family}, 2)
+				send "{@prefix} 마인페이지 가족 계정 추천이 완료되었습니다." to player

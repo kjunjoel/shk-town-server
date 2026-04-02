@@ -1,0 +1,27 @@
+command /종이cmd [<int>]:
+	permission: op.admin
+	trigger:
+		set {_cmd} to arg-1
+		set {_item} to paper named "&f보기용" with custom model data {_cmd} with lore "&7관리자의 단순 보기용 아이템입니다." and "&7거래 및 양도가 불가능한 아이템입니다."
+		itemGive(player, {_item}, 1, "GMPaper")
+
+options:
+    @: &e&l[요리사]&f
+    dir: plugins/Skript/data/cook
+    log: plugins/Skript/data/logs/cook/%now formatted as "yyyy-MM-dd"%.csv
+    loop2: "1-103", "1-105", "2-102", "2-105", "2-110", "3-103", "4-101", "4-102", "5-102", "5-105", "7-103"
+
+
+command /cook_give <offlineplayer> <text>:
+	trigger:
+		set {_name} to arg-2
+		set {_player} to arg-1
+		set yaml value "owner" from "cookshop.%{_name}%.yml" to uuid of {_player}
+		save yaml "cookshop.%{_name}%.yml"
+		unload yaml "cookshop.%{_name}%.yml"
+		set {_data::*} to {_name} split by "-"
+		send "요리사 상가 &e%{_data::1}%동 %{_data::2}%호&f를 &6%{_player}%&f에게 주었습니다."
+		execute console command "hologram setline cook%{_name}% 4 &f현재 상태: &a운영중"
+		execute console command "hologram setline cook%{_name}%-2 4 &f현재 상태: &a운영중" if {@loop2} contains {_name}
+		execute console command "hologram setline cook%{_name}% 5 &f소유주: &b%{_player}%"
+		execute console command "hologram setline cook%{_name}%-2 5 &f소유주: &b%{_player}%" if {@loop2} contains {_name}

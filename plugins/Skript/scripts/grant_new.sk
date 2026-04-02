@@ -1,0 +1,73 @@
+options:
+	C: &2&l[ &f&l추첨 &2&l]&f
+
+command /추첨 [<integer>]:
+	permission: op.user
+	trigger:
+		if arg 1 is not set:
+			send "{@C} 지급할 아이템의 개수를 적어주시기 바랍니다."
+			stop
+		if player's tool is air:
+			send "{@C} 지급할 아이템을 들어주시기 바랍니다."
+			stop
+		delete {PLAYER.rgrant::*}
+		if {grant.start} is not set:
+			set {grant.start} to false
+		if {grant.start} is false:
+			delete {PLAYER.rgrant::*}
+			set {grant.start} to true
+			if {grant.control} is not true:
+				loop all players:
+					add loop-player to {PLAYER.rgrant::*}
+				set {timehuman.user} to random element out of {PLAYER.rgrant::*}
+			set {grant.control} to false
+			wait 1 tick
+			broadcast "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+			broadcast "&f"
+			broadcast "{@C} &7추첨 결과 &e&l%{timehuman.user}% &7님이 당첨 되셨습니다. 축하드립니다!"
+			broadcast "{@C} &6%{timehuman.user}% &7님은 잠수가 아니라면, &c&l5초 안에 움직여주세요!"
+			broadcast "&e&l보상&f: %name of player's tool% &f%arg 1%개"
+			broadcast "&f"
+			broadcast "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+			set {grant_new.%{timehuman.user}%.move} to true
+			wait 1 second
+			if {grant_new.%{timehuman.user}%.move} is true:
+				send "{@C} &6%{timehuman.user}% &7님은 잠수가 아니라면, &c&l4초 안에 움직여주세요!" to player
+			wait 1 second
+			if {grant_new.%{timehuman.user}%.move} is not false:
+				send "{@C} &6%{timehuman.user}% &7님은 잠수가 아니라면, &c&l3초 안에 움직여주세요!" to player
+			wait 1 second
+			if {grant_new.%{timehuman.user}%.move} is not false:
+				send "{@C} &6%{timehuman.user}% &7님은 잠수가 아니라면, &c&l2초 안에 움직여주세요!" to player
+			wait 1 second
+			if {grant_new.%{timehuman.user}%.move} is not false:
+				send "{@C} &6%{timehuman.user}% &7님은 잠수가 아니라면, &c&l1초 안에 움직여주세요!" to player
+			wait 1 second
+			if {grant_new.%{timehuman.user}%.move} is not false:
+				broadcast "{@C} &6%{timehuman.user}% &7님은 안타깝게도 &c&l잠수&7였습니다."
+			set {grant_new.%{timehuman.user}%.move} to false
+			set {grant_new.%player%.move} to false
+			set {grant.start} to false
+		else:
+			send "{@C} &6이미 추첨이 진행중입니다."
+			stop
+
+on quit:
+	set {grant_new.%player%.move} to false
+
+on any movement:
+	if {grant_new.%player%.move} is true:
+		set {grant_new.%player%.move} to false
+		broadcast "{@C} &6%player% &7님은 다행이도 잠수가 아니였습니다."
+		set {추첨.move} to false
+		stop
+
+command /추첨조작 [<text>]:
+	permission: op.user
+	trigger:
+		if player is op:
+			set {timehuman.user} to arg 1
+			set {grant.control} to true
+			broadcast "&f"
+			broadcast "{@C} &6다음 추첨 때 &c&l%arg 1%&6(이)가 걸릴 것 같아..."
+			broadcast "&f"

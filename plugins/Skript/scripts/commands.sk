@@ -1,0 +1,295 @@
+options:
+	# 접두사
+	prefix: &f쀄 &d|&f
+	gui: &d[&f&l명령어&d]&f
+
+
+function commandGUI(p: player):
+	set {_inv} to chest inventory with 3 rows named "{@prefix} 명령어 목록 선택"
+	set {_item} to rose bush named "&bSHK WORLD &f| &e&l명령어(유저) &f모음" with lore "&7└ 유저가 사용할 수 있는 명령어를 확인합니다."
+	set slot 11 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l명령어(가이드) &f모음" with custom model data 68 with lore "&7└ 가이드가 사용할 수 있는 명령어를 확인합니다."
+	set slot 13 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l명령어(관리자) &f모음" with custom model data 37 with lore "&7└ 관리자가 사용할 수 있는 명령어를 확인합니다."
+	set slot 15 of {_inv} to {_item}
+	open {_inv} to {_p}
+
+
+function commandUserGui(p: player):
+	set {_inv} to chest inventory with 6 rows named "{@prefix} 유저 세부 명령어"
+
+	set slot 13 of {_inv} to stick named "&f" with custom model data 2001
+
+	set {_item} to "Lantum" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l패키지" with custom model data 95 with lore "&7└ 패키지에 대해서 알아봅니다."
+	set slot 1 of {_inv} to {_item}
+
+	set {_item} to "GyeongRye" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l파벌" with custom model data 95 with lore "&7└ 파벌에 대해서 알아봅니다."
+	set slot 2 of {_inv} to {_item}
+
+	set {_item} to "Mir_Dragon" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l선거 및 투표" with custom model data 95 with lore "&7└ 투표(선거)에 대해서 알아봅니다."
+	set slot 3 of {_inv} to {_item}
+
+	set {_item} to "rldn12134" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l주식 및 코인" with custom model data 95 with lore "&7└ 주식 및 코인에 대해서 알아봅니다."
+	set slot 4 of {_inv} to {_item}
+
+	set {_item} to "Donnie10707" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l커뮤니티" with custom model data 95 with lore "&7└ 커뮤니티(디스코드, 카페), 계정연동에 대해서 알아봅니다."
+	set slot 5 of {_inv} to {_item}
+
+	set {_item} to "shkworld_kr" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l친구" with custom model data 95 with lore "&7└ 친구에 대해서 알아봅니다."
+	set slot 6 of {_inv} to {_item}
+
+	set {_item} to "dogodogodogodog" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l뉴비" with custom model data 95 with lore "&7└ 출석, 급식, 뉴비보호해제에 대해서 알아봅니다."
+	set slot 7 of {_inv} to {_item}
+
+	set {_item} to "__SLR" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l추천" with custom model data 95 with lore "&7└ 마인리스트, 마인페이지에 대해서 알아봅니다."
+	set slot 19 of {_inv} to {_item}
+
+	set {_item} to "abyss_flower" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l제재" with custom model data 95 with lore "&7└ 주의, 경고, 채금, 차단, 징역, 금고 등에 대해서 알아봅니다."
+	set slot 20 of {_inv} to {_item}
+
+	set {_item} to "SeoJieun" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l접속보상" with custom model data 95 with lore "&7└ 접속보상에 대해서 알아봅니다."
+	set slot 21 of {_inv} to {_item}
+
+	set {_item} to "L_Raffy" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l재산" with custom model data 95 with lore "&7└ 재산 확인, 돈에 대해서 알아봅니다."
+	set slot 22 of {_inv} to {_item}
+
+	set {_item} to "Carpe__DM" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l일일퀘스트" with custom model data 95 with lore "&7└ 일일퀘스트에 대해서 알아봅니다."
+	set slot 23 of {_inv} to {_item}
+
+	set {_item} to "ms7477oo" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l상어마켓" with custom model data 95 with lore "&7└ 상어마켓에 대해서 알아봅니다."
+	set slot 24 of {_inv} to {_item}
+
+	set {_item} to "tkarhd_oxo" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l부동산" with custom model data 95 with lore "&7└ 아파트, 원룸, 빌딩, 상가에 대해서 알아봅니다."
+	set slot 25 of {_inv} to {_item}
+
+	set {_item} to "sangchuu_" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l결혼" with custom model data 95 with lore "&7└ 결혼에 대해서 알아봅니다."
+	set slot 37 of {_inv} to {_item}
+
+	set {_item} to "Ssak_" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l민원" with custom model data 95 with lore "&7└ 민원, 가이드에 대해서 알아봅니다."
+	set slot 38 of {_inv} to {_item}
+
+	set {_item} to "_Gyul_2" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l닉네임" with custom model data 95 with lore "&7└ 닉네임에 대해서 알아봅니다."
+	set slot 39 of {_inv} to {_item}
+
+	set {_item} to "star_tree_" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l서점" with custom model data 95 with lore "&7└ 서점에 대해서 알아봅니다."
+	set slot 40 of {_inv} to {_item}
+
+	set {_item} to "CheoHae__032" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l경매" with custom model data 95 with lore "&7└ 경매에 대해서 알아봅니다."
+	set slot 41 of {_inv} to {_item}
+
+	set {_item} to "Masiti" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l월급" with custom model data 95 with lore "&7└ 월급에 대해서 알아봅니다."
+	set slot 42 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l기타" with custom model data 95 with lore "&7└ 확성기, 리소스팩, 버프해제, 국고, 선물함에 대해서 알아봅니다."
+	set slot 43 of {_inv} to {_item}
+
+
+	open {_inv} to {_p}
+
+
+function commandGuideGui(p: player):
+	set {_inv} to chest inventory with 1 rows named "{@prefix} 가이드 세부 명령어"
+
+	# 1열 하얀색 유리
+	set {_item} to white stained glass pane named "&f"
+	set slot 1, 3, 5, 7 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l학교" with custom model data 11 with lore "&7└ 학교와 관련된 명령어를 확인합니다."
+	set slot 0 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l경고" with custom model data 1011 with lore "&7└ 경고와 관련된 명령어를 확인합니다."
+	set slot 2 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l채팅금지" with custom model data 1010 with lore "&7└ 채팅금지와 관련된 명령어를 확인합니다."
+	set slot 4 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l주의" with custom model data 65 with lore "&7└ 주의와 관련된 명령어를 확인합니다."
+	set slot 6 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l가이드" with custom model data 68 with lore "&7└ 가이드의 복지 및 특별 권한에 관련된 명령어를 확인합니다."
+	set slot 8 of {_inv} to {_item}
+	open {_inv} to {_p}
+
+
+function commandOpGui(p: player):
+	# 상자 이름
+	set {_inv} to chest inventory with 6 rows named "{@prefix} 관리자 세부 명령어"
+
+	# 스마트폰 GUI
+	set slot 13 of {_inv} to stick named "&f" with custom model data 2001
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l예산" with custom model data 1 with lore "&7└ 예산과 관련된 명령어를 확인합니다."
+	set slot 1 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l빌딩" with custom model data 1 with lore "&7└ 빌딩과 관련된 명령어를 확인합니다."
+	set slot 2 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l버스" with custom model data 1014 with lore "&7└ 버스와 관련된 명령어를 확인합니다."
+	set slot 3 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l캐시" with custom model data 1008 with lore "&7└ 캐시와 관련된 명령어를 확인합니다."
+	set slot 4 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l주식 및 코인" with custom model data 1005 with lore "&7└ 주식 및 코인에 관련된 명령어를 확인합니다."
+	set slot 5 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l일일퀘스트" with custom model data 1011 with lore "&7└ 일일퀘스트와 관련된 명령어를 확인합니다."
+	set slot 6 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l정보" with custom model data 1001 with lore "&7└ 유저 정보 확인과 관련된 명령어를 확인합니다."
+	set slot 7 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l정보관리" with custom model data 107 with lore "&7└ 유저 정보 관리와 관련된 명령어를 확인합니다."
+	set slot 19 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l채팅" with custom model data 5 with lore "&7└ 채팅 스파이와 관련된 명령어를 확인합니다."
+	set slot 20 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l칭호" with custom model data 1006 with lore "&7└ 칭호와 관련된 명령어를 확인합니다."
+	set slot 21 of {_inv} to {_item}
+
+	set {_item} to sunflower named "&bSHK WORLD &f| &e&l학교" with custom model data 11 with lore "&7└ 학교와 관련된 명령어를 확인합니다."
+	set slot 22 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l가이드관리" with custom model data 68 with lore "&7└ 가이드 정보 관리와 관련된 명령어를 확인합니다."
+	set slot 23 of {_inv} to {_item}
+
+	set {_item} to paper named "&bSHK WORLD &f| &e&l관리" with custom model data 37 with lore "&7└ 서버 관리와 관련된 명령어를 확인합니다."
+	set slot 24 of {_inv} to {_item}
+
+	set {_item} to book named "&bSHK WORLD &f| &e&l계좌" with lore "&7└ 플레이어의 계좌와 관련된 명령어를 확인합니다."
+	set slot 25 of {_inv} to {_item}
+
+	set {_item} to "Lantum" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l파벌" with lore "&7└ 파벌과 관련된 명령어를 확인합니다."
+	set slot 37 of {_inv} to {_item}
+
+	set {_item} to "GyeongRye" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l선거관리위원회" with lore "&7└ 선거와 관련된 명령어를 확인합니다."
+	set slot 38 of {_inv} to {_item}
+
+	set {_item} to "Mir_Dragon" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l패키지" with lore "&7└ 패키지와 관련된 명령어를 확인합니다."
+	set slot 39 of {_inv} to {_item}
+
+	set {_item} to "shkworld_kr" parsed as offlineplayer's skull named "&bSHK WORLD &f| &e&l기타" with lore "&7└ 나머지 명령어를 확인합니다."
+	set slot 40 of {_inv} to {_item}
+	open {_inv} to {_p}
+
+
+function commandOutput(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/user/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f유저 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+function commandOutput2(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/op/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f관리자 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+function commandOutput3(p: player, file: text):
+	set {_file::*} to content of file path "plugins/Skript/data/command/guide/%{_file}%"
+	replace all ".txt" in {_file} with ""
+	send "&f" to {_p}
+	send "&f쀄 &d| &f가이드 명령어(%{_file}%)" to {_p}
+	send "&f" to {_p}
+	set {_ind} to 1
+	loop {_file::*}:
+		if first 1 character of uncolored loop-value is "/":
+			send "[%{_ind}%] %colored loop-value%" to {_p}
+			add 1 to {_ind}
+		else:
+			send colored loop-value to {_p}
+	send "&f" to {_p}
+
+
+command /명령어:
+	aliases: 도움말, 명령어목록, commands, 도움
+	trigger:
+		commandGUI(player)
+
+command /유저명령어:
+	aliases: n
+	trigger:
+		commandUserGui(player)
+
+command /가이드명령어:
+	aliases: g
+	permission: guide.user
+	permission message: {@prefix} 해당 목록을 열람할 &c권한&f이 없습니다.
+	trigger:
+		commandGuideGui(player)
+
+command /관리자명령어:
+	aliases: o
+	permission: op.user
+	permission message: {@prefix} 해당 목록을 열람할 &c권한&f이 없습니다.
+	trigger:
+		commandOpGui(player)
+
+
+on inventory click:
+	if uncolored display name of event-inventory is "쀄 | 명령어 목록 선택":
+		cancel event
+		click type is left mouse button
+		if clicked slot is 11:
+			commandUserGui(player)
+
+		else if clicked slot is 13:
+			if player doesn't have permission "guide.user":
+				send "{@prefix} 해당 목록을 열람할 &c권한&f이 없습니다."
+				close player's inventory
+				stop
+			commandGuideGui(player)
+
+		else if clicked slot is 15:
+			if player isn't op:
+				send "{@prefix} 해당 목록을 열람할 &c권한&f이 없습니다."
+				close player's inventory
+				stop
+			commandOpGui(player)
+
+	else if uncolored display name of event-inventory is "쀄 | 유저 세부 명령어" or "쀄 | 관리자 세부 명령어" or "쀄 | 가이드 세부 명령어":
+		cancel event
+		click type is left mouse button
+		set {_name} to uncolored name of clicked item
+		if uncolored display name of event-inventory contains "유저":
+			set {_file::*} to content of file path "plugins/Skript/data/command/user/user_index.txt"
+
+		else if uncolored display name of event-inventory contains "관리자":
+			set {_file::*} to content of file path "plugins/Skript/data/command/op/op_index.txt"
+
+		else if uncolored display name of event-inventory contains "가이드":
+			set {_file::*} to content of file path "plugins/Skript/data/command/guide/guide_index.txt"
+
+		loop {_file::*}:
+			set {_data::*} to loop-value split by " "
+			replace all "_" in {_data::1} with " "
+			if {_data::1} is {_name}:
+				if uncolored display name of event-inventory contains "유저":
+					commandOutput(player, {_data::2})
+				else if uncolored display name of event-inventory contains "관리자":
+					commandOutput2(player, {_data::2})
+				else if uncolored display name of event-inventory contains "가이드":
+					commandOutput3(player, {_data::2})
+				close player's inventory
+				stop

@@ -1,0 +1,48 @@
+options:
+    prefix: &f[ &6&l!&f ]
+
+on load:
+    set {dropped.cool} to 1200 if {dropped.cool} isn't set
+
+every 1 second:
+    remove 1 from {dropped.cool}
+    if {dropped.cool} is 180:
+        send "" to all players
+        send "{@prefix} &e3분&f 후 떨어진 아이템이 청소됩니다." to all players
+        send "" to all players
+    else if {dropped.cool} is 60:
+        send "" to all players
+        send "{@prefix} &e1분&f 후 떨어진 아이템이 청소됩니다." to all players
+        send "" to all players
+    else if {dropped.cool} is 30:
+        send "" to all players
+        send "{@prefix} &e30초&f 후 떨어진 아이템이 청소됩니다." to all players
+        send "" to all players
+    else if {dropped.cool} is 10:
+        send "" to all players
+        send "{@prefix} &e10초&f 후 떨어진 아이템이 청소됩니다." to all players
+        send "" to all players
+    else if {dropped.cool} is 0:
+        set {_n} to 0
+        loop all dropped items:
+            clear loop-entity
+            add 1 to {_n}
+        send "" to all players
+        send "{@prefix} &e%{_n}%&f개의 떨어진 아이템이 청소되었습니다." to all players
+        send "" to all players
+        set {dropped.cool} to 1800
+
+command /바닥청소:
+    trigger:
+        if player is op:
+            set {_n} to 0
+            loop all dropped items:
+                clear loop-entity
+                add 1 to {_n}
+            send "" to all players
+            send "{@prefix} &e%{_n}%&f개의 떨어진 아이템이 청소되었습니다. &7(담당자 | %player%)" to all players
+            send "" to all players
+        else:
+            set {_min} to round down ({dropped.cool}/60)
+            set {_sec} to mod({dropped.cool}, 60)
+            send "{@prefix} 바닥청소까지 &e%{_min}%분 %{_sec}%초&f 남았습니다."

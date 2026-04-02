@@ -1,0 +1,416 @@
+options:
+    prefix: &e&l[ CASINO ]&f
+    npc: 바카라
+
+    CARD_SOUND: ENTITY_PLAYER_ATTACK_WEAK
+    BUST_SOUND: ITEM_SHIELD_BREAK
+    WIN_SOUND: UI_TOAST_CHALLENGE_COMPLETE
+    DRAW_SOUND: ENTITY_PLAYER_LEVELUP
+    LOSE_SOUND: ITEM_SHIELD_BREAK
+
+    max: 10000000
+
+# 변수
+# {casino.baccara.%player%.select}     | 플레이어가 선택한 것 (플레이어, 뱅커, 타이)
+# {casino.baccara.%player%.deck::*}    | 전체 패
+# {casino.baccara.%player%.banker::*}  | 뱅커의 패
+# {casino.baccara.%player%.player::*}  | 플레이어의 패
+
+function casinoBaccaraRand(p: player) :: number:
+    loop 52 times:
+        set {_rand} to random integer between 0 and 51
+        if {casino.baccara.%{_p}%.deck::*} contains {_rand}:
+            remove {_rand} from {casino.baccara.%{_p}%.deck::*}
+            return {_rand}
+
+function casinoBaccaraName(n: number) :: text:
+    set {_suit} to round down {_n}/13
+    set {_number} to mod({_n}, 13)
+    if {_suit} is 0:
+        set {_result} to "&f&l♠"
+    else if {_suit} is 1:
+        set {_result} to "&f&l♣"
+    else if {_suit} is 2:
+        set {_result} to "&c&l♥"
+    else if {_suit} is 3:
+        set {_result} to "&c&l♦"
+    if {_number} is 0:
+        return "%{_result}% A"
+    else if {_number} is 1:
+        return "%{_result}% 2"
+    else if {_number} is 2:
+        return "%{_result}% 3"
+    else if {_number} is 3:
+        return "%{_result}% 4"
+    else if {_number} is 4:
+        return "%{_result}% 5"
+    else if {_number} is 5:
+        return "%{_result}% 6"
+    else if {_number} is 6:
+        return "%{_result}% 7"
+    else if {_number} is 7:
+        return "%{_result}% 8"
+    else if {_number} is 8:
+        return "%{_result}% 9"
+    else if {_number} is 9:
+        return "%{_result}% 10"
+    else if {_number} is 10:
+        return "%{_result}% J"
+    else if {_number} is 11:
+        return "%{_result}% Q"
+    else if {_number} is 12:
+        return "%{_result}% K"
+
+function casinoBaccaraItem(t: text) :: item:
+    if {_t} is "hidden":
+        set {_item} to book with custom model data 53 named "&f"
+        return {_item}
+    set {_list::*} to uncolored {_t} split by " "
+    if {_list::1} is "♠":
+        set {_result.1} to 0
+    else if {_list::1} is "♣":
+        set {_result.1} to 1
+    else if {_list::1} is "♥":
+        set {_result.1} to 2
+    else if {_list::1} is "♦":
+        set {_result.1} to 3
+    if {_list::2} is "A":
+        set {_result.2} to 1
+    else if {_list::2} is "2":
+        set {_result.2} to 2
+    else if {_list::2} is "3":
+        set {_result.2} to 3
+    else if {_list::2} is "4":
+        set {_result.2} to 4
+    else if {_list::2} is "5":
+        set {_result.2} to 5
+    else if {_list::2} is "6":
+        set {_result.2} to 6
+    else if {_list::2} is "7":
+        set {_result.2} to 7
+    else if {_list::2} is "8":
+        set {_result.2} to 8
+    else if {_list::2} is "9":
+        set {_result.2} to 9
+    else if {_list::2} is "10":
+        set {_result.2} to 10
+    else if {_list::2} is "J":
+        set {_result.2} to 11
+    else if {_list::2} is "Q":
+        set {_result.2} to 12
+    else if {_list::2} is "K":
+        set {_result.2} to 13
+    set {_custom} to 13*{_result.1} + {_result.2}
+    set {_item} to book with custom model data {_custom} named "%{_t}%"
+    return {_item}
+
+function casinoBaccaraCalculate(items: objects) :: number:
+    set {_result} to 0
+    loop {_items::*}:
+        set {_list::*} to uncolored loop-value split by " "
+        if {_list::2} is "A":
+            add 1 to {_result}
+        else if {_list::2} is "2":
+            add 2 to {_result}
+        else if {_list::2} is "3":
+            add 3 to {_result}
+        else if {_list::2} is "4":
+            add 4 to {_result}
+        else if {_list::2} is "5":
+            add 5 to {_result}
+        else if {_list::2} is "6":
+            add 6 to {_result}
+        else if {_list::2} is "7":
+            add 7 to {_result}
+        else if {_list::2} is "8":
+            add 8 to {_result}
+        else if {_list::2} is "9":
+            add 9 to {_result}
+        else if {_list::2} is "10":
+            add 0 to {_result}
+        else if {_list::2} is "J":
+            add 0 to {_result}
+        else if {_list::2} is "Q":
+            add 0 to {_result}
+        else if {_list::2} is "K":
+            add 0 to {_result}
+    set {_result} to mod({_result}, 10)
+    return {_result}
+
+function casinoBaccaraSelectGUI(p: player):
+    set {_inv} to chest inventory with 3 rows named "&0&l[ CASINO BACCARA ]"
+    loop 27 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 11 of {_inv} to red stained glass pane named "&4&lPLAYER" with lore "&7배당률 2배"
+    set slot 13 of {_inv} to gray stained glass pane named "&8&lTIE" with lore "&7배당률 6배"
+    set slot 15 of {_inv} to yellow stained glass pane named "&e&lBANKER" with lore "&7배당률 1.95배"
+    open {_inv} to {_p}
+
+function casinoBaccaraGUI(p: player, state: text, player: objects, banker: objects):
+    set {_inv} to chest inventory with 5 rows named "&0&l[ CASINO BACCARA ]"
+    loop 45 times:
+        set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+    set slot 11 of {_inv} to red stained glass pane named "&4&lPLAYER"
+    set slot 29 of {_inv} to yellow stained glass pane named "&e&lBANKER"
+    loop 3 times:
+        set slot (loop-number)+12 of {_inv} to air
+        set slot (loop-number)+30 of {_inv} to air
+    set {_ind} to 13
+    loop {_player::*}:
+        if {_state} is "setting":
+            set {_item} to casinoBaccaraItem("hidden")
+        else if {_state} is "1":
+            if {_ind} is 13:
+                set {_item} to casinoBaccaraItem(loop-value)
+            else:
+                set {_item} to casinoBaccaraItem("hidden")
+        else:
+            set {_item} to casinoBaccaraItem(loop-value)
+        set slot {_ind} of {_inv} to {_item}
+        add 1 to {_ind}
+    set {_ind} to 31
+    loop {_banker::*}:
+        if {_state} is "setting" or "1" or "2":
+            set {_item} to casinoBaccaraItem("hidden")
+        else if {_state} is "3":
+            if {_ind} is 31:
+                set {_item} to casinoBaccaraItem(loop-value)
+            else:
+                set {_item} to casinoBaccaraItem("hidden")
+        else:
+            set {_item} to casinoBaccaraItem(loop-value)
+        set slot {_ind} of {_inv} to {_item}
+        add 1 to {_ind}
+    open {_inv} to {_p}
+
+function casinoBaccaraPlay(p: player):
+    loop 52 times:
+        add (loop-number)-1 to {casino.baccara.%{_p}%.deck::*}
+    loop 4 times:
+        set {_rand} to casinoBaccaraRand({_p})
+        set {_name} to casinoBaccaraName({_rand})
+        if loop-number is between 1 and 2:
+            add {_name} to {casino.baccara.%{_p}%.player::*}
+        else:
+            add {_name} to {casino.baccara.%{_p}%.banker::*}
+        wait 10 ticks
+        casinoBaccaraGUI({_p}, "setting", {casino.baccara.%{_p}%.player::*}, {casino.baccara.%{_p}%.banker::*})
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        set {gui.%uuid of {_p}%::casinoBaccaraGUI} to true
+    wait 20 ticks
+    loop 4 times:
+        wait 20 ticks
+        {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+        casinoBaccaraGUI({_p}, "%loop-number%", {casino.baccara.%{_p}%.player::*}, {casino.baccara.%{_p}%.banker::*})
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        set {gui.%uuid of {_p}%::casinoBaccaraGUI} to true
+    wait 40 ticks
+    {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+    set {_player} to casinoBaccaraCalculate({casino.baccara.%{_p}%.player::*})
+    set {_banker} to casinoBaccaraCalculate({casino.baccara.%{_p}%.banker::*})
+    if {_player} >= 8:
+        set {_state} to "natural"
+    else if {_banker} >= 8:
+        set {_state} to "natural"
+    if {_state} is "natural":
+        {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+        casinoBaccaraAward({_p}, {_player}, {_banker})
+        stop
+    if {_player} >= 6:
+        if {_banker} >= 6:
+            wait 40 ticks
+            {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+            casinoBaccaraAward({_p}, {_player}, {_banker})
+            stop
+        else:
+            set {_rand} to casinoBaccaraRand({_p})
+            set {_name} to casinoBaccaraName({_rand})
+            add {_name} to {casino.baccara.%{_p}%.banker::*}
+            wait 20 ticks
+            {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+            casinoBaccaraGUI({_p}, "else", {casino.baccara.%{_p}%.player::*}, {casino.baccara.%{_p}%.banker::*})
+            play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+            set {gui.%uuid of {_p}%::casinoBaccaraGUI} to true
+            wait 40 ticks
+            set {_player} to casinoBaccaraCalculate({casino.baccara.%{_p}%.player::*})
+            set {_banker} to casinoBaccaraCalculate({casino.baccara.%{_p}%.banker::*})
+            {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+            casinoBaccaraAward({_p}, {_player}, {_banker})
+            stop
+    else:
+        set {_rand} to casinoBaccaraRand({_p})
+        set {_name} to casinoBaccaraName({_rand})
+        add {_name} to {casino.baccara.%{_p}%.player::*}
+        wait 20 ticks
+        {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+        casinoBaccaraGUI({_p}, "else", {casino.baccara.%{_p}%.player::*}, {casino.baccara.%{_p}%.banker::*})
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        set {gui.%uuid of {_p}%::casinoBaccaraGUI} to true
+        set {_player.number::*} to uncolored {_name} split by " "
+        set {_number} to {_player.number::2}
+        if {_banker} <= 2:
+            set {_banker.add} to true
+        else if {_banker} is 3:
+            if {_number} isn't "8":
+                set {_banker.add} to true
+        else if {_banker} is 4:
+            if {_number} is "2" or "3" or "4" or "5" or "6" or "7":
+                set {_banker.add} to true
+        else if {_banker} is 5:
+            if {_number} is "4" or "5" or "6" or "7":
+                set {_banker.add} to true
+        else if {_banker} is 6:
+            if {_number} is "6" or "7":
+                set {_banker.add} to true
+    if {_banker.add} is true:
+        set {_rand} to casinoBaccaraRand({_p})
+        set {_name} to casinoBaccaraName({_rand})
+        add {_name} to {casino.baccara.%{_p}%.banker::*}
+        wait 20 ticks
+        {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+        casinoBaccaraGUI({_p}, "else", {casino.baccara.%{_p}%.player::*}, {casino.baccara.%{_p}%.banker::*})
+        play sound "{@CARD_SOUND}" with volume 0.4 to {_p}
+        set {gui.%uuid of {_p}%::casinoBaccaraGUI} to true
+    wait 40 ticks
+    set {_player} to casinoBaccaraCalculate({casino.baccara.%{_p}%.player::*})
+    set {_banker} to casinoBaccaraCalculate({casino.baccara.%{_p}%.banker::*})
+    {gui.%uuid of {_p}%::casinoBaccaraGUI} is set
+    casinoBaccaraAward({_p}, {_player}, {_banker})
+    stop
+
+function casinoBaccaraAward(p: player, player: number, banker: number):
+    close {_p}'s inventory
+    set {_select} to {casino.baccara.%{_p}%.select}
+    send "{@prefix} 플레이어의 카드의 합은 &a%{_player}%&f, 뱅커의 카드의 합은 &a%{_banker}%&f입니다." to {_p}
+    if {_player} > {_banker}:
+        if {_select} is "player":
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 2*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&4&lPLAYER!" with subtitle "배팅액의 2배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            send "{@prefix} &4&lPLAYER&f로 승리하여 배팅액의 2배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 0
+            casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&c&l실패!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    else if {_player} < {_banker}:
+        if {_select} is "banker":
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 1.95*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&e&lBANKER!" with subtitle "배팅액의 1.95배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            send "{@prefix} &e&lBANKER&f로 승리하여 배팅액의 1.95배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 0
+            casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&c&l실패!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    else:
+        if {_select} is "tie":
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 6*loop-value
+            set {_price} to casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&8&lTIE!" with subtitle "배팅액의 6배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p} for 3 seconds
+            send "{@prefix} &8&lTIE&f로 승리하여 배팅액의 6배인 &6%moneyDigit({_price})%원&f을 획득하였습니다." to {_p}
+        else:
+            play sound "{@LOSE_SOUND}" with volume 0.4 to {_p}
+            loop {casino.baccara.%{_p}%.chips::*}:
+                set {casino.baccara.%{_p}%.chips::%loop-index%} to 0
+            casinoChipGive({_p}, {casino.baccara.%{_p}%.chips::*}, "Baccara")
+            send title "&c&l실패!" with subtitle "배팅액을 돌려받을 수 없습니다." to {_p} for 3 seconds
+            send "{@prefix} 예측에 실패하였으므로 배팅액을 돌려받을 수 없습니다." to {_p}
+    delete {casino.baccara.%{_p}%.select}
+    delete {casino.baccara.%{_p}%.chips::*}
+    delete {casino.baccara.%{_p}%.deck::*}
+    delete {casino.baccara.%{_p}%.player::*}
+    delete {casino.baccara.%{_p}%.banker::*}
+
+on rightclick on entity:
+    if entity's name is "{@npc}":
+        delete {casino.baccara.%player%.select}
+        delete {casino.baccara.%player%.chips::*}
+        delete {casino.baccara.%player%.deck::*}
+        delete {casino.baccara.%player%.player::*}
+        delete {casino.baccara.%player%.banker::*}
+        send "{@prefix} 배팅할 곳을 선택하세요." to player
+        wait 10 ticks
+        casinoBaccaraSelectGUI(player)
+        wait 1 tick
+        set {gui.%uuid of player%::casinoBaccaraSelectGUI} to true
+        stop
+
+on inventory click:
+    if uncolored display name of event-inventory contains "[ CASINO BACCARA ]":
+        if {gui.%uuid of player%::casinoBaccaraSelectGUI} is true:
+            cancel event
+            if clicked slot is 11:
+                set {casino.baccara.%player%.select} to "player"
+                send "{@prefix} &4&lPLAYER&f를 선택하셨습니다. 다음 창에 배팅할 칩을 넣어주세요."
+                casinoChipGUI(player)
+                wait 1 tick
+                set {gui.%uuid of player%::casinoBaccaraChipGUI} to true
+            else if clicked slot is 13:
+                set {casino.baccara.%player%.select} to "tie"
+                send "{@prefix} &8&lTIE&f를 선택하셨습니다. 다음 창에 배팅할 칩을 넣어주세요."
+                casinoChipGUI(player)
+                wait 1 tick
+                set {gui.%uuid of player%::casinoBaccaraChipGUI} to true
+            else if clicked slot is 15:
+                set {casino.baccara.%player%.select} to "banker"
+                send "{@prefix} &e&lBANKER&f를 선택하셨습니다. 다음 창에 배팅할 칩을 넣어주세요."
+                casinoChipGUI(player)
+                wait 1 tick
+                set {gui.%uuid of player%::casinoBaccaraChipGUI} to true
+
+        else if {gui.%uuid of player%::casinoBaccaraGUI} is true:
+            cancel event
+
+    else if uncolored display name of event-inventory contains "[ CASINO CHIP ]":
+        if {gui.%uuid of player%::casinoBaccaraChipGUI} is true:
+            if event-inventory is player's inventory:
+                stop
+
+            if clicked slot is 22:
+                cancel event
+                set {_chips::*} to casinoChipCount(player, event-inventory, "Baccara")
+                if {_chips::*} is false:
+                    send "{@prefix} 배팅할 칩을 넣어주시기 바랍니다."
+                    stop
+                else if {_chips::*} is true:
+                    send "{@prefix} &6%moneyDigit({@max})%원&f 이상은 배팅하실 수 없습니다."
+                    stop
+                set {casino.baccara.%player%.chips::*} to {_chips::*}
+                delete {gui.%uuid of player%::casinoBaccaraChipGUI}
+                close player's inventory
+                wait 1 tick
+                casinoBaccaraPlay(player)
+
+            else if clicked slot is between 0 and 10:
+                cancel event
+            else if clicked slot is between 16 and 26:
+                cancel event
+            stop
+
+on inventory close:
+    if {gui.%uuid of player%::casinoBaccaraSelectGUI} is true:
+        delete {gui.%uuid of player%::casinoBaccaraSelectGUI}
+    if {gui.%uuid of player%::casinoaccaraChipGUI} is true:
+        loop 5 times:
+            set {_item} to slot (loop-number)+10 of player's current inventory
+            give {_item} to player
+        delete {gui.%uuid of player%::casinoBaccarakChipGUI}
+    if {gui.%uuid of player%::casinoBaccaraGUI} is true:
+        delete {gui.%uuid of player%::casinoBaccaraGUI}
+
+on quit:
+    delete {casino.baccara.%player%.select}
+    delete {casino.baccara.%player%.chips::*}
+    delete {casino.blaccara.%player%.chips::*}
+    delete {casino.baccara.%player%.deck::*}
+    delete {casino.baccara.%player%.player::*}
+    delete {casino.baccara.%player%.banker::*}

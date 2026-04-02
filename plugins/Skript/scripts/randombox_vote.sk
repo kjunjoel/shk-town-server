@@ -1,0 +1,334 @@
+options:
+    prefix: [ &6&l&o! &f]
+
+on rightclick with slime ball:
+    if uncolored name of event-item is "[ 추천 ] 코인":
+        if item amount of player's tool < 50:
+            send "{@prefix} &f[ &a&l추천&f ] &e&l코인 &f50개를 손에 들고 우클릭해주세요."
+            stop
+        remove 50 of player's tool from player's tool
+        set {_item} to slime ball of infinity 1 named "&f[ &a&l추천&f ] &d&l압축 &e코인" with lore "&7거래가 불가능한 아이템입니다." and "&7중앙광장에서 교환할 수 있습니다."
+        itemGive(player, {_item}, 1, "vote_2")
+
+command /vote_coin_give [<offlineplayer>] [<number>]:
+    permission: op.user
+    trigger:
+        send "&f[ &6&l&o! &f] &e%arg-1%&f님에게 &f[ &a&l추천&f ] &e&l코인 &c%arg-2%&f개를 주었습니다." to player
+        set {_item} to slime ball named "&f[ &a&l추천&f ] &e&l코인" with lore "&7거래가 불가능한 아이템입니다." and "&7중앙광장에서 교환할 수 있습니다."
+        itemGive(arg-1, {_item}, arg-2, "EventCoinGive")
+
+on rightclick with gold ingot:
+    if uncolored name of event-item is "[ 추천 ] 랜덤 코인":
+        remove 1 of player's tool from player's tool
+        set {_number} to random integer between 1 and 82
+        if {_number} is between 1 and 20:
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &f코인 &6⚝&f을 획득하였습니다!" to player
+            set {_item} to gold ingot named "&f[ <##FFFFCC>&l설날 &f] &f코인 &6⚝" with custom model data 21 with lore "&7거래가 불가능한 아이템입니다." and "&7우클릭하여 사용할 수 있습니다." and "&f" and "&72023년 리메이크"
+
+        else if {_number} is between 21 and 40:
+            send "{@prefix} &f[ &7&l임인년 &f] &f코인 &6⚝&f을 획득하였습니다!" to player
+            set {_item} to gold ingot named "&f[ &7&l임인년 &f] &f코인 &6⚝" with custom model data 19 with lore "&7거래가 불가능한 아이템입니다." and "&7우클릭하여 사용할 수 있습니다." and "&f" and "&72023년 리메이크"
+
+        else if {_number} is between 41 and 60:
+            send "{@prefix} &f[ &9&l샤&b&l크&9&l스&b&l마&9&l스 &f] &f코인 &6⚝&f을 획득하였습니다!" to player
+            set {_item} to gold ingot named "&f[ &9&l샤&b&l크&9&l스&b&l마&9&l스 &f] &f코인 &6⚝" with custom model data 13 with lore "&7거래가 불가능한 아이템입니다." and "&7우클릭하여 사용할 수 있습니다." and "&f" and "&72023년 리메이크"
+
+        else if {_number} is between 61 and 80:
+            send "{@prefix} &f[ &8&l계묘년 &f] &f코인 &6⚝&f을 획득하였습니다!" to player
+            set {_item} to gold ingot named "&f[ &8&l계묘년 &f] &f코인 &6⚝" with custom model data 20 with lore "&7거래가 불가능한 아이템입니다." and "&7우클릭하여 사용할 수 있습니다." and "&f" and "&72023년 리메이크"
+
+        else if {_number} is between 81 and 82:
+            send "{@prefix} &f[ &d&lGoodBye 2022 &f] &f랜덤 치장 뽑기권 &6⚝" to player
+            set {_item} to paper named "&f[ &d&lGoodBye 2022 &f] &f랜덤 치장 뽑기권 &6⚝" with lore "&7거래가 불가능한 아이템입니다." and "&7우클릭하여 사용할 수 있습니다." and "&f" and "&72023년 리메이크"
+
+        itemGive(player, {_item}, item amount of {_item}, "Randombox")
+
+
+on rightclick with ghast tear:
+    if uncolored name of event-item is "[ 추천 ] 랜덤 치장템":
+        remove 1 of player's tool from player's tool
+        set {_number} to random integer between 1 and 645
+        
+        if {_number} is 1: #검은 롭이어 토끼 모자 (10,000)
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_lop_bunny"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_lop_bunny"
+            send "{@prefix} &8&l검은 롭이어 토끼 모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 2 and 20:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_rabbit_doll"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_rabbit_doll"
+            send "{@prefix} &8&l검은 토끼 인형&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 21 and 40:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_rabbit_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_rabbit_hat"
+            send "{@prefix} &8&l검은 토끼 모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 41 and 60:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_rabbit_headband"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_rabbit_headband"
+            send "{@prefix} &8&l검은 토끼 머리띠&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 61 and 80:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.tiger_head_mask"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.tiger_head_mask"
+            send "{@prefix} &6&l호&e&l랑&d&l이 &7머리탈&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 81 and 100:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.tiger_gloves"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.tiger_gloves"
+            send "{@prefix} &6&l호&e&l랑&d&l이 &7장갑&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 101 and 120:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.tiger_tail"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.tiger_tail"
+            send "{@prefix} &6&l호&e&l랑&d&l이 &7꼬리털&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 121 and 140:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.korean_flag"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.korean_flag"
+            send "{@prefix} &4&l태&9&l극&f&l기 &7깃발&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 141: #고양이 헤드폰(핑크) (6,000)
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.pink_cat_headset"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.pink_cat_headset"
+            send "{@prefix} &f&l고양이 헤드폰<##FFC0CB>&l(핑크)&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 142: #고양이 헤드폰(블랙) (5,000)
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_cat_headset"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_cat_headset"
+            send "{@prefix} &f&l헤드폰&8&l(블랙)&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 143: #곰돌이 헬멧 (10,000)
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.bear_helmet"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.bear_helmet"
+            send "{@prefix} <##964B00>&l곰돌이 헬멧&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 144: #고양이 헤드폰(블루) (7,000)
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.blue_cat_headset"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.blue_cat_headset"
+            send "{@prefix} &f&l고양이 헤드폰&9&l(블루)&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 145:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.fullmoon"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.fullmoon"
+            send "{@prefix} &e&l보름달&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 166 and 180:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.songpyeon"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.songpyeon"
+            send "{@prefix} &a&l송&c&l편&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 181 and 200:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.eunuch_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.eunuch_hat"
+            send "{@prefix} <##1F5458>&l내시 &7&l모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 201 and 220:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.daegam_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.daegam_hat"
+            send "{@prefix} <##272727>&l대감 &7&l모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 221 and 240:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.yusaeng_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.yusaeng_hat"
+            send "{@prefix} <##0072a1>&l유생 &7&l모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 241 and 260:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.king_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.king_hat"
+            send "{@prefix} &e&l왕 &7&l모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 261 and 280:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.bat_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.bat_hat"
+            send "{@prefix} &8&l박쥐 모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 281 and 300:
+            send "{@prefix} &e&l사탕 바구니&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is 301 and 320:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.halloween_witch_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.halloween_witch_hat"
+            send "{@prefix} &d할로윈 &5&l마녀&d의 모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 146 and 165:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.skull_cap"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.skull_cap"
+            send "{@prefix} &8&l해골 &7모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 321 and 340:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_cat_headband"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_cat_headband"
+            send "{@prefix} &8&l검은 고양이 머리띠&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 341 and 360:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.little_ghost"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.little_ghost"
+            send "{@prefix} &f꼬마 &b&l유령 &f어깨 장식&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 361 and 380:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.santa_headband"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.santa_headband"
+            send "{@prefix} <##006600>&l산타 <##663300>&l머리띠&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 381 and 400:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.holly_badge"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.holly_badge"
+            send "{@prefix} <##FF0000>&l호랑가시 <##666666>&l뱃지&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 401 and 420:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.rudolph_headband"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.rudolph_headband"
+            send "{@prefix} <##66360C>&l루돌프 <##E7DE79>&l머리띠&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 421 and 440:
+            send "{@prefix} <##FF0000>&l크리스마스 &f&l막대사탕&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is between 441 and 460:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.black_shawl"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.black_shawl"
+            send "{@prefix} &8&l검은색 &f&l목도리&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 461 and 480:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.purple_shawl"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.purple_shawl"
+            send "{@prefix} <##B19DC9>&l보라색 &f&l목도리&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 481 and 500:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.red_shawl"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.red_shawl"
+            send "{@prefix} <##FF0000>&l빨간색 &f&l목도리&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 501 and 520:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.santa_hat"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.santa_hat"
+            send "{@prefix} &c&l산타 <##FF0000>&l모자&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 521 and 540:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.snowcloud"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.snowcloud"
+            send "{@prefix} &f&l눈구름&f을 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 541 and 560:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.snowman"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.snowman"
+            send "{@prefix} &f&l눈사람&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is 561:
+            send "{@prefix} &6루돌프 칭호&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is 562:
+            send "{@prefix} &6瑞雪 칭호&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is 563:
+            send "{@prefix} &f&l눈송이 칭호&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is 564:
+            send "{@prefix} &c&l산타클로스 칭호&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is 565:
+            send "{@prefix} &f한적한 겨울 칭호 칭호&f를 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 관리자에게 보여주세요! &7(20%now%)"
+
+        else if {_number} is between 567 and 580:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.baessi_daenggi"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.baessi_daenggi"
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] 배씨댕기&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 581 and 600:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.chuseok_kite"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.chuseok_kite"
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &6&l추&c&l석&f의 &4&l연&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 601 and 620:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.lucky_bag"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.lucky_bag"
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &d&l복&f주머니&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 621 and 640:
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.wear.magpie"
+            execute console command "lp user %player% permission set cosmeticscore.user.cosmetics.seeingui.magpie"
+            send "{@prefix} &f[ <##FFFFCC>&l설날 &f] &7&l까&8&l치&f를 뽑았습니다!" to player
+            send "{@prefix} 치장 착용 권한을 획득하였습니다. 옷장에서 착용할 수 있습니다."
+            send "&7     └ 옷장은 중앙광장이나 코스트코에서 이용할 수 있습니다."
+
+        else if {_number} is between 641 and 645:
+            send "{@prefix} &e&l&o초&6&l&o대&d&l&o박&f&o!!!!! &b&l상어&f의 &c&l마음&f을 뽑았습니다!" to player
+            send "{@prefix} 이 채팅을 찍어 shkworld_kr에게 보여주세요! &7(20%now%)"

@@ -1,0 +1,46 @@
+options:
+	@: <##353535>&l[세팅]&f
+	
+
+command /세팅 [<text>] [<text>] [<text>]:
+	trigger:
+		player is op
+		if arg 1 is not set:
+			send "{@@} /세팅 이름 <값> | 아이템의 이름을 바꿉니다."
+			send "{@@} /세팅 네임 <값> | 아이템의 이름을 바꿉니다(밑줄 포함)"
+			send "{@@} /세팅 로어 <줄> <값> | 아이템의 로어를 바꿉니다."
+		if arg 1 is "이름":
+			if arg 2 is not set:
+				send "{@@} 값을 입력해주세요"
+				stop
+			if player's tool is air:
+				send "{@@} 손에 아이템을 들어주세요"
+				stop
+			set {_name} to colored arg 2
+			replace all "_" with " " in {_name}
+			set name of player's tool to {_name}
+			send "{@@} 아이템의 이름을 변경하였습니다"
+		if arg-1 is "네임":
+			if arg-2 isn't set:
+				send "{@@} 값을 입력해주세요"
+				stop
+			if player's tool is air:
+				send "{@@} 손에 아이템을 들어주세요"
+				stop
+			set {_name} to colored arg-2
+			set name of player's tool to {_name}
+			send "{@@} 아이템의 이름을 변경하였습니다"
+		if arg 1 is "로어":
+			if arg 2 parsed as integer is not integer:
+				send "{@@} 줄을 입력해주세요"
+				stop
+			if arg 3 is not set:
+				send "{@@} 값을 입력해주세요"
+				stop
+			if player's tool is air:
+				send "{@@} 손에 아이템을 들어주세요"
+				stop
+			set {_lore} to colored arg 3
+			replace all "_" with " " in {_lore}
+			set line arg 2 parsed as integer of lore of player's tool to {_lore}
+			send "{@@} 아이템의 로어를 변경하였습니다"

@@ -1,0 +1,63 @@
+on swap hand items:
+    set {_item} to 1 of player's tool
+    if {_item} is air:
+        stop
+    if {lefthand.itemlist::*} doesn't contain {_item}:
+        cancel event
+        stop
+
+    
+
+on inventory click:
+    if index of event-slot is 40:
+        if event-item is air:
+            cancel event
+            stop
+
+
+
+
+command /왼손 [<string>] [<integer>]:
+    trigger:
+        if player is op:
+            if arg-1 is "추가":
+                set {_item} to 1 of player's tool
+                add {_item} to {lefthand.itemlist::*}
+                message "추가완료"
+                stop
+
+            if arg-1 is "제거":
+                if arg-2 is not set:
+                    message "올바른 번호를 입력해주세요"
+                    stop
+                remove {lefthand.itemlist::%arg-2%} from {lefthand.itemlist::*}
+                message "제거완료"
+                stop
+            
+            if arg-1 is "초기화":
+                delete {lefthand.itemlist::*}
+                message "초기화 완료"
+                stop
+            
+            if arg-1 is "목록":
+                set {_itemsPerPage} to 15
+                set {_totalPages} to ceil(size of {lefthand.itemlist::*} / {_itemsPerPage})
+                set {_pageNum} to arg-2
+                if {_pageNum} is not set:
+                    send "올바른 페이지 번호를 입력해주세요. (1 ~ %{_totalPages}%)"
+                    stop
+                if {_pageNum} < 1:
+                    send "올바른 페이지 번호를 입력해주세요. (1 ~ %{_totalPages}%)"
+                    stop
+                if {_pageNum} > {_totalPages}:
+                    send "올바른 페이지 번호를 입력해주세요. (1 ~ %{_totalPages}%)"
+                    stop
+                
+                set {_start} to (({_pageNum} - 1) * {_itemsPerPage}) + 1
+                set {_end} to min({_pageNum} * {_itemsPerPage}, size of {lefthand.itemlist::*})
+                send "왼손 들기 아이템 목록 (페이지 %{_pageNum}% / %{_totalPages}%):"
+                set {_t} to 1
+                while {_start} <= {_end}:
+                    add 1 to {_start}
+                    send "%{_t}%   %{lefthand.itemlist::%{_t}%}%"
+                    add 1 to {_t}

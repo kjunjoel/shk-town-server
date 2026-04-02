@@ -1,0 +1,258 @@
+options:
+    # 접두사
+    prefix: &c&l》 &f
+
+    # GUI
+    guiSet: &c&l< &f스킨 &c&l>
+    guiEdit: &c&l< &f스킨 관리 &c&l>
+
+# 변수
+# {toolskin.skin::*}               | 전체 스킨 목록
+# {toolskin.%uuid of player%::*}   | 플레이어의 스킨 목록
+
+function toolskinGUI(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@guiSet}"
+    set slot 45, 46, 47, 51, 52, 53 of {_inv} to white stained glass pane named "&f"
+    set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+    set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+    set {_page} to round up ((size of {toolskin.%uuid of {_p}%::*}) / 45)
+    set slot 49 of {_inv} to {_p}'s skull named "&6%{_n}%/%{_page}% 페이지"
+    set {_ind} to 0
+    loop {toolskin.%uuid of {_p}%::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_item} to loop-value
+            add "&f", "&7좌클릭하여 스킨 착용" to lore of {_item}
+            set {_i} to {_ind} - ({_n}-1)*45
+            set slot ({_i} - 1) of {_inv} to {_item}
+    set metadata tag "toolskin-gui" of {_p} to {_inv}
+    set metadata tag "toolskin-gui-page" of {_p} to {_n}
+    open {_inv} to {_p}
+
+function toolskinEdit(p: player, n: number):
+    set {_inv} to chest inventory with 6 rows named "{@guiEdit}"
+    set slot 45, 46, 47, 51, 52, 53 of {_inv} to pink stained glass pane named "&f"
+    set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+    set {_page} to round up ((size of {toolskin.skin::*}) / 45)
+    set slot 49 of {_inv} to end crystal named "&f%{_n}%/%{_page}% 페이지"
+    set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+    set {_ind} to 0
+    loop sorted {toolskin.skin::*}:
+        add 1 to {_ind}
+        if {_ind} is between (({_n}-1)*45+1) and ({_n}*45):
+            set {_item} to loop-value
+            add "&f", "&a좌클릭&f하여 스킨 얻기" and "&c우클릭&f하여 스킨 삭제" to lore of {_item}
+            set {_i} to {_ind} - ({_n}-1)*45
+            set slot ({_i} - 1) of {_inv} to {_item}
+    open {_inv} to {_p}
+    set metadata tag "toolskin-edit-gui" of {_p} to {_inv}
+    set metadata tag "toolskin-edit-gui-page" of {_p} to {_n}
+
+command /스킨:
+    trigger:
+        toolskinGUI(player, 1)
+
+command /toolskin [<text>] [<text>]:
+    permission: op.user
+    permission message: {@prefix} 이 명령어를 사용할 권한이 없습니다.
+    trigger:
+        if arg 1 is "list":
+            toolskinEdit(player, 1)
+            
+        else if arg 1 is "add":
+            if player's tool isn't set:
+                send "{@prefix} 추가할 스킨을 손에 들고 다시 입력해주시기 바랍니다."
+                stop
+            loop {toolskin.skin::*}:
+                if type of player's tool is type of loop-value:
+                    if custom model data of player's tool is custom model data of loop-value:
+                        set {_temp} to true
+            if {_temp} is true:
+                send "{@prefix} 이미 존재하는 스킨입니다."
+                stop
+            add player's tool to {toolskin.skin::*}
+            send "{@prefix} 스킨을 추가했습니다."
+            
+        else if arg 1 is "get":
+            if arg 2 isn't set:
+                send "{@prefix} 얻을 스킨을 입력해주시기 바랍니다."
+                stop
+            loop {toolskin.skin::*}:
+                if uncolored arg-2 is uncolored name of loop-value:
+                    itemGive(player, loop-value with lore "&7우클릭하여 스킨을 획득합니다." and "&7거래가 불가능한 아이템입니다.", 1, "ToolSkin")
+            send "{@prefix} 스킨을 얻었습니다."
+            
+        else:
+            send "{@prefix} /toolskin list &8&l| &f스킨 리스트를 확인합니다."
+            send "{@prefix} /toolskin add &8&l| &f손에 든 아이템을 스킨으로 추가합니다."
+            send "{@prefix} /toolskin get [스킨 이름] &8&l| &f스킨을 획득합니다."
+            stop
+
+command /스킨확인 [<offlineplayer>] [<integer>]:
+    permission: op.user
+    permission message: {@prefix} 이 명령어를 사용할 권한이 없습니다.
+    trigger:
+        set {_n} to arg-2
+        set {_n} to 1 if arg-2 isn't set
+        set {_inv} to chest inventory with 6 rows named "&f스킨 관리 &6%arg-1%"
+        set slot 45, 46, 47, 51, 52, and 53 of {_inv} to white stained glass pane named "&f"
+        set slot 48 of {_inv} to blue dye named "&a이전" with lore "&f이전 페이지로 이동"
+        set slot 50 of {_inv} to green dye named "&a다음" with lore "&f다음 페이지로 이동"
+        set {_page} to round up ((size of {toolskin.%uuid of arg-1%::*}) / 45)
+        set slot 49 of {_inv} to arg-1's skull named "&6%{_n}%/%{_page}% 페이지"
+        set {_ind} to 0
+        loop {toolskin.%uuid of arg-1%::*}:
+            add 1 to {_ind}
+            set {_item} to loop-value
+            add "&f", "&c우클릭하여 삭제" to lore of {_item}
+            set {_i} to {_ind} - ({_n}-1)*45
+            set slot ({_i} - 1) of {_inv} to {_item}
+        open {_inv} to player
+        set metadata tag "toolskin-manage-gui" of player to {_inv}
+        set metadata tag "toolskin-manage-gui-page" of player to {_n}
+
+on inventory click:
+    if metadata tag "toolskin-manage-gui" of player is event-inventory:
+        cancel event
+        player has permission "op.user"
+        set {_n} to metadata tag "toolskin-manage-gui-page" of player
+        set {_name::*} to uncolored display name of event-inventory split by " "
+        set {_player} to uncolored {_name::3} parsed as offlineplayer
+        set {_lore::*} to lore of clicked item
+        if {_lore::*} contains "&c우클릭하여 삭제":
+            click type is right mouse button
+            loop {toolskin.%uuid of {_player}%::*}:
+                if type of loop-value is type of clicked item:
+                    if custom model data of loop-value is custom model data of clicked item:
+                        delete {toolskin.%uuid of {_player}%::%loop-index%}
+        if clicked slot is 48:
+            if {_n} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {_n}
+        else if clicked slot is 50:
+            if ({_n} * 45) >= (size of {toolskin.%uuid of {_player}%::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {_n}
+        execute player command "스킨확인 %{_player}% %{_n}%"
+
+    else if metadata tag "toolskin-gui" of player is event-inventory:
+        cancel event
+        set {_n} to metadata tag "toolskin-gui-page" of player
+        if clicked slot is 48:
+            if {_n} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {_n}
+            toolskinGUI(player, {_n})
+
+        else if clicked slot is 50:
+            if ({_n} * 45) >= (size of {toolskin.%uuid of player%::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {_n}
+            toolskinGUI(player, {_n})
+
+
+        else if clicked slot is 45 or 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+        
+        else:
+            if type of clicked slot isn't air:
+                set {_item} to clicked item
+                set {_cmd} to custom model data of clicked item
+                loop 36 times:
+                    set {_ind} to loop-number - 1
+                    set {_loop} to slot {_ind} of player's inventory
+                    if "%type of clicked item%" contains "sword":
+                        if "%type of {_loop}%" contains "sword":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    else if "%type of clicked item%" contains "pickaxe":
+                        if "%type of {_loop}%" contains "pickaxe":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    else if "%type of clicked item%" contains "axe":
+                        if "%type of {_loop}%" contains "axe":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    else if "%type of clicked item%" contains "shovel":
+                        if "%type of {_loop}%" contains "shovel":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    else if "%type of clicked item%" contains "hoe":
+                        if "%type of {_loop}%" contains "hoe":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    else if "%type of clicked item%" contains "fishing rod":
+                        if "%type of {_loop}%" contains "fishing rod":
+                            if custom model data of {_loop} is 0:
+                                set custom model data of {_loop} to {_cmd}
+                    set slot {_ind} of player's inventory to {_loop}
+                send "{@prefix} 스킨을 착용했습니다."
+                toolskinGUI(player, {_n})
+            else:
+                stop
+
+    else if metadata tag "toolskin-edit-gui" of player is event-inventory:
+        cancel event
+        set {_n} to metadata tag "toolskin-edit-gui-page" of player
+        if clicked slot is 48:
+            if {_n} is 1:
+                send "{@prefix} 처음 페이지입니다."
+                stop
+            add -1 to {_n}
+            toolskinEdit(player, {_n})
+            
+        else if clicked slot is 50:
+            if ({_n} * 45) >= (size of {toolskin.skin::*}):
+                send "{@prefix} 마지막 페이지입니다."
+                stop
+            add 1 to {_n}
+            toolskinEdit(player, {_n})
+            
+        else if clicked slot is 45 or 46 or 47 or 49 or 51 or 52 or 53:
+            stop
+        
+        else:
+            if clicked slot isn't air:
+                if click type is left mouse button:
+                    loop {toolskin.skin::*}:
+                        if type of loop-value is type of clicked item:
+                            if custom model data of loop-value is custom model data of clicked item:
+                                itemGive(player, loop-value with lore "&7우클릭하여 스킨을 획득합니다.", 1, "ToolSkin")
+                                send "{@prefix} 스킨을 얻었습니다."
+                                exit 1 loop
+                    stop
+                else if click type is right mouse button:
+                    loop {toolskin.skin::*}:
+                        if type of loop-value is type of clicked item:
+                            if custom model data of loop-value is custom model data of clicked item:
+                                delete {toolskin.skin::%loop-index%}
+                                send "{@prefix} 스킨을 삭제했습니다."
+                                exit 1 loop
+                    toolskinEdit(player, {_n})
+                    
+on inventory close:
+    if metadata tag "toolskin-gui" of player is event-inventory:
+        delete metadata tag "toolskin-gui" of player
+        delete metadata tag "toolskin-gui-page" of player
+    else if metadata tag "toolskin-edit-gui" of player is event-inventory:
+        delete metadata tag "toolskin-edit-gui" of player
+        delete metadata tag "toolskin-edit-gui-page" of player
+    else if metadata tag "toolskin-manage-gui" of player is event-inventory:
+        delete metadata tag "toolskin-manage-gui" of player
+        delete metadata tag "toolskin-manage-gui-page" of player
+
+on rightclick:
+    if uncolored lore of player's tool contains "우클릭하여 스킨을 획득합니다.":
+        loop {toolskin.%uuid of player%::*}:
+            if type of player's tool is type of loop-value:
+                if custom model data of player's tool is custom model data of loop-value:
+                    send "{@prefix} 이미 획득한 스킨입니다."
+                    stop
+        add player's tool to {toolskin.%uuid of player%::*}
+        remove 1 of player's tool from player's tool
+        send "{@prefix} 스킨을 획득하였습니다." 
+        stop

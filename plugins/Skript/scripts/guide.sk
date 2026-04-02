@@ -1,0 +1,322 @@
+import:
+    java.lang.String
+
+# 변수
+# {guide.op}
+# {guide.time}
+# {guide.time::%uuid of player%}
+# {guide.attend::%uuid of player%}
+
+function guideTimeName(n: number) :: text:
+    set {_t} to {_n}
+    if {_n} isn't set:
+        set {_time} to 0
+    set {_h} to round down {_t}/3600
+    remove {_h}*3600 from {_t}
+    set {_m} to round down {_t}/60
+    remove {_m}*60 from {_t}
+    return "%{_h}%시간 %{_m}%분 %{_t}%초"
+
+command /list_set:
+    permission: op.user
+    trigger:
+        delete {list.admin::*}
+        delete {list.guide::*}
+        delete {list.tempguide::*}
+        delete {list.manager::*}
+        wait 1 tick
+        set {list.admin::*} to "Lantum", "GyeongRye", "rldn12134", "Donnie10707", "Mir_Dragon", "Ploma", "dogodogodogodog", "shkworld_kr", "Carpe__DM", "Mulberry_MK", "Yang_Ja", "Seo_hyun2", "_Winter__", "OwOLunala", "star_tree_"
+        set {list.guide::*} to "_GOMDORI__", "_Gyul_2", "AdroitMantis609", "bini0729", "Horing1807", "Iron8379", "ooxu", "sangchuu_", "som_0", "Ven_detta_", "yeajun0212"
+        # set {list.tempguide::*} to 
+        set {list.manager::*} to "Lantum", "GyeongRye", "rldn12134", "Donnie10707", "Mir_Dragon", "Ploma", "dogodogodogodog", "shkworld_kr", "Carpe__DM", "Mulberry_MK", "Yang_Ja", "Seo_hyun2", "_Winter__", "OwOLunala", "star_tree_", "_GOMDORI__", "_Gyul_2", "AdroitMantis609", "bini0729", "Iron8379", "ooxu", "sangchuu_", "som_0", "Ven_detta_", "yeajun0212"
+
+command /가이드 [<text>] [<offlineplayer>] [<number>]:
+    trigger:
+        if arg-1 isn't set:
+            set {_head::*} to "som_0", "bini0729", "sangchuu_"
+            set {_headdiscord::*} to "som_01", "bini0729", "sangchu.u"
+            set {_nick::*} to "AdroitMantis609", "Horing1807", "", "", "_GOMDORI__", "Iron8379", "yeajun0212", "", "_Gyul_2", "ooxu", "Ven_detta_", ""
+            set {_discord::*} to "zajub", "horing09", "", "", "happieeee._.", "iron8379", "ye._212", "", "_gyul_2", "qkrtjgk", "ven_detta_", ""
+            
+            set {_temp} to true if player has permission "op.user"
+            set {_temp} to true if {list.guide::*} contains "%player%"
+            set {_temp} to true if {list.tempguide::*} contains "%player%"
+            if {_temp} is set:
+                set {_inv} to chest inventory with 6 rows named "&d&l가이드 &f목록"
+            else:
+                set {_inv} to chest inventory with 5 rows named "&d&l가이드 &f목록"
+            loop 54 times:
+                set slot (loop-number)-1 of {_inv} to white stained glass pane named "&f"
+            
+            set slot 49 of {_inv} to sunflower named "&f클릭하여 &eOP &f호출하기" with lore "&7쿨타임 30초" with custom model data 1011 if player has permission "guide.chatting"
+            set slot 53 of {_inv} to sunflower named "&f클릭하여 &d가이드 &a잠수 &f확인하기" with lore "&7쿨타임 30초" with custom model data 1011 if player has permission "op.user"
+
+            loop 3 times:
+                if loop-number is 1:
+                    set {_slot} to 11
+                else if loop-number is 2:
+                    set {_slot} to 20
+                else:
+                    set {_slot} to 29
+                set {_item} to {_head::%loop-number%} parsed as offlineplayer's skull named "&d%loop-number%팀장 &f%{_head::%loop-number%}%"
+                add "&7디스코드: &f%{_headdiscord::%loop-number%}%" to lore of {_item}
+                if {guide.attend::%uuid of ({_head::%loop-number%} parsed as offlineplayer)%} is set:
+                    add "&7현재 상태: &a출근" to lore of {_item}
+                    if {sharktalk::%player%} is {_head::%loop-number%} parsed as offlineplayer:
+                        add "&c우클릭&f하여 상어톡 퇴장" to lore of {_item}
+                    else:
+                        add "&a좌클릭&f하여 상어톡 입장" to lore of {_item}
+                else:
+                    add "&7현재 상태: &c퇴근" to lore of {_item}
+                set slot {_slot} of {_inv} to {_item}
+
+            loop 12 times:
+                if loop-number is between 1 and 4:
+                    set {_slot} to 11 + loop-number
+                else if loop-number is between 5 and 8:
+                    set {_slot} to 16 + loop-number
+                else:
+                    set {_slot} to 21 + loop-number
+                set {_item} to {_nick::%loop-number%} parsed as offlineplayer's skull named "&d%round up (loop-number) / 4%팀원 &f%{_nick::%loop-number%}%"
+                add "&7디스코드: &f%{_discord::%loop-number%}%" to lore of {_item}
+                if {guide.attend::%uuid of ({_nick::%loop-number%} parsed as offlineplayer)%} is set:
+                    add "&7현재 상태: &a출근" to lore of {_item}
+                    if {sharktalk::%player%} is {_nick::%loop-number%} parsed as offlineplayer:
+                        add "&c우클릭&f하여 상어톡 퇴장" to lore of {_item}
+                    else:
+                        add "&a좌클릭&f하여 상어톡 입장" to lore of {_item}
+                else:
+                    add "&7현재 상태: &c퇴근" to lore of {_item}
+                set slot {_slot} of {_inv} to {_item}
+
+            open {_inv} to player
+            wait 1 tick
+            set {gui.%uuid of player%::guideGUI} to true
+
+        else if arg-1 is "출근":
+            player isn't op
+            set {_temp} to true if {list.guide::*} contains "%player%"
+            set {_temp} to true if {list.tempguide::*} contains "%player%"
+            {_temp} is set
+            set {_nick::*} to {list.admin::*}, {list.guide::*} and {list.tempguide::*}
+            if {guide.attend::%uuid of player%} isn't set:
+                set {guide.attend::%uuid of player%} to true
+                loop {_nick::*}:
+                    send "[ &6&l! &f] &e%player%&f님이 출근하였습니다. &7(%now formatted as "yyyy-MM-dd HH:mm:ss"%)" to loop-value parsed as offlineplayer
+            else:
+                send "[ &6&l! &f] 이미 출근하였습니다."
+
+        else if arg-1 is "퇴근":
+            player isn't op
+            set {_temp} to true if {list.guide::*} contains "%player%"
+            set {_temp} to true if {list.tempguide::*} contains "%player%"
+            {_temp} is set
+            set {_nick::*} to {list.admin::*}, {list.guide::*} and {list.tempguide::*}
+            if {guide.attend::%uuid of player%} is set:
+                delete {guide.attend::%uuid of player%}
+                loop {_nick::*}:
+                    send "[ &6&l! &f] &e%player%&f님이 퇴근하였습니다. &7(%now formatted as "yyyy-MM-dd HH:mm:ss"% | 누적 근무시간 %guideTimeName({guide.time::%uuid of player%})%)" to loop-value parsed as offlineplayer
+            else:
+                send "[ &6&l! &f] 이미 퇴근하였습니다."
+
+        else if arg-1 is "강제퇴근":
+            player has permission "op.user"
+            arg-2 is set
+            set {_nick::*} to {list.admin::*}, {list.guide::*} and {list.tempguide::*}
+            if {guide.attend::%uuid of arg-2%} is set:
+                delete {guide.attend::%uuid of arg-2%}
+                loop {_nick::*}:
+                    send "[ &6&l! &f] &e%arg-2%&f님이 퇴근하였습니다. &7(%now formatted as "yyyy-MM-dd HH:mm:ss"% | 누적 근무시간 %guideTimeName({guide.time::%uuid of arg-2%})%)" to loop-value parsed as offlineplayer
+            else:
+                send "[ &6&l! &f] 이미 퇴근하였습니다."
+
+        else if arg-1 is "강제졸업":
+            if arg-2 isn't set:
+                send "&d&l[가이드]&f 플레이어명을 입력해주세요."
+                stop
+            loop {list.admin::*}:
+                if loop-value parsed as offlineplayer is online:
+                    set {_temp} to true
+                    exit 1 loop
+            if {_temp} is true:
+                send "&d&l[가이드]&f 관리자가 서버에 존재합니다."
+            else:
+                make player run command "school_force %arg-2%" as op
+                send "&d&l[가이드]&f %arg-2%님을 강제 졸업 시키셨습니다."
+                stop
+
+        else if arg-1 is "조회":
+            set {_temp} to true if player has permission "op.user"
+            set {_temp} to true if {list.guide::*} contains "%player%"
+            set {_temp} to true if {list.tempguide::*} contains "%player%"
+            {_temp} is set
+            set {_nick::*} to {list.guide::*} and {list.tempguide::*}
+            send "[ &6&l! &f] &d&l가이드&f 출근 조회 &7(%now formatted as "yyyy-MM-dd HH:mm:ss"% 기준)"
+            loop {_nick::*}:
+                set {_uuid} to uuid of (loop-value parsed as offlineplayer)
+                if {guide.attend::%{_uuid}%} is set:
+                    set {_attend} to "&a출근"
+                else:
+                    set {_attend} to "&c퇴근"
+                send "&e%loop-value% %{_attend}% &7(근무시간 | %guideTimeName({guide.time::%{_uuid}%})%)"
+
+        else if arg-1 is "추가":
+            player has permission "op.user"
+            arg-2 is set
+            arg-3 is set
+            add arg-3 to {guide.time::%uuid of arg-2%}
+            send "[ &6&l! &f] &e%arg-2%&f님의 근무 시간에 &b%guideTimeName(arg-3)%&f만큼 추가하였습니다."
+            send "[ &6&l! &f] 현재 &e%arg-2%&f님의 근무 시간은 &b%guideTimeName({guide.time::%uuid of arg-2%})%&f입니다."
+
+        else if arg-1 is "삭제":
+            player has permission "op.user"
+            arg-2 is set
+            arg-3 is set
+            remove arg-3 from {guide.time::%uuid of arg-2%}
+            if {guide.time::%uuid of arg-2%} <= 0:
+                set {guide.time::%uuid of arg-2%} to 0
+            send "[ &6&l! &f] &e%arg-2%&f님의 근무 시간에 &b%guideTimeName(arg-3)% &f만큼 삭제하였습니다."
+            send "[ &6&l! &f] 현재 &e%arg-2%&f님의 근무 시간은 &b%guideTimeName({guide.time::%uuid of arg-2%})%&f입니다."
+
+        else if arg-1 is "저장":
+            player has permission "op.user"
+            set {_file} to "plugins/Skript/data/logs/guide/backup/%now formatted as "yyyy-MM-dd"%.txt"
+            create file path {_file}
+            sync append now formatted as "yyyy년 MM월 dd일 HH시 mm분 ss초 근무 기록 백업" to file path {_file}
+            set {_nick::*} to {list.guide::*} and {list.tempguide::*}
+            loop {_nick::*}:
+                set {_player} to loop-value parsed as offlineplayer
+                sync append "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to file path {_file}
+                send "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to console
+                wait 2 ticks
+            sync append "" to file path {_file}
+            send "[ &6&l! &f] 현재까지의 가이드 근무 기록이 저장되었습니다."
+            
+        else if arg-1 is "초기화":
+            player has permission "op.user"
+            execute player command "가이드 저장"
+            delete {guide.time::*}
+            send "[ &6&l! &f] 모든 가이드 근무 기록이 초기화되었습니다."
+
+command /가이드공지 <text>:
+    permission: guide.chatting
+    trigger:
+        send "" to all players
+        send "&d&l[가이드]&r &l%arg-1% &7(작성자 | %player%)" to all players
+        send "" to all players
+        play sound "entity.experience_orb.pickup" with volume 2 and pitch 1 at all players for all players
+
+command /guide_set:
+    permission: guide.user
+    trigger:
+        loop {list.guide::*}:
+            execute console command "lp user %loop-value% parent add 가이드"
+            wait 20 ticks
+        loop {list.tempguide::*}:
+            execute console command "lp user %loop-value% parent add 임시가이드"
+            wait 20 ticks
+        send "[ &6&l! &f] 설정이 완료되었습니다."
+        
+
+on inventory click:
+    if {gui.%uuid of player%::guideGUI} is true:
+        cancel event
+        if clicked item is sunflower:
+            if clicked slot is 49:
+                if {guide.op} is set:
+                    send "[ &6&l! &f] &e%{guide.op}%&f초 후 다시 누를 수 있습니다."
+                    stop
+                set {guide.op} to 30
+                send "[ &6&l! &f] 모든 &e개발자&f에게 알림을 보냈습니다!"
+                loop {list.admin::*}:
+                    send "" to loop-value parsed as offlineplayer
+                    send "[ &6&l! &f] &d&l가이드&f&l가 호출했습니다! &7(담당자 | %player%)" to loop-value parsed as offlineplayer
+                    send "" to loop-value parsed as offlineplayer
+                    play sound "ui.toast.challenge_complete" with volume 1 and pitch 1 at loop-value parsed as offlineplayer for loop-value parsed as offlineplayer
+                stop
+            if clicked slot is 53:
+                if {guide.time} is set:
+                    send "[ &6&l! &f] &e%{guide.time}%&f초 후 다시 누를 수 있습니다."
+                    stop
+                set {guide.time} to 30
+                send "[ &6&l! &f] 모든 &d가이드&f에게 알림을 보냈습니다!"
+                loop {list.guide::*}:
+                    set {_player} to loop-value parsed as offlineplayer
+                    if {guide.attend::%uuid of {_player}%} is true:
+                        send "" to loop-value parsed as offlineplayer
+                        send "[ &6&l! &f] &e&l오픈채팅 &f가이드 잠수 확인에 10분 내로 메시지를 보내세요!" to loop-value parsed as offlineplayer
+                        send "[ &6&l! &f] &7 └ 비밀번호: &f0927 &8&l| &7(담당자 | %player%)" to loop-value parsed as offlineplayer
+                        send "" to loop-value parsed as offlineplayer
+                        play sound "ui.toast.challenge_complete" with volume 2 and pitch 1 at loop-value parsed as offlineplayer for loop-value parsed as offlineplayer
+                loop {list.tempguide::*}:
+                    set {_player} to loop-value parsed as offlineplayer
+                    if {guide.attend::%uuid of {_player}%} is true:
+                        send "" to loop-value parsed as offlineplayer
+                        send "[ &6&l! &f] &e&l오픈채팅 &f가이드 잠수 확인에 10분 내로 메시지를 보내세요!" to loop-value parsed as offlineplayer
+                        send "[ &6&l! &f] &7 └ 비밀번호: &f0927 &8&l| &7(담당자 | %player%)" to loop-value parsed as offlineplayer
+                        send "" to loop-value parsed as offlineplayer
+                        play sound "ui.toast.challenge_complete" with volume 2 and pitch 1 at loop-value parsed as offlineplayer for loop-value parsed as offlineplayer
+                stop
+            
+        if clicked item isn't white stained glass pane:
+            set {_name::*} to uncolored name of clicked item split by " "
+            set {_player} to {_name::2} parsed as offlineplayer
+            if {_player} is online:
+                if click type is left mouse button:
+                    set {_lore::*} to lore of clicked item
+                    {_lore::3} is "&a좌클릭&f하여 상어톡 입장"
+                    set {sharktalk::%player%} to {_player}
+                    send " &a&l》 &f&6%{sharktalk::%player%}%&f님과의 대화에 입장하였습니다."
+                else if click type is right mouse button:
+                    set {_lore::*} to lore of clicked item
+                    {_lore::3} is "&c우클릭&f하여 상어톡 퇴장"
+                    send " &a&l》 &f&6%{sharktalk::%player%}%님&f과의 대화에서 퇴장하였습니다."
+                    delete {sharktalk::%player%}
+                close player's inventory
+
+on inventory close:
+    if {gui.%uuid of player%::guideGUI} is true:
+        delete {gui.%uuid of player%::guideGUI}
+
+every 1 second:
+    if now formatted as "HH:mm:ss" contains "00:00:00":
+        if now formatted as "E" contains "월":
+            create file path "plugins/Skript/data/logs/guide/%now formatted as "yyyy-w"%.txt"
+            loop {list.guide::*}:
+                set {_player} to loop-value parsed as offlineplayer
+                sync append "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to file path "plugins/Skript/data/logs/guide/%now formatted as "yyyy-w"%.txt"
+                send "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to console
+                wait 1 tick
+            loop {list.tempguide::*}:
+                set {_player} to loop-value parsed as offlineplayer
+                sync append "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to file path "plugins/Skript/data/logs/guide/%now formatted as "yyyy-w"%.txt"
+                send "%{_player}% %guideTimeName({guide.time::%uuid of {_player}%})%" to console
+                wait 1 tick
+            delete {guide.time::*}
+    if {guide.time} is set:
+        remove 1 from {guide.time}
+        if {guide.time} is 0:
+            delete {guide.time}
+    if {guide.op} is set:
+        remove 1 from {guide.op}
+        if {guide.op} is 0:
+            delete {guide.op}
+    loop {guide.attend::*}:
+        loop-index parsed as offlineplayer is online
+        add 1 to {guide.time::%loop-index%}
+        if mod({guide.time::%loop-index%}, 3600) is 0:
+            set {_nick::*} to {list.admin::*} and {list.guide::*}
+            loop {_nick::*}:
+                send "[ &6&l! &f] &e%loop-index-1 parsed as offlineplayer%&f님이 근무시간 &b%round down {guide.time::%loop-index-1%}/3600%시간&f을 달성하였습니다." to loop-value-2 parsed as offlineplayer
+
+on quit:
+    set {_temp} to true if {list.guide::*} contains "%player%"
+    set {_temp} to true if {list.tempguide::*} contains "%player%"
+    {_temp} is set
+    set {_nick::*} to {list.admin::*}, {list.guide::*} and {list.tempguide::*}
+    if {guide.attend::%uuid of player%} is set:
+        delete {guide.attend::%uuid of player%}
+        loop {_nick::*}:
+            send "[ &6&l! &f] &e%player%&f님이 퇴근하였습니다. &7(%now formatted as "yyyy-MM-dd HH:mm:ss"% | 누적 근무시간 %guideTimeName({guide.time::%uuid of player%})%)" to loop-value parsed as offlineplayer
+    else:
+        send "[ &6&l! &f] 이미 퇴근하였습니다."
