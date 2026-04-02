@@ -1,1 +1,36 @@
+# --- [Server Engine & Executables] ---
+paper-1.21.4.jar
+paper-*.jar
+start.sh
+
+# --- [Runtime Folders] ---
+cache/
+config/
+libraries/
+logs/
+versions/
+world/
+world_nether/
+world_the_end/
+
+# --- [Plugins & Configurations] ---
 plugins/*.jar
+plugins/.paper-remapped/
+plugins/bStats
+plugins/spark/
+
+# --- [Metadata & Misc] ---
+banned-ips.json
+banned-players.json
+bukkit.yml
+commands.yml
+eula.txt
+help.yml
+ops.json
+permissions.yml
+server.properties
+session.lock
+spigot.yml
+usercache.json
+version_history.json
+whitelist.json

@@ -1,0 +1,6 @@
+name: SHKTownCore
+version: '1.0.0'
+main: kr.shkworld.shktown.SHKTownCore
+api-version: '1.21'
+authors: [GyeongRye]
+description: SHK TOWN Server Core Plugin
